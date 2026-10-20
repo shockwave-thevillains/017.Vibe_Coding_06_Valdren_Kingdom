@@ -139,7 +139,7 @@ src/ui.js         start screen, pause menu, toasts, hints, debug readout
 3. Under **Build and deployment**, choose **Deploy from a branch**, then pick the
    branch that holds these files and the `/ (root)` folder, and click **Save**.
 4. After a minute or two the game is live at `https://<username>.github.io/<repo>/`
-   (for this repository: `https://shockwave-thevillains.github.io/017.vibe_coding_06/`).
+   (for this repository: `https://shockwave-thevillains.github.io/017.Vibe_Coding_06/`).
    The **Actions** tab shows the "pages build and deployment" run while it
    publishes.
 
