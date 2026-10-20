@@ -16,6 +16,15 @@ const params = new URLSearchParams(window.location.search);
 const ui = new UI();
 const NO_MOVE = Object.freeze({ x: 0, y: 0, magnitude: 0, run: false });
 
+// Rendering budget. Touch devices get a lighter default; phase 5 exposes these as presets.
+function qualityFor(coarse, maxAnisotropy) {
+  const q = coarse
+    ? { mobile: true, pixelRatio: 1.5, shadows: true, shadowMap: 1024, shadowExtent: 34, textureSize: 256, anisotropy: 2, treeDetail: 0, grass: 6000, grassTile: 46 }
+    : { mobile: false, pixelRatio: 2, shadows: true, shadowMap: 2048, shadowExtent: 46, textureSize: 512, anisotropy: 8, treeDetail: 1, grass: 18000, grassTile: 64 };
+  q.anisotropy = Math.min(q.anisotropy, maxAnisotropy);
+  return q;
+}
+
 function nextFrame() {
   return new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
 }
@@ -33,20 +42,23 @@ async function boot() {
     ui.showFatal('WebGL is not available, so Valdren cannot run here. Try enabling hardware acceleration or another browser.');
     return;
   }
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, coarse ? 1.5 : 2));
+  const quality = qualityFor(coarse, renderer.capabilities.getMaxAnisotropy());
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, quality.pixelRatio));
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.enabled = quality.shadows;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.toneMapping = THREE.NeutralToneMapping;
-  renderer.toneMappingExposure = 1;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.0;
   document.getElementById('app').appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.25, 1600);
 
-  ui.setStatus('Raising the land…');
-  await nextFrame();
-  const world = new World(scene, { mobile: coarse });
+  const world = new World(scene, renderer, quality);
+  await world.build(async (text) => {
+    ui.setStatus(text);
+    await nextFrame();
+  });
   const hour = parseFloat(params.get('time'));
   if (Number.isFinite(hour)) world.setTime(hour);
 
@@ -188,6 +200,7 @@ async function boot() {
       `pos ${p.x.toFixed(1)} ${p.y.toFixed(1)} ${p.z.toFixed(1)}`,
       `speed ${player.speed.toFixed(1)} m/s${depth > 0 ? `  wading ${depth.toFixed(2)} m` : ''}`,
       `time ${world.timeOfDay.toFixed(1)} h  dpr ${renderer.getPixelRatio()}`,
+      `houses ${world.stats.houses}  trees ${world.stats.trees}  grass ${quality.grass}`,
       `${mode}${input.touchMode ? ' · touch' : ''}${input.pointerLocked ? ' · locked' : ''}`,
     ].join('\n'));
   }
@@ -202,6 +215,8 @@ async function boot() {
       follow.addZoom(input.consumeZoom());
       player.update(dt, input.getMove(), follow.yaw);
       follow.update(dt, player.position);
+      // Hide the player when an obstacle squeezes the camera right up to them.
+      player.figure.root.visible = follow.actualDistance > 1.0;
       world.update(dt, player.position, camera);
       renderer.render(scene, camera);
     } else if (mode === 'title') {

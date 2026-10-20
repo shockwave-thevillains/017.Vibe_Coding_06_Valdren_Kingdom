@@ -1,14 +1,33 @@
 # Valdren
 
-An explorable low-poly medieval kingdom that runs in the browser. It is built with
-Three.js as a 100 % static site (HTML, ES modules and JSON), with no build step,
-backend or API keys, so it can be hosted on GitHub Pages as is.
+An explorable medieval kingdom that runs in the browser. It is built with Three.js
+as a 100 % static site (HTML, ES modules and JSON), with no build step, backend or
+API keys, so it can be hosted on GitHub Pages as is. Every model and texture is
+generated in code at load time; the project ships no art assets.
 
-> **Status: Phase 1 of 5, engine core.** Terrain, sky, fog, lighting, the river,
-> the player, the third-person camera, and desktop and mobile input are in place.
-> The castle, town and other landmarks (phase 2), NPCs and dialogue (phase 3),
-> lore, journal, minimap, saving and the day-night cycle (phase 4), and quality
-> presets (phase 5) are still to come.
+> **Status: Phase 2 of 5, the world.** The engine core (phase 1) and the whole
+> kingdom are in place. NPCs and dialogue (phase 3), lore, journal, minimap,
+> saving and the day-night cycle (phase 4), and the quality menu (phase 5) are
+> still to come.
+
+## The kingdom
+
+- **Castle Valdren** crowns the hill to the north: an octagonal curtain wall with
+  eight round towers, a twin-towered gatehouse with a raised portcullis, a cobbled
+  courtyard with barracks, stables, a well and training dummies, the great
+  donjon (with a sealed, chained door), and the **Throne Hall**, which you can
+  walk into: columns, a long carpet, a two-step dais and throne, stained-glass
+  windows, banners, braziers and a chandelier.
+- **The walled town** below: a twelve-sided wall with towers and three gates,
+  winding cobbled streets with kerbs and lamp posts, about thirty half-timbered
+  and stone houses, a market square with stalls, a well and a king's statue, the
+  tavern *The Broken Oar*, the blacksmith's forge, and a chapel with a bell tower
+  and graveyard.
+- **Outside the walls:** the royal road winding up the castle hill, a
+  three-arched stone bridge over the river, wheat, barley and cabbage fields with
+  fences, a farmstead with a barn and haystacks, a turning windmill, woods to the
+  west, north-east and south-west, and a ruined watchtower on a knoll at the
+  forest edge with a hermit's camp beside it.
 
 ## Run it locally
 
@@ -52,18 +71,40 @@ left mouse button and drag to look around.
 - **Three.js r170** (npm `three@0.170.0`). The core and the addons are loaded from
   jsDelivr through an `<script type="importmap">` pinned to that exact version.
 - All paths are relative, so the site works from `username.github.io/<repo>/`.
-- The terrain is a single 200 × 200 grid mesh, 800 m across, sampled from a height
+- **Terrain:** a single 256 × 256 grid mesh, 800 m across, sampled from a height
   function: rolling meadows, the castle hill, the town shelf, farmland, the ruins'
-  knoll, a ring of mountains and a carved river. Gameplay height queries
-  interpolate the actual mesh triangles, so feet always meet the rendered ground.
-- One shadow-casting directional light follows the player. Its shadow frustum is
-  snapped to shadow-map texels so shadows do not shimmer. A hemisphere light
-  provides fill. The sky is a small shader dome whose horizon colour drives the
-  fog, so distant land melts into the sky.
-- Boulders are a single `InstancedMesh`. Obstacles are circles and rotated boxes
-  in a uniform spatial grid. Deep water and slopes above 45° cannot be walked into.
-- The device pixel ratio is capped at 2 (1.5 on touch devices). The shadow map is
-  2048² on desktop and 1024² on touch devices.
+  knoll, a ring of mountains and a carved river. Roads cut and fill the land along
+  smoothed profiles. Gameplay height queries interpolate the actual mesh
+  triangles, so feet always meet the rendered ground.
+- **Procedural textures:** stone, cobbles, plaster, timber, planks, roof tiles,
+  thatch, dirt, soil, bark, ground detail and water ripples are painted into data
+  textures at load time, each with a matching normal map. The banner arms and the
+  tavern sign are drawn with the 2D canvas API.
+- **Lighting:** physically based materials, ACES filmic tone mapping, and
+  image-based lighting from a slightly desaturated copy of the sky. One
+  shadow-casting directional light follows the player, with its shadow frustum
+  snapped to shadow-map texels so shadows do not shimmer. The sky's horizon
+  colour drives the fog. Windows and lanterns glow after dusk.
+- **Batching:** static architecture is merged per material and per 160 m chunk,
+  so the whole kingdom is about 90 meshes. UVs are projected in world space, so
+  textures keep their real-world scale on every wall.
+- **Instancing:** trees, bushes, crops, market stalls, roof-tile courses, fence
+  posts and rails, barrels, crates, gravestones and boulders are `InstancedMesh`es.
+- **Trees** come in two levels of detail. Both are drawn instanced, and the shader
+  keeps each tree in exactly one of them depending on its distance from the
+  camera, so detail changes per tree rather than per chunk. Foliage close to the
+  camera dissolves instead of filling the screen.
+- **Grass** is drawn entirely on the GPU: one instanced tuft mesh wraps around the
+  player, reads the terrain height and a density/colour mask from textures, and
+  sways in the wind. Wheat, leaves, flags and the river surface move too.
+- **Collision:** circles and rotated boxes with a vertical extent, in a uniform
+  spatial grid. Walkable surfaces (the bridge deck, the hall floor and dais) sit
+  above the terrain; steps up to 45 cm can be climbed; deep water and slopes above
+  45° cannot. The camera pulls in rather than pass through walls, and stays under
+  the Throne Hall's ceiling.
+- **Budget:** the device pixel ratio is capped at 2 (1.5 on touch devices). Touch
+  devices also get a 1024² shadow map (2048² on desktop), half-size textures,
+  fewer grass tufts and simpler trees.
 
 ### Project layout
 
@@ -71,8 +112,9 @@ left mouse button and drag to look around.
 index.html        page shell, import map, overlays and touch controls
 style.css         UI styles (parchment panels, HUD, touch controls)
 src/main.js       renderer, game loop, title / playing / paused states
-src/world.js      terrain, river, sky and lighting, colliders, boulders
-src/player.js     low-poly figure, player controller, follow camera
+src/world.js      terrain, textures, sky and lighting, every building and prop,
+                  vegetation, grass, colliders and walkable surfaces
+src/player.js     jointed figure (shared with NPCs), player controller, follow camera
 src/input.js      keyboard, mouse / pointer lock, touch joystick and look, buttons
 src/ui.js         start screen, pause menu, toasts, hints, debug readout
 .nojekyll         serve files exactly as they are on GitHub Pages
@@ -88,6 +130,6 @@ src/ui.js         start screen, pause menu, toasts, hints, debug readout
 
 ## Credits and licences
 
-- All geometry, colours and the sky are generated procedurally in code. The
-  project ships no third-party models, textures, fonts or sounds.
+- All geometry, textures, colours and the sky are generated procedurally in code.
+  The project ships no third-party models, textures, fonts or sounds.
 - [Three.js](https://threejs.org/) © three.js authors, MIT licence.
