@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#14110d">
+  <meta name="description" content="Valdren: a low-poly medieval kingdom you can explore in the browser.">
+  <title>Valdren</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+  <!-- Three.js r170 (npm three@0.170.0), core and addons pinned to the same version. -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="app"></div>
+
+  <div id="hud">
+    <div id="hint" class="hidden"></div>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <pre id="debug" class="hidden"></pre>
+  </div>
+
+  <div id="touch-ui">
+    <div id="joy-base"><div id="joy-knob"></div></div>
+    <button type="button" class="tbtn" id="btn-journal" data-action="journal" aria-label="Journal">Journal</button>
+    <button type="button" class="tbtn" id="btn-interact" data-action="interact" aria-label="Interact">Interact</button>
+    <button type="button" class="tbtn" id="btn-pause" data-action="pause" aria-label="Pause"><span class="bars"></span></button>
+  </div>
+
+  <section id="start" class="overlay">
+    <div class="panel">
+      <p class="kicker">The Kingdom of</p>
+      <h1>Valdren</h1>
+      <p class="tagline">Walk its roads. Hear its people. Learn what it has forgotten.</p>
+      <p id="load-status" class="status">Loading…</p>
+      <button type="button" id="btn-begin" class="primary" disabled>Begin</button>
+      <div class="controls-slot"></div>
+    </div>
+  </section>
+
+  <section id="pause" class="overlay hidden">
+    <div class="panel">
+      <h2>Paused</h2>
+      <button type="button" id="btn-resume" class="primary">Resume</button>
+      <div class="controls-slot"></div>
+    </div>
+  </section>
+
+  <template id="tpl-controls">
+    <div class="controls desktop-only">
+      <h3>Controls</h3>
+      <dl>
+        <dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></dt><dd>Walk</dd>
+        <dt><kbd>Shift</kbd></dt><dd>Run</dd>
+        <dt><kbd>Mouse</kbd></dt><dd>Look around</dd>
+        <dt><kbd>Wheel</kbd></dt><dd>Zoom</dd>
+        <dt><kbd>E</kbd></dt><dd>Interact</dd>
+        <dt><kbd>J</kbd></dt><dd>Journal</dd>
+        <dt><kbd>M</kbd></dt><dd>Map</dd>
+        <dt><kbd>Esc</kbd></dt><dd>Pause</dd>
+      </dl>
+    </div>
+    <div class="controls touch-only">
+      <h3>Controls</h3>
+      <dl>
+        <dt>Left thumb</dt><dd>Walk (push to the edge to run)</dd>
+        <dt>Right side</dt><dd>Drag to look around</dd>
+        <dt>Interact</dt><dd>Talk, read, examine</dd>
+        <dt>Journal</dt><dd>Your discoveries</dd>
+        <dt><span class="bars inline"></span></dt><dd>Pause</dd>
+      </dl>
+    </div>
+  </template>
+
+  <noscript>
+    <p class="noscript">Valdren needs JavaScript enabled to run.</p>
+  </noscript>
+
+  <script>
+    // Plain script: report loading problems even if the ES modules never run.
+    (function () {
+      var status = document.getElementById('load-status');
+      function fail(message) {
+        if (window.__valdrenReady || !status) return;
+        status.textContent = message;
+        status.classList.add('error');
+      }
+      window.__valdrenFail = fail;
+      if (!(window.HTMLScriptElement && HTMLScriptElement.supports && HTMLScriptElement.supports('importmap'))) {
+        fail('This browser is too old to run Valdren (no import map support). Please update it.');
+      }
+      window.addEventListener('error', function (e) {
+        fail('Valdren failed to start: ' + (e.message || 'a script error occurred') + '.');
+      });
+      setTimeout(function () {
+        fail('Still loading… If this persists, check your connection (Three.js loads from cdn.jsdelivr.net).');
+      }, 20000);
+    })();
+  </script>
+  <script type="module" src="src/main.js" onerror="window.__valdrenFail && window.__valdrenFail('Could not download the game scripts. Check your connection and reload.')"></script>
+</body>
+</html>
