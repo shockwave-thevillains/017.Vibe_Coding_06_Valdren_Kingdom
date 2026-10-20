@@ -97,6 +97,17 @@ left mouse button and drag to look around.
 - **Grass** is drawn entirely on the GPU: one instanced tuft mesh wraps around the
   player, reads the terrain height and a density/colour mask from textures, and
   sways in the wind. Wheat, leaves, flags and the river surface move too.
+- **The traveller** is one skinned mesh built in code and bound to a 19-bone
+  skeleton: a lofted torso, limbs, hands and boots, a pleated tunic skirt and a
+  cloak, and a head sculpted from a sphere (brow, eye sockets, nose, cheekbones,
+  lips, jaw and chin). The face (eyes, brows, lips, skin shading, stubble) is
+  painted onto a canvas at load time. Hair and beards are a shell around the
+  head whose edge fades out through a strand mask, so the hairline breaks into
+  strands instead of ending in a hard rim. The walk and run cycles are
+  procedural: pelvis sway and twist, counter-rotating shoulders, bending knees
+  and elbows, heel-to-toe feet and a trailing cloak. The same `createFigure()`
+  builds every NPC with its own colours, hair and beard (about 12k triangles
+  each).
 - **Collision:** circles and rotated boxes with a vertical extent, in a uniform
   spatial grid. Walkable surfaces (the bridge deck, the hall floor and dais) sit
   above the terrain; steps up to 45 cm can be climbed; deep water and slopes above
@@ -114,7 +125,8 @@ style.css         UI styles (parchment panels, HUD, touch controls)
 src/main.js       renderer, game loop, title / playing / paused states
 src/world.js      terrain, textures, sky and lighting, every building and prop,
                   vegetation, grass, colliders and walkable surfaces
-src/player.js     jointed figure (shared with NPCs), player controller, follow camera
+src/player.js     skinned human figure (shared with NPCs), its animation,
+                  player controller, follow camera
 src/input.js      keyboard, mouse / pointer lock, touch joystick and look, buttons
 src/ui.js         start screen, pause menu, toasts, hints, debug readout
 .nojekyll         serve files exactly as they are on GitHub Pages
@@ -126,7 +138,24 @@ src/ui.js         start screen, pause menu, toasts, hints, debug readout
 2. Open **Settings → Pages**.
 3. Under **Build and deployment**, choose **Deploy from a branch**, then pick the
    branch that holds these files and the `/ (root)` folder, and click **Save**.
-4. After a minute the game is live at `https://<username>.github.io/<repo>/`.
+4. After a minute or two the game is live at `https://<username>.github.io/<repo>/`
+   (for this repository: `https://shockwave-thevillains.github.io/017.vibe_coding_06/`).
+   The **Actions** tab shows the "pages build and deployment" run while it
+   publishes.
+
+Nothing needs building: GitHub serves the files as they are (`.nojekyll` turns
+Jekyll off), every path in the project is relative, and Three.js comes from
+jsDelivr. A free account can publish Pages from a public repository; a private
+repository needs a paid plan.
+
+To check the sub-folder setup before publishing, serve the parent directory and
+open the game from its folder, the way GitHub Pages will:
+
+```bash
+cd ..
+python -m http.server 8000
+# then open http://localhost:8000/<repo-folder>/
+```
 
 ## Credits and licences
 
