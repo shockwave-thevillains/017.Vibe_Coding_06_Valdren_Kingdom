@@ -1,0 +1,1658 @@
+{
+  "npcs": [
+    {
+      "id": "king",
+      "name": "King Osric II",
+      "role": "King of Valdren",
+      "position": {
+        "x": 0,
+        "z": -210.6
+      },
+      "heading": 0,
+      "scale": 1.02,
+      "action": "behind",
+      "patrol": {
+        "mode": "loop",
+        "speed": 0.9,
+        "points": [
+          {
+            "x": 0,
+            "z": -210.6,
+            "wait": 12,
+            "face": 0
+          },
+          {
+            "x": -2.4,
+            "z": -209.0,
+            "wait": 6,
+            "face": 0.4
+          },
+          {
+            "x": 2.4,
+            "z": -209.0,
+            "wait": 6,
+            "face": -0.4
+          }
+        ]
+      },
+      "look": {
+        "skin": "#c49577",
+        "hair": "#6e6258",
+        "hairStyle": "short",
+        "beard": "short",
+        "stubble": false,
+        "eyes": "#4a5e72",
+        "age": 0.55,
+        "tunic": "#5a1c2a",
+        "skirt": "robe",
+        "trim": "#d4a640",
+        "trousers": "#2a2230",
+        "boots": "#2e2118",
+        "belt": "#2a1a10",
+        "pouch": null,
+        "cloak": "#24356e",
+        "cloakTrim": "#efeae0",
+        "gloveL": "#1e1712"
+      },
+      "outfit": {
+        "crown": true,
+        "ermine": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_king"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "A traveller in my hall, unannounced. Few are so bold these days. Speak, and be brief.",
+            "choices": [
+              {
+                "text": "Forgive me, Your Majesty. I came to see Valdren.",
+                "next": "kingdom"
+              },
+              {
+                "text": "Why do you wear only one glove?",
+                "next": "glove"
+              },
+              {
+                "text": "I will leave you in peace."
+              }
+            ]
+          },
+          "again": {
+            "text": "You again. Ask what you came to ask.",
+            "choices": [
+              {
+                "text": "Tell me of the Red Winter.",
+                "next": "redwinter"
+              },
+              {
+                "text": "About your brother, Prince Edmund…",
+                "next": "edmund",
+                "if": [
+                  "heard_edmund"
+                ]
+              },
+              {
+                "text": "Why do you wear only one glove?",
+                "next": "glove",
+                "if": [
+                  "!heard_edmund"
+                ]
+              },
+              {
+                "text": "Farewell, Majesty."
+              }
+            ]
+          },
+          "kingdom": {
+            "text": "Then look well. Queen Aldra raised the bridge, my forefathers raised these walls, and I keep them standing. Three hundred and two years, and no army has ever crossed that river uninvited.",
+            "choices": [
+              {
+                "text": "Who was Queen Aldra?",
+                "next": "aldra"
+              },
+              {
+                "text": "In the town they speak of a Red Winter.",
+                "next": "redwinter"
+              },
+              {
+                "text": "Thank you, Majesty."
+              }
+            ]
+          },
+          "aldra": {
+            "text": "The founder. A ferryman's daughter who bridged the river and swore an oath on its first stone: ‘By bridge and by bread.’ It is woven into every banner in this hall, though few remember what it means.",
+            "choices": [
+              {
+                "text": "What does it mean?",
+                "next": "oath"
+              },
+              {
+                "text": "Tell me of your father, King Harald.",
+                "next": "harald"
+              },
+              {
+                "text": "I have taken enough of your time."
+              }
+            ]
+          },
+          "oath": {
+            "text": "That the crown holds the kingdom's grain in trust, and opens its stores to the hungry in a hard year. A fine promise. Promises are cheaper than granaries.",
+            "set": [
+              "heard_bread_oath"
+            ],
+            "choices": [
+              {
+                "text": "Was it kept in the Red Winter?",
+                "next": "redwinter"
+              },
+              {
+                "text": "I see. Farewell, Majesty."
+              }
+            ]
+          },
+          "redwinter": {
+            "text": "The year the harvest rotted in the fields and the frost came early. I was young. My father held the realm together while lesser men panicked. That is all the chronicles need to say.",
+            "set": [
+              "heard_red_winter"
+            ],
+            "choices": [
+              {
+                "text": "Did he open the granary?",
+                "next": "granary"
+              },
+              {
+                "text": "Tell me about King Harald.",
+                "next": "harald"
+              },
+              {
+                "text": "Didn't you have a brother?",
+                "next": "edmund",
+                "if": [
+                  "heard_edmund"
+                ]
+              }
+            ]
+          },
+          "harald": {
+            "text": "Harald the Steadfast. His statue stands in the market so that no one forgets who saved Valdren. He was a hard man. Hard winters need hard men.",
+            "choices": [
+              {
+                "text": "Did he open the granary?",
+                "next": "granary"
+              },
+              {
+                "text": "Farewell, Majesty."
+              }
+            ]
+          },
+          "granary": {
+            "text": "Open it? It was guarded. There were armies on the far bank and spies in every inn. A king who feeds his enemies loses his kingdom. We did what had to be done.",
+            "choices": [
+              {
+                "text": "And the people who starved?",
+                "next": "starved"
+              },
+              {
+                "text": "And your brother? What did he do?",
+                "next": "edmund",
+                "if": [
+                  "heard_edmund"
+                ]
+              },
+              {
+                "text": "I understand, Majesty."
+              }
+            ]
+          },
+          "starved": {
+            "text": "You speak of things you did not see. I saw them. Leave it there, traveller.",
+            "leave": "Bow and withdraw."
+          },
+          "glove": {
+            "text": "A burn. An old one. A king's hand should not tremble in public, so I keep it covered. You are bold to ask.",
+            "choices": [
+              {
+                "text": "How did it happen?",
+                "next": "burn"
+              },
+              {
+                "text": "Forgive me, Majesty."
+              }
+            ]
+          },
+          "burn": {
+            "text": "A fire, thirty years ago, in a tower at the edge of the forest. I was too slow. We will not speak of it again.",
+            "set": [
+              "heard_tower_fire"
+            ],
+            "leave": "Bow and withdraw."
+          },
+          "edmund": {
+            "text": "Edmund. My elder brother died in the Greywatch fire, killed by brigands. The chronicles say so. The stone in the chapel yard says so.",
+            "choices": [
+              {
+                "text": "And what do you say?",
+                "next": "edmund2"
+              },
+              {
+                "text": "I'm sorry. I'll go."
+              }
+            ]
+          },
+          "edmund2": {
+            "text": "I say he was braver than I was, and more foolish, and that the door he opened has stayed shut ever since.",
+            "choices": [
+              {
+                "text": "Which door?",
+                "next": "door"
+              },
+              {
+                "text": "Then I will leave you to your memories."
+              }
+            ]
+          },
+          "door": {
+            "text": "The door in the donjon. My father had it chained the morning after the fire, and I have never had it opened. Some doors are graves too. Go now.",
+            "set": [
+              "heard_sealed_door"
+            ],
+            "leave": "Bow and withdraw."
+          }
+        }
+      }
+    },
+    {
+      "id": "captain",
+      "name": "Dame Isolde Varn",
+      "role": "Captain of the Guard",
+      "position": {
+        "x": -1,
+        "z": -172
+      },
+      "heading": -1.37,
+      "action": "behind",
+      "patrol": {
+        "mode": "loop",
+        "speed": 1.35,
+        "points": [
+          {
+            "x": -1,
+            "z": -172,
+            "wait": 7,
+            "face": -1.37
+          },
+          {
+            "x": 6,
+            "z": -168,
+            "wait": 4,
+            "face": -0.57
+          },
+          {
+            "x": 4,
+            "z": -178,
+            "wait": 4,
+            "face": -2.68
+          },
+          {
+            "x": -3,
+            "z": -180,
+            "wait": 5,
+            "face": 2.4
+          }
+        ]
+      },
+      "look": {
+        "female": true,
+        "skin": "#d6a98a",
+        "hair": "#2b1d14",
+        "hairStyle": "long",
+        "eyes": "#3e5a3a",
+        "lips": "#a84a46",
+        "age": 0.3,
+        "tunic": "#22396a",
+        "trim": "#c9a24a",
+        "trousers": "#2e2a2a",
+        "boots": "#2a2018",
+        "belt": "#24170f",
+        "cloak": "#7a1f22"
+      },
+      "outfit": {
+        "helmet": true,
+        "breastplate": true,
+        "pauldrons": true,
+        "sword": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_captain"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Halt. You're not one of mine. State your business in the king's yard.",
+            "choices": [
+              {
+                "text": "Just a traveller, Captain.",
+                "next": "traveller"
+              },
+              {
+                "text": "I'd like an audience with the king.",
+                "next": "audience"
+              },
+              {
+                "text": "I'm leaving."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back again? Walk with me if you're talking. I've a round to finish.",
+            "choices": [
+              {
+                "text": "What does the guard watch for?",
+                "next": "watch"
+              },
+              {
+                "text": "Tell me about your father.",
+                "next": "father"
+              },
+              {
+                "text": "Another time, Captain."
+              }
+            ]
+          },
+          "traveller": {
+            "text": "Travellers are welcome in Valdren, so long as their hands stay where I can see them. Isolde Varn, Captain of the Guard, as my father was before me.",
+            "choices": [
+              {
+                "text": "Your father was Captain too?",
+                "next": "father"
+              },
+              {
+                "text": "What does the guard watch for?",
+                "next": "watch"
+              },
+              {
+                "text": "I'll keep my hands in sight."
+              }
+            ]
+          },
+          "audience": {
+            "text": "The hall's straight ahead, and the king's mood is about as warm as the river in January. Mind your tongue in there.",
+            "choices": [
+              {
+                "text": "Who are you, then?",
+                "next": "traveller"
+              },
+              {
+                "text": "Thanks for the warning."
+              }
+            ]
+          },
+          "watch": {
+            "text": "Cutpurses on market days, drunks at the Broken Oar, wolves on the west road. And the old ruin by the forest, though there's nothing left in it but a hermit and bad memories.",
+            "choices": [
+              {
+                "text": "What happened at the ruin?",
+                "next": "greywatch"
+              },
+              {
+                "text": "A hermit?",
+                "next": "hermit"
+              },
+              {
+                "text": "Sounds quiet enough."
+              }
+            ]
+          },
+          "greywatch": {
+            "text": "That was the Greywatch, Prince Edmund's tower. It burned in the Red Winter with the prince inside it. Brigands, the chronicle says. My father never said brigands. He never said anything at all.",
+            "set": [
+              "heard_tower_fire",
+              "heard_edmund"
+            ],
+            "choices": [
+              {
+                "text": "Your father was there?",
+                "next": "father"
+              },
+              {
+                "text": "I'll let you get back to your round."
+              }
+            ]
+          },
+          "hermit": {
+            "text": "Old man with a staff and a burned face. Lives by the ruin, comes to market twice a year, pays in honey. Harmless. The farm widow walks bread out to him.",
+            "choices": [
+              {
+                "text": "A burned face?",
+                "next": "greywatch"
+              },
+              {
+                "text": "Harmless. Good."
+              }
+            ]
+          },
+          "father": {
+            "text": "Captain Aldous Varn. Led the guard thirty years and died last winter. Something weighed on him all that time. He drank to it every year, on the same night.",
+            "choices": [
+              {
+                "text": "The night the Greywatch burned?",
+                "next": "night",
+                "if": [
+                  "heard_tower_fire"
+                ]
+              },
+              {
+                "text": "Which night?",
+                "next": "greywatch",
+                "if": [
+                  "!heard_tower_fire"
+                ]
+              },
+              {
+                "text": "I'm sorry for your loss.",
+                "next": "sorry"
+              }
+            ]
+          },
+          "sorry": {
+            "text": "Don't be. He had a long life and a short temper. Now, unless you need something, I've a gate to watch.",
+            "leave": "Let her go."
+          },
+          "night": {
+            "text": "Aye. After the funeral I found a letter in his chest, the royal seal broken on it. An order to arrest Prince Edmund. ‘Bring him alive,’ it said. Arrest, not rescue. Keep that to yourself.",
+            "set": [
+              "heard_arrest"
+            ],
+            "choices": [
+              {
+                "text": "Who gave the order?",
+                "next": "order"
+              },
+              {
+                "text": "I'll keep it quiet."
+              }
+            ]
+          },
+          "order": {
+            "text": "King Harald's seal. And beneath it, the name of the officer who rode with my father to carry it out: Prince Osric. Our king.",
+            "leave": "Say nothing more."
+          }
+        }
+      }
+    },
+    {
+      "id": "smith",
+      "name": "Brannoc",
+      "role": "Blacksmith",
+      "position": {
+        "x": -11.3,
+        "z": 34.6
+      },
+      "heading": 1.5708,
+      "scale": 1.04,
+      "action": "hammer",
+      "look": {
+        "skin": "#b07a58",
+        "hair": "#2a1c12",
+        "hairStyle": "bald",
+        "beard": "short",
+        "stubble": false,
+        "eyes": "#5a4632",
+        "age": 0.35,
+        "belly": 0.45,
+        "tunic": "#5e5a52",
+        "trousers": "#3a3028",
+        "boots": "#3a2a1e",
+        "belt": "#2a1a10",
+        "pouch": null,
+        "trim": "#4a4038",
+        "cloak": null
+      },
+      "outfit": {
+        "apron": "#5a3a22",
+        "hammer": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_smith"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Mind the sparks. If you're buying, I've nails, hinges and a decent knife. If you're gawping, gawp from over there.",
+            "choices": [
+              {
+                "text": "What are you forging?",
+                "next": "forging"
+              },
+              {
+                "text": "Have you always been the smith here?",
+                "next": "family"
+              },
+              {
+                "text": "Just gawping. Sorry."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back for that knife, then?",
+            "choices": [
+              {
+                "text": "Tell me again about the donjon door.",
+                "next": "chains",
+                "if": [
+                  "heard_chains"
+                ]
+              },
+              {
+                "text": "Your family made every lock in Valdren?",
+                "next": "family",
+                "if": [
+                  "!heard_chains"
+                ]
+              },
+              {
+                "text": "What are you forging today?",
+                "next": "forging"
+              },
+              {
+                "text": "Not today."
+              }
+            ]
+          },
+          "forging": {
+            "text": "Hinges for the chapel door. Father Anselm swears the old ones scream like the damned. Maybe they do.",
+            "choices": [
+              {
+                "text": "Have you always been the smith here?",
+                "next": "family"
+              },
+              {
+                "text": "I'll let you work."
+              }
+            ]
+          },
+          "family": {
+            "text": "Four generations at this anvil. My father, his father, and his before that. Every lock and chain in Valdren came out of this forge.",
+            "choices": [
+              {
+                "text": "Every chain?",
+                "next": "chains"
+              },
+              {
+                "text": "Even the castle's?",
+                "next": "castle"
+              },
+              {
+                "text": "Impressive."
+              }
+            ]
+          },
+          "castle": {
+            "text": "Gate hinges, portcullis teeth, the guards' mail. And the chains on the donjon door, though that was my father's work, not mine.",
+            "choices": [
+              {
+                "text": "Tell me about those chains.",
+                "next": "chains"
+              },
+              {
+                "text": "I'll leave you to it."
+              }
+            ]
+          },
+          "chains": {
+            "text": "He forged them in a single night, the night after the Greywatch burned, with soldiers standing over him till dawn. He only spoke of it once, in his cups: ‘I locked bread away from hungry people.’",
+            "set": [
+              "heard_chains"
+            ],
+            "choices": [
+              {
+                "text": "Bread? Behind that door?",
+                "next": "bread"
+              },
+              {
+                "text": "Why seal it at all?",
+                "next": "why"
+              },
+              {
+                "text": "A heavy thing to carry."
+              }
+            ]
+          },
+          "bread": {
+            "text": "The royal granary is under the donjon. Has been since Queen Aldra's day. If there's grain in there after thirty years it's dust and rats. But that winter it was full. Full.",
+            "choices": [
+              {
+                "text": "Why seal it at all?",
+                "next": "why"
+              },
+              {
+                "text": "Thank you, Brannoc."
+              }
+            ]
+          },
+          "why": {
+            "text": "Ask the king, if you've the nerve. All I know is the lock has no key. My father melted it in this forge, on royal orders.",
+            "leave": "Leave him to his hinges."
+          }
+        }
+      }
+    },
+    {
+      "id": "maera",
+      "name": "Maera",
+      "role": "Keeper of the Broken Oar",
+      "position": {
+        "x": 11,
+        "z": -7
+      },
+      "heading": 0,
+      "action": "wipe",
+      "look": {
+        "female": true,
+        "skin": "#e0b08e",
+        "hair": "#7a3e1e",
+        "hairStyle": "bun",
+        "eyes": "#5a7a4a",
+        "lips": "#b4504e",
+        "age": 0.15,
+        "tunic": "#3d6a4a",
+        "sleeves": "#e8dcc4",
+        "skirt": "robe",
+        "trim": "#a8884a",
+        "belt": "#4a3020",
+        "pouch": null,
+        "boots": "#3a2a1e",
+        "cloak": null
+      },
+      "outfit": {
+        "apron": "#ece4d2",
+        "mug": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_maera"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Welcome to the Broken Oar! Ale's brown, stew's hot, and the gossip's free. What'll it be, love?",
+            "choices": [
+              {
+                "text": "Why ‘the Broken Oar’?",
+                "next": "name"
+              },
+              {
+                "text": "What's the gossip?",
+                "next": "gossip"
+              },
+              {
+                "text": "Just passing, thanks."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back already? Stew's still hot.",
+            "choices": [
+              {
+                "text": "Any more gossip?",
+                "next": "gossip"
+              },
+              {
+                "text": "Sing me that song again.",
+                "next": "ballad",
+                "if": [
+                  "heard_ballad"
+                ]
+              },
+              {
+                "text": "Any songs worth hearing?",
+                "next": "songs",
+                "if": [
+                  "!heard_ballad"
+                ]
+              },
+              {
+                "text": "Later, Maera."
+              }
+            ]
+          },
+          "name": {
+            "text": "Before the bridge there was a ferry, and the ferryman was Aldra's father. When she built the bridge she broke his oar over the first stone, so no one would ever pay to cross again. Or so my grandmother told it.",
+            "choices": [
+              {
+                "text": "What's the gossip?",
+                "next": "gossip"
+              },
+              {
+                "text": "A good story."
+              }
+            ]
+          },
+          "gossip": {
+            "text": "Let's see. The smith's sweet on the miller's sister, the priest's hinges scream, and the king hasn't smiled since my mother was a girl.",
+            "choices": [
+              {
+                "text": "Why doesn't the king smile?",
+                "next": "king"
+              },
+              {
+                "text": "Any songs worth hearing?",
+                "next": "songs"
+              },
+              {
+                "text": "Thanks, Maera."
+              }
+            ]
+          },
+          "king": {
+            "text": "Lost his brother young. Prince Edmund, the one the old folk still raise a cup to when they think nobody's watching. Edmund of the Carts, they called him.",
+            "set": [
+              "heard_edmund"
+            ],
+            "choices": [
+              {
+                "text": "Of the Carts?",
+                "next": "carts"
+              },
+              {
+                "text": "Any songs about him?",
+                "next": "songs"
+              }
+            ]
+          },
+          "carts": {
+            "text": "In the Red Winter, the story goes, he fed half the valley off the back of grain carts. Ask old Wynn at the farm. She was there; I was a babe in arms.",
+            "set": [
+              "heard_red_winter"
+            ],
+            "choices": [
+              {
+                "text": "Any songs about him?",
+                "next": "songs"
+              },
+              {
+                "text": "I'll ask her."
+              }
+            ]
+          },
+          "songs": {
+            "text": "There's one. Not one I'd sing loud, mind; the guard broke a fiddler's fingers for it once. But you've an honest face.",
+            "choices": [
+              {
+                "text": "Sing it. Quietly.",
+                "next": "ballad"
+              },
+              {
+                "text": "Never mind, then."
+              }
+            ]
+          },
+          "ballad": {
+            "text": "♪ The king kept the bread in his tower of stone, / the prince drove the carts down the frost-bitten road; / they burned the grey watch with the prince in its keep, / but the valley remembers, and the valley won't sleep. ♪",
+            "set": [
+              "heard_ballad",
+              "heard_edmund"
+            ],
+            "choices": [
+              {
+                "text": "Who wrote it?",
+                "next": "writer"
+              },
+              {
+                "text": "Beautiful. Thank you."
+              }
+            ]
+          },
+          "writer": {
+            "text": "Nobody knows. Some say a farm girl. Some say the hermit out by the ruin, though he's never once set foot in here. Pays in honey at the market, they tell me.",
+            "leave": "Leave a coin on the bench."
+          }
+        }
+      }
+    },
+    {
+      "id": "tobias",
+      "name": "Tobias Fenn",
+      "role": "Merchant of Saltmere",
+      "position": {
+        "x": 13,
+        "z": 10.6
+      },
+      "heading": -1.5708,
+      "action": "behind",
+      "patrol": {
+        "mode": "pingpong",
+        "speed": 1.1,
+        "points": [
+          {
+            "x": 13,
+            "z": 10.6,
+            "wait": 9,
+            "face": -1.5708
+          },
+          {
+            "x": 13,
+            "z": 19.6,
+            "wait": 7,
+            "face": -1.5708
+          }
+        ]
+      },
+      "look": {
+        "skin": "#c99878",
+        "hair": "#4a2e1a",
+        "hairStyle": "short",
+        "beard": "short",
+        "stubble": false,
+        "eyes": "#6a4a2a",
+        "age": 0.25,
+        "tunic": "#6a2240",
+        "sleeves": "#a8781e",
+        "trousers": "#2e3a5a",
+        "boots": "#2a1e16",
+        "belt": "#3a2414",
+        "pouch": "#8a5a2e",
+        "trim": "#d4a640",
+        "cloak": "#2a4a3a",
+        "cloakTrim": "#d4a640"
+      },
+      "outfit": {
+        "hat": "#2f4a2c"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_tobias"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Cloth from the coast, pepper from beyond the sea, needles finer than a lady's eyelash! Ah, a new face. Tobias Fenn, at your service.",
+            "choices": [
+              {
+                "text": "You're not from Valdren?",
+                "next": "outsider"
+              },
+              {
+                "text": "How's trade?",
+                "next": "trade"
+              },
+              {
+                "text": "Just looking."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back for pepper? No? Then for gossip, which is cheaper.",
+            "choices": [
+              {
+                "text": "Tell me about the bridge stone.",
+                "next": "bridge"
+              },
+              {
+                "text": "Was the bargain ever broken?",
+                "next": "kept",
+                "if": [
+                  "heard_bread_oath"
+                ]
+              },
+              {
+                "text": "Nothing today, Tobias."
+              }
+            ]
+          },
+          "outsider": {
+            "text": "Saltmere, three weeks downriver. I come up every spring. Valdren's bridge is the only crossing for forty miles, so sooner or later everyone comes through here.",
+            "choices": [
+              {
+                "text": "The bridge matters that much?",
+                "next": "bridge"
+              },
+              {
+                "text": "How's trade?",
+                "next": "trade"
+              },
+              {
+                "text": "Safe travels."
+              }
+            ]
+          },
+          "trade": {
+            "text": "Good, if you don't mind the king's tolls. Better than thirty years ago, my father would say. Back then grain sold for silver by the cup.",
+            "choices": [
+              {
+                "text": "Why was grain so dear?",
+                "next": "bridge"
+              },
+              {
+                "text": "I'll leave you to it."
+              }
+            ]
+          },
+          "bridge": {
+            "text": "The bridge is the whole kingdom! No bridge, no road, no market, no Valdren. There's a stone at its south end with Queen Aldra's oath on it. Merchants touch it for luck.",
+            "choices": [
+              {
+                "text": "What does the oath say?",
+                "next": "oath"
+              },
+              {
+                "text": "I'll go and touch it myself."
+              }
+            ]
+          },
+          "oath": {
+            "text": "‘Ponte et pane’: by bridge and by bread. The crown keeps the crossing open and the granary full, and in a hungry year the granary opens to all. That bargain is why the farmers swore to her.",
+            "set": [
+              "heard_bread_oath"
+            ],
+            "choices": [
+              {
+                "text": "And was the bargain kept?",
+                "next": "kept"
+              },
+              {
+                "text": "A fine bargain."
+              }
+            ]
+          },
+          "kept": {
+            "text": "Ha! Ask the farmers about the Red Winter. Up and down the river they still say ‘tight as Harald's granary’. My father traded here that year. He said the castle had grain and the town had funerals.",
+            "set": [
+              "heard_red_winter"
+            ],
+            "leave": "Thank him and move on."
+          }
+        }
+      }
+    },
+    {
+      "id": "anselm",
+      "name": "Father Anselm",
+      "role": "Priest of the Chapel",
+      "position": {
+        "x": -21,
+        "z": -11.2
+      },
+      "heading": 0,
+      "stoop": 0.12,
+      "action": "behind",
+      "patrol": {
+        "mode": "pingpong",
+        "speed": 1.0,
+        "points": [
+          {
+            "x": -21,
+            "z": -11.2,
+            "wait": 10,
+            "face": 0
+          },
+          {
+            "x": -30.5,
+            "z": -12.5,
+            "wait": 0.3
+          },
+          {
+            "x": -30.5,
+            "z": -28,
+            "wait": 0.3
+          },
+          {
+            "x": -38.5,
+            "z": -27.6,
+            "wait": 14,
+            "face": -2.42,
+            "action": "pray"
+          }
+        ]
+      },
+      "look": {
+        "skin": "#d2a488",
+        "hair": "#b8b4ac",
+        "hairStyle": "tonsure",
+        "beard": null,
+        "stubble": true,
+        "eyes": "#5a6a7a",
+        "age": 0.75,
+        "tunic": "#3a3028",
+        "skirt": "robe",
+        "trim": "#3a3028",
+        "belt": "#c8b48a",
+        "pouch": null,
+        "boots": "#2a2018",
+        "cloak": null
+      },
+      "outfit": {
+        "cross": true,
+        "ropeBelt": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_anselm"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Peace be with you, child. The chapel is open to all who seek quiet, and the graveyard to all who seek the past.",
+            "choices": [
+              {
+                "text": "I'm seeking the past.",
+                "next": "past"
+              },
+              {
+                "text": "Is the chapel old?",
+                "next": "chapel"
+              },
+              {
+                "text": "Peace be with you, Father."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back again, child? The dead are patient. So am I.",
+            "choices": [
+              {
+                "text": "Tell me about the graves.",
+                "next": "past"
+              },
+              {
+                "text": "About Prince Edmund's grave…",
+                "next": "grave",
+                "if": [
+                  "heard_edmund"
+                ]
+              },
+              {
+                "text": "Another time, Father."
+              }
+            ]
+          },
+          "chapel": {
+            "text": "Nearly as old as the bridge. Queen Aldra lies beneath the altar, and her oath is painted above it, though the paint has faded. As oaths do.",
+            "choices": [
+              {
+                "text": "Her oath?",
+                "next": "oath"
+              },
+              {
+                "text": "I'm seeking the past.",
+                "next": "past"
+              },
+              {
+                "text": "Thank you, Father."
+              }
+            ]
+          },
+          "oath": {
+            "text": "That no child of Valdren shall go hungry while the crown's stores are full. I preached it every Sunday of the Red Winter, until the castle sent word I should preach on patience instead.",
+            "set": [
+              "heard_bread_oath",
+              "heard_red_winter"
+            ],
+            "choices": [
+              {
+                "text": "Tell me about the graves.",
+                "next": "past"
+              },
+              {
+                "text": "Thank you, Father."
+              }
+            ]
+          },
+          "past": {
+            "text": "Then you've come to the right place. Every name that mattered in Valdren is carved out there, and some that didn't, and one that…",
+            "choices": [
+              {
+                "text": "One that what?",
+                "next": "grave"
+              },
+              {
+                "text": "Whose graves are these?",
+                "next": "names"
+              },
+              {
+                "text": "I'll leave the dead in peace."
+              }
+            ]
+          },
+          "names": {
+            "text": "Bakers, soldiers, three royal cousins and a hound the old queen loved too much. And in the old corner, beneath the yew, Prince Edmund.",
+            "set": [
+              "heard_edmund"
+            ],
+            "choices": [
+              {
+                "text": "Tell me about the prince's grave.",
+                "next": "grave"
+              },
+              {
+                "text": "Thank you, Father."
+              }
+            ]
+          },
+          "grave": {
+            "text": "I was an acolyte when we buried him. I carried the coffin with five other boys.” He lowers his voice. “It was very light, child. Very light.",
+            "set": [
+              "heard_empty_grave",
+              "heard_edmund"
+            ],
+            "choices": [
+              {
+                "text": "Are you saying it was empty?",
+                "next": "empty"
+              },
+              {
+                "text": "I see. Thank you."
+              }
+            ]
+          },
+          "empty": {
+            "text": "I am saying I have prayed over that stone for thirty years and never once felt anyone listening. And someone leaves wild heather on it every winter, on the night the Greywatch burned. The dead do not pick flowers.",
+            "choices": [
+              {
+                "text": "Who leaves the heather?",
+                "next": "heather"
+              },
+              {
+                "text": "I'll leave you to your prayers."
+              }
+            ]
+          },
+          "heather": {
+            "text": "I have never waited up to see. Some questions are better asked of the living. Try the ruin at the forest's edge, if you have strong legs and a kind tongue.",
+            "leave": "Bow your head and go."
+          }
+        }
+      }
+    },
+    {
+      "id": "wynn",
+      "name": "Wynn Hollis",
+      "role": "Farmer",
+      "position": {
+        "x": -17,
+        "z": 199
+      },
+      "heading": 1.5708,
+      "action": "staff",
+      "patrol": {
+        "mode": "pingpong",
+        "speed": 1.1,
+        "points": [
+          {
+            "x": -17,
+            "z": 199,
+            "wait": 9,
+            "face": 1.5708
+          },
+          {
+            "x": -10.5,
+            "z": 202,
+            "wait": 0.3
+          },
+          {
+            "x": -10.5,
+            "z": 222,
+            "wait": 0.3
+          },
+          {
+            "x": -21.5,
+            "z": 227,
+            "wait": 12,
+            "face": 0
+          }
+        ]
+      },
+      "look": {
+        "female": true,
+        "skin": "#c48a64",
+        "hair": "#8a7f74",
+        "hairStyle": "bun",
+        "eyes": "#4a5a3a",
+        "lips": "#a8564c",
+        "age": 0.5,
+        "tunic": "#7a5a3a",
+        "sleeves": "#d8ccb0",
+        "skirt": "robe",
+        "trim": "#5a4028",
+        "belt": "#3a2a1a",
+        "pouch": "#6a4a2e",
+        "boots": "#3a2a1e",
+        "cloak": null
+      },
+      "outfit": {
+        "strawHat": true,
+        "apron": "#cfc2a2",
+        "hoe": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_wynn"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Mind the furrows, they're new. If you're from the castle, the tithe's paid. If you're not, well, hello.",
+            "choices": [
+              {
+                "text": "I'm not from the castle.",
+                "next": "notcastle"
+              },
+              {
+                "text": "Good harvest this year?",
+                "next": "harvest"
+              },
+              {
+                "text": "Sorry to disturb you."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back again? Grab a hoe or grab a seat.",
+            "choices": [
+              {
+                "text": "Tell me about the Red Winter.",
+                "next": "redwinter"
+              },
+              {
+                "text": "Tell me about Prince Edmund.",
+                "next": "edmund",
+                "if": [
+                  "heard_carts"
+                ]
+              },
+              {
+                "text": "Just passing, Wynn."
+              }
+            ]
+          },
+          "notcastle": {
+            "text": "Then sit a moment; my knees want an excuse. Name's Wynn. My family has farmed this bank since before the bridge.",
+            "choices": [
+              {
+                "text": "Do you remember the Red Winter?",
+                "next": "redwinter"
+              },
+              {
+                "text": "Good harvest this year?",
+                "next": "harvest"
+              },
+              {
+                "text": "I'll let you work."
+              }
+            ]
+          },
+          "harvest": {
+            "text": "Good enough. Wheat's tall, barley's fat, and the mill's turning. I never complain about good years. I've seen the other kind.",
+            "choices": [
+              {
+                "text": "The Red Winter?",
+                "next": "redwinter"
+              },
+              {
+                "text": "Long may it last."
+              }
+            ]
+          },
+          "redwinter": {
+            "text": "I was nineteen. Blight in the summer, frost in the autumn, and by midwinter we were boiling bark. My little brother didn't see the spring. Nor did half the babes in the valley.",
+            "set": [
+              "heard_red_winter"
+            ],
+            "choices": [
+              {
+                "text": "Didn't the castle help?",
+                "next": "castle"
+              },
+              {
+                "text": "I'm sorry."
+              }
+            ]
+          },
+          "castle": {
+            "text": "The castle shut its gates. Then one night, in the deep of winter, there were carts on the road. Grain carts, with the prince's own riders walking beside them.",
+            "set": [
+              "heard_carts"
+            ],
+            "choices": [
+              {
+                "text": "Prince Edmund?",
+                "next": "edmund"
+              },
+              {
+                "text": "Thank you for telling me."
+              }
+            ]
+          },
+          "edmund": {
+            "text": "Edmund himself, his hands raw from the reins. He opened his father's granary without asking and gave it away sack by sack. Three nights later his tower was burning.",
+            "set": [
+              "heard_edmund",
+              "heard_tower_fire"
+            ],
+            "choices": [
+              {
+                "text": "What happened to him?",
+                "next": "after"
+              },
+              {
+                "text": "Thank you, Wynn."
+              }
+            ]
+          },
+          "after": {
+            "text": "The chronicles say he died.” She looks west, towards the forest. “I bake an extra loaf on Fridays. Old habit. Don't ask me who eats it.",
+            "set": [
+              "heard_bread"
+            ],
+            "leave": "Leave her to the furrows."
+          }
+        }
+      }
+    },
+    {
+      "id": "hermit",
+      "name": "The Old Hermit",
+      "role": "Hermit of the Greywatch",
+      "position": {
+        "x": -223.44,
+        "z": -29.6
+      },
+      "heading": -0.94,
+      "stoop": 0.3,
+      "action": "staff",
+      "patrol": {
+        "mode": "pingpong",
+        "speed": 0.8,
+        "points": [
+          {
+            "x": -223.44,
+            "z": -29.6,
+            "wait": 14,
+            "face": -0.94
+          },
+          {
+            "x": -229,
+            "z": -33,
+            "wait": 0.3
+          },
+          {
+            "x": -232.5,
+            "z": -39.5,
+            "wait": 10,
+            "face": -1.5708
+          }
+        ]
+      },
+      "look": {
+        "skin": "#b88866",
+        "hair": "#d8d4cc",
+        "hairStyle": "long",
+        "beard": "full",
+        "eyes": "#4a6a8a",
+        "age": 0.75,
+        "scar": "burn",
+        "tunic": "#5a4a38",
+        "sleeves": "#4a3e30",
+        "trousers": "#3a3228",
+        "boots": "#2e2418",
+        "belt": "#2a1e14",
+        "pouch": "#5a4630",
+        "trim": "#4a3e30",
+        "cloak": "#4e5240"
+      },
+      "outfit": {
+        "cowl": "#4e5240",
+        "staff": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_hermit"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Hm. A visitor. Mind the fire, and mind the stones; the tower drops one now and then, to remind me it's still angry.",
+            "choices": [
+              {
+                "text": "Who are you?",
+                "next": "who"
+              },
+              {
+                "text": "What is this place?",
+                "next": "place"
+              },
+              {
+                "text": "I'll leave you be."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back by my fire? Sit, then. The crows are poor company.",
+            "choices": [
+              {
+                "text": "Tell me about the night the tower burned.",
+                "next": "burned"
+              },
+              {
+                "text": "Who leaves heather on the prince's grave?",
+                "next": "heather",
+                "if": [
+                  "heard_empty_grave"
+                ]
+              },
+              {
+                "text": "Just passing, old man."
+              }
+            ]
+          },
+          "who": {
+            "text": "Nobody. An old man who keeps bees and talks to crows. The crows are better listeners.",
+            "choices": [
+              {
+                "text": "What is this place?",
+                "next": "place"
+              },
+              {
+                "text": "Your face is burned.",
+                "next": "scar"
+              },
+              {
+                "text": "I'll leave you to your crows."
+              }
+            ]
+          },
+          "scar": {
+            "text": "Fire is a careless sculptor.” He turns his cheek from the light. “Ask about the living, traveller. The burned have nothing to tell you.",
+            "choices": [
+              {
+                "text": "What is this place?",
+                "next": "place"
+              },
+              {
+                "text": "Forgive me."
+              }
+            ]
+          },
+          "place": {
+            "text": "The Greywatch. It guarded the west road once, when Valdren still had something to guard it against. Now it guards me, and does a poor job of it.",
+            "choices": [
+              {
+                "text": "It burned, didn't it?",
+                "next": "burned"
+              },
+              {
+                "text": "I'll leave you be."
+              }
+            ]
+          },
+          "burned": {
+            "text": "In the Red Winter. Thirty-one years ago this winter. Brigands, they say in the town.",
+            "set": [
+              "heard_tower_fire"
+            ],
+            "choices": [
+              {
+                "text": "It wasn't brigands. It was the king's guard.",
+                "next": "guard",
+                "if": [
+                  "heard_arrest"
+                ]
+              },
+              {
+                "text": "The prince's grave is empty.",
+                "next": "grave",
+                "if": [
+                  "heard_empty_grave"
+                ]
+              },
+              {
+                "text": "Were you here then?",
+                "next": "then",
+                "if": [
+                  "!heard_arrest",
+                  "!heard_empty_grave"
+                ]
+              },
+              {
+                "text": "I should go."
+              }
+            ]
+          },
+          "then": {
+            "text": "I have always been here, or it feels so. Go and talk to the living: the priest, the smith, the farm wife, the Captain. When you know more, come and tell me what you've learned.",
+            "leave": "Leave him by the fire."
+          },
+          "guard": {
+            "text": "Did they now.” He is quiet a long while. “Then you've spoken to a Varn. Old Aldous kept his silence longer than anyone deserved.",
+            "set": [
+              "hermit_trust"
+            ],
+            "choices": [
+              {
+                "text": "You knew Captain Varn?",
+                "next": "varn"
+              },
+              {
+                "text": "I'll keep it to myself."
+              }
+            ]
+          },
+          "varn": {
+            "text": "He carried an order he hated, from a king he feared, with a boy beside him who wanted to be anywhere else. The boy kicked in the door. The guard brought torches. Nobody meant the fire. Fire rarely asks.",
+            "choices": [
+              {
+                "text": "The boy was Osric.",
+                "next": "osric"
+              },
+              {
+                "text": "Thank you for telling me."
+              }
+            ]
+          },
+          "osric": {
+            "text": "The boy ran into the flames after his brother and came out with his hand on fire and nothing in it. He has carried that empty hand ever since.” He stirs the embers. “Tell no one I said so.",
+            "set": [
+              "heard_osric_burn"
+            ],
+            "leave": "Promise, and go."
+          },
+          "grave": {
+            "text": "Is it.” He smiles, and it doesn't reach his eyes. “Then whoever lies there is lighter than me, and luckier.",
+            "set": [
+              "hermit_trust"
+            ],
+            "choices": [
+              {
+                "text": "Do you leave the heather?",
+                "next": "heather"
+              },
+              {
+                "text": "I'll go."
+              }
+            ]
+          },
+          "heather": {
+            "text": "Heather grows wild on the ridge. An old man walks; an old man picks. The dead don't mind.",
+            "choices": [
+              {
+                "text": "You're Prince Edmund.",
+                "next": "deny"
+              },
+              {
+                "text": "Of course. Good night."
+              }
+            ]
+          },
+          "deny": {
+            "text": "Edmund of the Carts died in this tower with his father's bread on his conscience. I'm only the hermit who keeps his bees.” He looks at you a long while. “If you want the rest, find what the kingdom hid: the stones, the scrolls, the door. Then come back.",
+            "set": [
+              "hermit_challenge"
+            ],
+            "leave": "Leave him by the fire."
+          }
+        }
+      }
+    }
+  ]
+}

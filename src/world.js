@@ -2009,7 +2009,9 @@ function buildTavern(ctx) {
   });
   // Hanging sign, benches and tables out front.
   F.box('metal', 5.6, base + 3.3, 5.6, 0.06, 0.06, 1.6);
-  F.geo('sign', SIGN_GEO, 5.6, base + 2.75, 6.1, 0, Math.PI / 2, 0, 1, 1, 1, WHITE, true);
+  // Two single-sided faces back to back, so the sign reads correctly from both sides.
+  F.geo('sign', SIGN_GEO, 5.605, base + 2.75, 6.1, 0, Math.PI / 2, 0, 1, 1, 1, WHITE, true);
+  F.geo('sign', SIGN_GEO, 5.595, base + 2.75, 6.1, 0, -Math.PI / 2, 0, 1, 1, 1, WHITE, true);
   F.box('metal', 5.6, base + 3.1, 6.1, 0.04, 0.05, 1.3);
   for (const bx of [1.5, 4.5]) {
     F.box('planks', bx, base - 0.25, 6.2, 1.6, 0.08, 0.8, TINT.door);
@@ -3372,7 +3374,7 @@ export class World {
       lamp: std({ color: 0xfff1d0, roughness: 0.3, emissive: 0xffb050, emissiveIntensity: 0.2, vertexColors: true }),
       fire: std({ color: 0x000000, emissive: 0xff7a28, emissiveIntensity: 3, roughness: 1, vertexColors: true }),
       banner: std({ map: T.banner, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.92, vertexColors: true }),
-      sign: std({ map: T.sign, roughness: 0.8, side: THREE.DoubleSide, vertexColors: true }),
+      sign: std({ map: T.sign, roughness: 0.8, vertexColors: true }),
       soil: std({ map: T.soil.map, normalMap: T.soil.normal, normalScale: n(1.4), vertexColors: true, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
       soilCrop: std({ map: T.soil.map, normalMap: T.soil.normal, color: 0xb8a070, vertexColors: true, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
       dirtRoad: std({ map: T.dirt.map, normalMap: T.dirt.normal, vertexColors: true, transparent: true, depthWrite: false, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }),

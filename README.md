@@ -5,10 +5,10 @@ as a 100 % static site (HTML, ES modules and JSON), with no build step, backend 
 API keys, so it can be hosted on GitHub Pages as is. Every model and texture is
 generated in code at load time; the project ships no art assets.
 
-> **Status: Phase 2 of 5, the world.** The engine core (phase 1) and the whole
-> kingdom are in place. NPCs and dialogue (phase 3), lore, journal, minimap,
-> saving and the day-night cycle (phase 4), and the quality menu (phase 5) are
-> still to come.
+> **Status: Phase 3 of 5, the people.** The engine core (phase 1), the whole
+> kingdom (phase 2) and its eight inhabitants with branching dialogue (phase 3)
+> are in place. Lore, journal, minimap, saving and the day-night cycle (phase 4)
+> and the quality menu (phase 5) are still to come.
 
 ## The kingdom
 
@@ -28,6 +28,28 @@ generated in code at load time; the project ships no art assets.
   fences, a farmstead with a barn and haystacks, a turning windmill, woods to the
   west, north-east and south-west, and a ruined watchtower on a knoll at the
   forest edge with a hermit's camp beside it.
+
+## The people
+
+Eight people live in Valdren. Each has a place, a routine and a story to tell,
+and what one of them lets slip can open up another.
+
+| Who | Where | Doing |
+| --- | --- | --- |
+| **King Osric II** | On the dais of the Throne Hall | Pacing before the throne, hands behind his back |
+| **Dame Isolde Varn**, Captain of the Guard | Castle courtyard | Walking her rounds in helmet and breastplate |
+| **Brannoc**, Blacksmith | The forge, north-west of the market | Hammering at the anvil |
+| **Maera**, keeper of *The Broken Oar* | Outside the tavern | Polishing a tankard |
+| **Tobias Fenn**, merchant of Saltmere | The east stalls of the market | Strolling between his stalls |
+| **Father Anselm** | Between the chapel door and the graveyard | Walking, and praying by an old grave |
+| **Wynn Hollis**, farmer | The farmstead across the river | Walking out to the ploughed field, hoe in hand |
+| **The Old Hermit** | His camp beside the ruined watchtower | Pottering between the fire and the ruin |
+
+Walk up to someone and a prompt appears (their name also floats above their
+head). Press `E`, or tap **Interact**, to talk. The camera moves over your
+shoulder, the line types itself out (click, tap or press `Space` to show it at
+once), and you pick a reply with the mouse, a tap or the keys `1`–`3`. `Esc`
+ends the conversation.
 
 ## Run it locally
 
@@ -53,6 +75,9 @@ Three.js loads from jsDelivr.
 | Journal     | `J`                            | **Journal** button                        |
 | Map         | `M`                            | n/a (minimap arrives in phase 4)          |
 | Pause       | `Esc`                          | Pause button (top right)                  |
+| Talk: reply | Click a reply, or `1`–`3`      | Tap a reply                               |
+| Talk: skip  | Click the text, `Space`, `E`   | Tap the text                              |
+| Talk: leave | `Esc` or the last reply        | The last reply                            |
 
 If the browser refuses pointer lock (for example inside an iframe), hold the
 left mouse button and drag to look around.
@@ -108,6 +133,22 @@ left mouse button and drag to look around.
   and elbows, heel-to-toe feet and a trailing cloak. The same `createFigure()`
   builds every NPC with its own colours, hair and beard (about 12k triangles
   each).
+- **People** are built from `data/npcs.json` with the same `createFigure()` as
+  the player: a look (colours, build, robe or tunic, hair, beard, age lines, a
+  burn scar, a gloved hand) and an outfit of procedural accessories (crown,
+  ermine collar, nasal helm, breastplate, pauldrons, sword, aprons, hats, a
+  cowl, a cross, a hammer, a tankard, a staff, a hoe). Accessories are baked
+  into the figure's own skinned mesh, so each person costs four or five draw
+  calls; their shadows are dropped beyond 24 m. Poses (hands behind the back,
+  praying, hammering, polishing, leaning on a staff) are layered over the walk
+  cycle, people turn their heads to watch you pass, and they gesture while
+  they speak.
+- **Dialogue** trees live in the same file. Each node is a line and two or three
+  replies; a reply leads to another node or ends the conversation. Nodes and
+  replies can require and set flags (`"if": ["heard_edmund", "!met_king"]`,
+  `"set": ["heard_chains"]`), which is how hearing something from one person
+  changes what you can ask another. `met_<id>` is set after a first meeting,
+  and `"start"` can pick a different greeting for a return visit.
 - **Collision:** circles and rotated boxes with a vertical extent, in a uniform
   spatial grid. Walkable surfaces (the bridge deck, the hall floor and dais) sit
   above the terrain; steps up to 45 cm can be climbed; deep water and slopes above
@@ -125,8 +166,12 @@ style.css         UI styles (parchment panels, HUD, touch controls)
 src/main.js       renderer, game loop, title / playing / paused states
 src/world.js      terrain, textures, sky and lighting, every building and prop,
                   vegetation, grass, colliders and walkable surfaces
-src/player.js     skinned human figure (shared with NPCs), its animation,
-                  player controller, follow camera
+src/player.js     skinned human figure (shared with NPCs), its animation and
+                  poses, player controller, follow camera
+src/npc.js        the people: figures and accessories from data, patrols,
+                  who can be talked to, name labels
+src/dialogue.js   branching conversations: typewriter, replies, flags
+data/npcs.json    the eight inhabitants: looks, outfits, routes, dialogue
 src/input.js      keyboard, mouse / pointer lock, touch joystick and look, buttons
 src/ui.js         start screen, pause menu, toasts, hints, debug readout
 .nojekyll         serve files exactly as they are on GitHub Pages

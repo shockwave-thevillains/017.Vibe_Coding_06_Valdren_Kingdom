@@ -59,13 +59,14 @@ const PARENT = {
 };
 const BONES = Object.keys(JOINTS);
 const BONE_INDEX = Object.fromEntries(BONES.map((n, i) => [n, i]));
-const HEAD_CENTRE = [0, 1.66, 0.012];
-const HEAD_RADII = [0.077, 0.112, 0.095];
+export const HEAD_CENTRE = [0, 1.66, 0.012];
+export const HEAD_RADII = [0.077, 0.112, 0.095];
 
 const smooth = (e0, e1, x) => {
   const t = clamp((x - e0) / (e1 - e0), 0, 1);
   return t * t * (3 - 2 * t);
 };
+const gauss = (x, centre, width) => Math.exp(-(((x - centre) / width) ** 2));
 const colour = (hex) => new THREE.Color(hex);
 const ring = (x, y, z, rx, rf, rb) => ({ c: [x, y, z], rx, rf, rb });
 const WHITE = new THREE.Color(1, 1, 1);
@@ -81,7 +82,11 @@ function placement(x, y, z, rx, ry, rz, sx, sy, sz) {
   return _m.compose(_v.set(x, y, z), _q.setFromEuler(_e.set(rx, ry, rz)), _s.set(sx, sy, sz));
 }
 
-// Accumulates skinned vertices (two bones each) into skin, cloth and face groups.
+// Material groups of the figure mesh, in material order. Matte gear shares the skin's
+// plain vertex-coloured material, so it costs no extra draw call.
+const GROUPS = ['skin', 'cloth', 'face', 'metal'];
+
+// Accumulates skinned vertices (two bones each) into the material groups above.
 class SkinBuilder {
   constructor() {
     this.pos = [];
@@ -89,7 +94,7 @@ class SkinBuilder {
     this.col = [];
     this.si = [];
     this.sw = [];
-    this.groups = { skin: [], cloth: [], face: [] };
+    this.groups = Object.fromEntries(GROUPS.map((g) => [g, []]));
     this.seams = [];
   }
 
@@ -122,6 +127,20 @@ class SkinBuilder {
     g.dispose();
   }
 
+  // Any geometry (indexed or not), already in bind-pose space, bound rigidly to one bone.
+  mesh(geometry, group, bone, colorAt) {
+    const p = geometry.attributes.position;
+    const uv = geometry.attributes.uv;
+    const base = this.count;
+    for (let i = 0; i < p.count; i++) this.vertex(p.getX(i), p.getY(i), p.getZ(i), uv ? uv.getX(i) : 0, uv ? uv.getY(i) : 0, colorAt(i), bone);
+    if (geometry.index) {
+      const idx = geometry.index.array;
+      for (let i = 0; i < idx.length; i += 3) this.tri(group, base + idx[i], base + idx[i + 1], base + idx[i + 2]);
+    } else {
+      for (let i = 0; i < p.count; i += 3) this.tri(group, base + i, base + i + 1, base + i + 2);
+    }
+  }
+
   build() {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(this.pos, 3));
@@ -130,7 +149,7 @@ class SkinBuilder {
     g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(this.si, 4));
     g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(this.sw, 4));
     const index = [];
-    ['skin', 'cloth', 'face'].forEach((name, m) => {
+    GROUPS.forEach((name, m) => {
       const list = this.groups[name];
       g.addGroup(index.length, list.length, m);
       for (let i = 0; i < list.length; i++) index.push(list[i]);
@@ -248,6 +267,73 @@ const FOOT = [
   [0.16, 0.026, 0.036, 0.021, 0.026], [0.185, 0.025, 0.022, 0.012, 0.024],
 ];
 
+// Skirts: [y, half-width, front, back], hem first. A tunic stops at the knee, a robe at the ankle.
+const TUNIC_SKIRT = [
+  [0.655, 0.205, 0.15, 0.155], [0.675, 0.203, 0.148, 0.153], [0.69, 0.2, 0.145, 0.15], [0.76, 0.19, 0.135, 0.14],
+  [0.84, 0.182, 0.125, 0.128], [0.9, 0.178, 0.114, 0.12], [0.95, 0.172, 0.104, 0.116],
+];
+const ROBE_SKIRT = [
+  [0.06, 0.25, 0.205, 0.22], [0.075, 0.249, 0.204, 0.219], [0.09, 0.247, 0.202, 0.217], [0.2, 0.235, 0.19, 0.203],
+  [0.35, 0.222, 0.175, 0.188], [0.5, 0.208, 0.16, 0.172], [0.65, 0.196, 0.146, 0.156], [0.78, 0.187, 0.132, 0.14],
+  [0.88, 0.18, 0.118, 0.124], [0.95, 0.172, 0.104, 0.116],
+];
+
+// Interpolates [y, ...values] rows (sorted by y) at height y.
+function rowAt(rows, y) {
+  if (y <= rows[0][0]) return rows[0];
+  for (let i = 1; i < rows.length; i++) {
+    if (y <= rows[i][0]) {
+      const a = rows[i - 1];
+      const b = rows[i];
+      const t = (y - a[0]) / (b[0] - a[0]);
+      return a.map((v, k) => v + (b[k] - v) * t);
+    }
+  }
+  return rows[rows.length - 1];
+}
+
+/*
+ * Torso and skirt rings for a look. A female build narrows the shoulders and
+ * waist and adds a bust and hips; belly (0..1) rounds the stomach. The skirt
+ * always clears the torso it hangs from.
+ */
+function bodyShape(L) {
+  const belly = L.belly || 0;
+  const torso = TORSO.map(([y, rx, rf, rb, z]) => {
+    if (L.female) {
+      rx *= (1 - 0.06 * smooth(1.28, 1.42, y)) * (1 - 0.09 * gauss(y, 1.1, 0.07)) * (1 + 0.05 * gauss(y, 0.93, 0.06));
+      rf += 0.03 * gauss(y, 1.27, 0.055);
+      rb += 0.012 * gauss(y, 0.9, 0.06);
+    }
+    rf += 0.06 * belly * gauss(y, 1.08, 0.12);
+    rx += 0.02 * belly * gauss(y, 1.05, 0.12);
+    return [y, rx, rf, rb, z];
+  });
+  const skirt = (L.skirt === 'robe' ? ROBE_SKIRT : TUNIC_SKIRT).map(([y, rx, rf, rb]) => {
+    if (y >= 0.83) {
+      const t = rowAt(torso, y);
+      return [y, Math.max(rx, t[1] + 0.01), Math.max(rf, t[2] + 0.012), Math.max(rb, t[3] + 0.012)];
+    }
+    return [y, rx, rf, rb];
+  });
+  return { torso, skirt };
+}
+
+const shapes = new WeakMap();
+
+/*
+ * The body's outline at height y for a look: { rx, rf } = half-width and depth
+ * in front of the centre line, over the clothes (skirt pleats included). Used
+ * to fit aprons and armour.
+ */
+export function frontProfile(look, y) {
+  let shape = shapes.get(look);
+  if (!shape) shapes.set(look, (shape = bodyShape(look)));
+  const r = y >= 0.95 ? rowAt(shape.torso, y) : rowAt(shape.skirt, y);
+  const pleat = y < 0.95 ? 1.04 : 1;
+  return { rx: r[1] * pleat, rf: r[2] * pleat };
+}
+
 function torsoWeights(x, y) {
   let r;
   if (y < 1.0) r = ['hips', 'hips', 0];
@@ -263,8 +349,10 @@ function torsoWeights(x, y) {
   return r;
 }
 
-function buildBody(B, c) {
-  loft(B, TORSO.map(([y, rx, rf, rb, z]) => ring(0, y, z, rx, rf, rb)), {
+function buildBody(B, c, look) {
+  const shape = bodyShape(look);
+  const robe = look.skirt === 'robe';
+  loft(B, shape.torso.map(([y, rx, rf, rb, z]) => ring(0, y, z, rx, rf, rb)), {
     radial: 24,
     capStart: true,
     capEnd: true,
@@ -276,26 +364,31 @@ function buildBody(B, c) {
     },
   });
 
-  // Pleated tunic skirt, pulled along by whichever thigh is nearer.
-  loft(B, [[0.655, 0.205, 0.15, 0.155], [0.675, 0.203, 0.148, 0.153], [0.69, 0.2, 0.145, 0.15], [0.76, 0.19, 0.135, 0.14], [0.84, 0.182, 0.125, 0.128], [0.9, 0.178, 0.114, 0.12], [0.95, 0.172, 0.104, 0.116]].map(([y, rx, rf, rb]) => ring(0, y, -0.005, rx, rf, rb)), {
-    radial: 36,
-    wobble: (t, r, i) => 1 + Math.sin(t * 9) * 0.035 * (1 - i / 6),
+  // Pleated skirt, pulled along by whichever thigh is nearer (a robe only gently).
+  const last = shape.skirt.length - 1;
+  loft(B, shape.skirt.map(([y, rx, rf, rb]) => ring(0, y, -0.005, rx, rf, rb)), {
+    radial: robe ? 40 : 36,
+    wobble: (t, r, i) => 1 + Math.sin(t * 9) * 0.035 * (1 - i / last),
     paint: (x, y, z, s) => ({
-      color: y < 0.68 ? c.trim : c.tunic,
+      color: y < (robe ? 0.095 : 0.68) ? c.trim : c.tunic,
       group: 'cloth',
       b0: 'hips',
       b1: x < 0 ? 'thighL' : 'thighR',
-      w: smooth(0.95, 0.66, y) * (0.3 + 0.45 * Math.abs(s)),
+      w: robe ? smooth(0.95, 0.45, y) * (0.15 + 0.3 * Math.abs(s)) : smooth(0.95, 0.66, y) * (0.3 + 0.45 * Math.abs(s)),
     }),
   });
 
   // Belt, buckle and a pouch.
-  loft(B, [[1.03, 0.152, 0.092, 0.094], [1.045, 0.154, 0.094, 0.096], [1.075, 0.15, 0.091, 0.091], [1.09, 0.147, 0.089, 0.089]].map(([y, rx, rf, rb]) => ring(0, y, 0, rx, rf, rb)), {
+  const beltFront = rowAt(shape.torso, 1.045)[2] + 0.009;
+  loft(B, [[1.03, 0.003], [1.045, 0.008], [1.075, 0.008], [1.09, 0.003]].map(([y, d]) => {
+    const t = rowAt(shape.torso, y);
+    return ring(0, y, 0, t[1] + d, t[2] + d, t[3] + d);
+  }), {
     radial: 24,
     paint: (x, y) => ({ color: c.belt, group: 'cloth', b0: 'hips', b1: 'spine', w: smooth(1.0, 1.12, y) }),
   });
-  B.shape(BOX, placement(0, 1.06, 0.096, 0, 0, 0, 0.05, 0.045, 0.012), 'cloth', c.trim, 'hips', 'spine', 0.5);
-  B.shape(BOX, placement(0.125, 0.99, 0.07, 0.05, 0.6, 0, 0.075, 0.085, 0.035), 'cloth', c.pouch, 'hips');
+  B.shape(BOX, placement(0, 1.06, beltFront, 0, 0, 0, 0.05, 0.045, 0.012), 'cloth', c.trim, 'hips', 'spine', 0.5);
+  if (c.pouch) B.shape(BOX, placement(0.125, 0.99, beltFront - 0.026, 0.05, 0.6, 0, 0.075, 0.085, 0.035), 'cloth', c.pouch, 'hips');
 
   for (const side of [-1, 1]) {
     const L = side < 0 ? 'L' : 'R';
@@ -333,7 +426,8 @@ function buildBody(B, c) {
       paint: (x, y, z, s, cs) => ({ color: cs < -0.55 ? c.sole : c.boots, group: 'cloth', b0: `foot${L}`, b1: `shin${L}`, w: smooth(-0.01, -0.06, z) * 0.4 }),
     });
 
-    // Arm: sleeve with a cuff, bare wrist.
+    // Arm: sleeve with a cuff, bare (or gloved) wrist.
+    const hand = side < 0 && c.gloveL ? c.gloveL : c.skin;
     loft(B, ARM.map(([y, rx, rf, rb]) => ring(side * (0.19 + (1.425 - y) * 0.05), y, -0.005, rx, rf, rb)), {
       radial: 14,
       capStart: true,
@@ -353,15 +447,15 @@ function buildBody(B, c) {
         }
         const skin = y < 0.927;
         const cuff = !skin && y < 0.958;
-        return { color: skin ? c.skin : cuff ? c.trim : c.sleeves, group: skin ? 'skin' : 'cloth', b0, b1, w };
+        return { color: skin ? hand : cuff ? c.trim : c.sleeves, group: skin ? 'skin' : 'cloth', b0, b1, w };
       },
     });
 
     // Hand: palm, curled fingers and thumb.
     const hx = side * 0.218;
-    B.shape(SPHERE, placement(hx, 0.855, 0.004, 0, 0, side * 0.08, 0.021, 0.05, 0.042), 'skin', c.skin, `hand${L}`);
-    B.shape(SPHERE, placement(hx + side * 0.003, 0.797, 0.013, 0.28, 0, 0, 0.018, 0.04, 0.036), 'skin', c.skin, `hand${L}`);
-    B.shape(SPHERE, placement(hx - side * 0.013, 0.848, 0.036, 0.4, 0, -side * 0.5, 0.011, 0.03, 0.012), 'skin', c.skin, `hand${L}`);
+    B.shape(SPHERE, placement(hx, 0.855, 0.004, 0, 0, side * 0.08, 0.021, 0.05, 0.042), 'skin', hand, `hand${L}`);
+    B.shape(SPHERE, placement(hx + side * 0.003, 0.797, 0.013, 0.28, 0, 0, 0.018, 0.04, 0.036), 'skin', hand, `hand${L}`);
+    B.shape(SPHERE, placement(hx - side * 0.013, 0.848, 0.036, 0.4, 0, -side * 0.5, 0.011, 0.03, 0.012), 'skin', hand, `hand${L}`);
 
     // Ears: a flattened shell with a darker hollow.
     B.shape(SPHERE, placement(side * 0.074, HEAD_CENTRE[1] - 0.004, HEAD_CENTRE[2] - 0.02, -0.15, side * 0.25, 0, 0.008, 0.026, 0.015), 'skin', c.skin, 'head');
@@ -369,14 +463,18 @@ function buildBody(B, c) {
   }
 }
 
+// Head shapes: how much the jaw tapers, how broad the chin, the jaw angle, brow ridge and nose.
+const MALE_HEAD = { jaw: 0.07, chin: 0.22, angle: 0.006, brow: 0.007, nose: 1 };
+const FEMALE_HEAD = { jaw: 0.13, chin: 0.1, angle: 0.0015, brow: 0.0025, nose: 0.82 };
+
 // Head shape: a sphere sculpted into a skull, brow, eye sockets, nose, cheekbones, lips and chin.
-function sculpt(nx, ny, nz) {
+function sculpt(nx, ny, nz, S = MALE_HEAD) {
   let x = nx * HEAD_RADII[0];
   const y = ny * HEAD_RADII[1];
   let z = nz * HEAD_RADII[2];
   const front = smooth(0.05, 0.55, nz);
   const jaw = smooth(-0.35, -1.0, ny);
-  x *= (1 - 0.07 * jaw) * (1 + 0.22 * smooth(-0.78, -1, ny) * smooth(-0.1, 0.5, nz));
+  x *= (1 - S.jaw * jaw) * (1 + S.chin * smooth(-0.78, -1, ny) * smooth(-0.1, 0.5, nz));
   z *= 1 - 0.16 * jaw * (nz < 0 ? 1.5 : 0.5);
   if (nz < 0) z *= 1.04 + 0.05 * smooth(0, 0.6, ny);
   // A sphere's front recedes towards the chin; a face is closer to a vertical plane.
@@ -386,27 +484,27 @@ function sculpt(nx, ny, nz) {
   const g = (a, b, ca, cb) => Math.exp(-(((a - ca[0]) / ca[1]) ** 2) - (((b - cb[0]) / cb[1]) ** 2));
   const ax = Math.abs(nx);
   z += 0.011 * g(nx, ny, [0, 0.3], [-0.82, 0.16]) * front;
-  z += 0.007 * Math.exp(-(((ny - 0.2) / 0.07) ** 2)) * front * smooth(0.75, 0.3, ax);
+  z += S.brow * Math.exp(-(((ny - 0.2) / 0.07) ** 2)) * front * smooth(0.75, 0.3, ax);
   z -= 0.01 * g(ax, ny, [0.34, 0.17], [0.07, 0.1]) * front;
   z += 0.004 * g(ax, ny, [0.33, 0.09], [0.07, 0.05]) * front;
-  z += 0.024 * g(nx, ny, [0, 0.1], [-0.13, 0.2]) * front;
-  z += 0.008 * g(nx, ny, [0, 0.12], [-0.28, 0.07]) * front;
+  z += 0.024 * S.nose * g(nx, ny, [0, 0.1], [-0.13, 0.2]) * front;
+  z += 0.008 * S.nose * g(nx, ny, [0, 0.12], [-0.28, 0.07]) * front;
   z += 0.006 * g(nx, ny, [0, 0.22], [-0.47, 0.07]) * front;
   z -= 0.002 * g(nx, ny, [0, 0.2], [-0.5, 0.02]) * front;
   x += Math.sign(nx) * 0.004 * g(ax, ny, [0.75, 0.15], [-0.05, 0.15]);
-  x += Math.sign(nx) * 0.006 * g(ax, ny, [0.85, 0.2], [-0.55, 0.15]) * smooth(-0.55, -0.2, nz);
+  x += Math.sign(nx) * S.angle * g(ax, ny, [0.85, 0.2], [-0.55, 0.15]) * smooth(-0.55, -0.2, nz);
   return [x, yOut, z];
 }
 
 const HEAD_SEGMENTS = [40, 28];
 
-function buildHead(B) {
+function buildHead(B, S) {
   const g = new THREE.SphereGeometry(1, HEAD_SEGMENTS[0], HEAD_SEGMENTS[1]);
   const p = g.attributes.position;
   const uv = g.attributes.uv;
   const base = B.count;
   for (let i = 0; i < p.count; i++) {
-    const [x, y, z] = sculpt(p.getX(i), p.getY(i), p.getZ(i));
+    const [x, y, z] = sculpt(p.getX(i), p.getY(i), p.getZ(i), S);
     // The front half of the head gets 82 % of the face texture; the back a plain strip.
     const phi = uv.getX(i) * TAU;
     const u = phi <= Math.PI ? (phi / Math.PI) * 0.82 : 0.82 + ((phi - Math.PI) / Math.PI) * 0.18;
@@ -541,8 +639,9 @@ function figureTextures() {
     weave: weaveTex,
     hair: hairTex,
     strands: strandTex,
-    skin: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0 }),
+    skin: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0, side: THREE.DoubleSide }),
     cloth: new THREE.MeshStandardMaterial({ vertexColors: true, map: weaveTex, roughness: 0.9, metalness: 0, side: THREE.DoubleSide }),
+    metal: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.42, metalness: 0.8, side: THREE.DoubleSide }),
   };
   return sharedTextures;
 }
@@ -560,6 +659,8 @@ function css(hex) {
 const HAIRLINE = {
   short: [[0, 0.44], [0.32, 0.5], [0.85, 0.37], [1.2, 0.12], [1.4, -0.2], [1.53, -0.2], [1.64, 0.25], [1.97, 0.22], [2.35, -0.36], [Math.PI, -0.8]],
   long: [[0, 0.44], [0.32, 0.5], [0.85, 0.37], [1.2, 0.1], [1.45, -0.32], [1.8, -0.55], [2.4, -0.85], [Math.PI, -0.95]],
+  // Swept back from a rounder brow, no sideburns, tucked behind the ears.
+  female: [[0, 0.48], [0.45, 0.47], [0.95, 0.34], [1.3, 0.12], [1.48, 0.02], [1.62, 0.26], [1.95, 0.22], [2.35, -0.38], [Math.PI, -0.82]],
 };
 
 function hairlineAt(style, a) {
@@ -571,8 +672,22 @@ function hairlineAt(style, a) {
   return pts[pts.length - 1][1];
 }
 
-function hairField(look, nx, ny, nz) {
-  let f = look.hairStyle === 'bald' ? -1 : ny - hairlineAt(look.hairStyle, Math.atan2(nx, nz));
+// Height of the hairline at azimuth a for a look (null for a bald head).
+function scalpLine(look, a) {
+  const style = look.hairStyle;
+  if (style === 'bald') return null;
+  return hairlineAt(style === 'long' ? 'long' : look.female ? 'female' : 'short', a);
+}
+
+// Hair on the scalp only: 'short', 'long', 'bun' (swept up), 'tonsure' (shaved crown) or 'bald'.
+function scalpField(look, nx, ny, nz, line = scalpLine(look, Math.atan2(nx, nz))) {
+  if (line === null) return -1;
+  const f = ny - line;
+  return look.hairStyle === 'tonsure' ? Math.min(f, 0.7 - ny) : f;
+}
+
+function hairField(look, nx, ny, nz, line) {
+  let f = scalpField(look, nx, ny, nz, line);
   if (look.beard) {
     // Below a line from the sideburns, under the cheekbones, to above the lip;
     // the lips stay clear and the beard stops under the jaw.
@@ -589,7 +704,7 @@ function paintFace(look) {
   const W = 512;
   const H = 512;
   const cv = canvas(W, H);
-  const g = cv.getContext('2d');
+  const g = cv.getContext('2d', { willReadFrequently: true });
   const P = (nx, ny) => {
     const nz = Math.sqrt(Math.max(1e-4, 1 - nx * nx - ny * ny));
     return [(Math.atan2(nz, -nx) / Math.PI) * 0.82 * W, (Math.acos(clamp(ny, -1, 1)) / Math.PI) * H];
@@ -611,14 +726,21 @@ function paintFace(look) {
     const hr = (look.hair >> 16) & 255;
     const hg = (look.hair >> 8) & 255;
     const hb = look.hair & 255;
+    // The azimuth (and so the hairline) depends only on the column.
+    const lines = [];
+    const cols = [];
+    for (let px = 0; px < W; px++) {
+      const u = (px + 0.5) / W;
+      const phi = u <= 0.82 ? (u / 0.82) * Math.PI : Math.PI + ((u - 0.82) / 0.18) * Math.PI;
+      cols.push([-Math.cos(phi), Math.sin(phi)]);
+      lines.push(scalpLine(look, Math.atan2(-Math.cos(phi), Math.sin(phi))));
+    }
     for (let py = 0; py < H; py++) {
       const theta = ((py + 0.5) / H) * Math.PI;
       const ny = Math.cos(theta);
       const st = Math.sin(theta);
       for (let px = 0; px < W; px++) {
-        const u = (px + 0.5) / W;
-        const phi = u <= 0.82 ? (u / 0.82) * Math.PI : Math.PI + ((u - 0.82) / 0.18) * Math.PI;
-        const f = hairField(look, -Math.cos(phi) * st, ny, Math.sin(phi) * st);
+        const f = hairField(look, cols[px][0] * st, ny, cols[px][1] * st, lines[px]);
         if (f < -0.03) continue;
         const a = smooth(-0.03, 0.06, f) * (0.4 + 0.3 * rand());
         const k = (py * W + px) * 4;
@@ -643,8 +765,38 @@ function paintFace(look) {
     g.fill();
     g.restore();
   };
+  const curve = (pts, width, rgba) => {
+    const q = pts.map(([nx, ny]) => P(nx, ny));
+    g.strokeStyle = rgba;
+    g.lineWidth = width;
+    g.lineCap = 'round';
+    g.beginPath();
+    g.moveTo(q[0][0], q[0][1]);
+    if (q.length === 3) g.quadraticCurveTo(q[1][0], q[1][1], q[2][0], q[2][1]);
+    else g.lineTo(q[1][0], q[1][1]);
+    g.stroke();
+  };
+  const age = look.age || 0;
+
+  // Age spots and a burn scar go under the features.
+  for (let i = 0; i < age * 60; i++) blob((rand() * 2 - 1) * 0.8, rand() * 0.9 - 0.5, 0.02 + rand() * 0.03, 0.02 + rand() * 0.03, '120,70,45', 0.12 * age);
+  if (look.scar === 'burn') {
+    for (let i = 0; i < 70; i++) {
+      const nx = -0.4 - rand() * 0.48;
+      const ny = 0.3 - rand() * 0.75;
+      if (nx > -0.5 && ny > -0.05) continue;
+      const pale = rand() < 0.4;
+      blob(nx, ny, 0.03 + rand() * 0.07, 0.03 + rand() * 0.06, pale ? '235,200,185' : '170,70,60', pale ? 0.35 : 0.22);
+    }
+    for (let i = 0; i < 12; i++) {
+      const nx = -0.5 - rand() * 0.35;
+      const ny = 0.2 - rand() * 0.6;
+      curve([[nx, ny], [nx - 0.05 + rand() * 0.1, ny - 0.05], [nx + rand() * 0.1 - 0.05, ny - 0.1 - rand() * 0.08]], 1.2, 'rgba(120,45,40,0.25)');
+    }
+  }
+
   for (const s of [-1, 1]) {
-    blob(s * 0.45, -0.22, 0.22, 0.15, '200,90,80', 0.22);
+    blob(s * 0.45, -0.22, 0.22, 0.15, '200,90,80', look.female ? 0.3 : 0.22);
     blob(s * 0.34, 0.05, 0.2, 0.12, '110,60,50', 0.2);
   }
   blob(0, -0.47, 0.25, 0.1, '180,90,80', 0.15);
@@ -700,11 +852,18 @@ function paintFace(look) {
     g.fillRect(ex - w, ey - h * 2, w * 2, h * 1.1);
     g.restore();
     g.strokeStyle = '#24160f';
-    g.lineWidth = 2.4;
+    g.lineWidth = look.female ? 3.4 : 2.4;
     g.beginPath();
     g.moveTo(ex - w * 1.05, ey + 0.5);
     g.quadraticCurveTo(ex, ey - h * 1.75, ex + w * 1.08, ey - 0.5);
     g.stroke();
+    if (look.female) {
+      g.lineWidth = 1.8;
+      g.beginPath();
+      g.moveTo(ex + s * w * 1.02, ey - 0.5);
+      g.lineTo(ex + s * w * 1.28, ey - h * 0.7);
+      g.stroke();
+    }
     g.strokeStyle = 'rgba(120,60,50,0.5)';
     g.lineWidth = 1;
     g.beginPath();
@@ -723,12 +882,13 @@ function paintFace(look) {
     const [b2x, b2y] = P(s * 0.52, 0.2);
     g.strokeStyle = css(look.brows);
     g.lineCap = 'round';
+    const fine = look.female ? 0.65 : 1;
     for (let k = 0; k < 3; k++) {
-      g.lineWidth = 4.5 - k * 1.2;
+      g.lineWidth = (4.5 - k * 1.2) * fine;
       g.globalAlpha = 0.45 + k * 0.2;
       g.beginPath();
       g.moveTo(b0x, b0y + k);
-      g.quadraticCurveTo(b1x, b1y - 2, b2x, b2y + 1);
+      g.quadraticCurveTo(b1x, b1y - (look.female ? 5 : 2), b2x, b2y + 1);
       g.stroke();
     }
     g.globalAlpha = 1;
@@ -737,17 +897,18 @@ function paintFace(look) {
   // Lips and mouth line.
   const [mx, my] = P(0, -0.465);
   const lw = 0.23 * SX;
+  const full = look.female ? 1.25 : 1;
   g.fillStyle = css(look.lips);
   g.beginPath();
   g.moveTo(mx - lw, my);
-  g.quadraticCurveTo(mx - lw * 0.4, my - 9, mx, my - 5);
-  g.quadraticCurveTo(mx + lw * 0.4, my - 9, mx + lw, my);
+  g.quadraticCurveTo(mx - lw * 0.4, my - 9 * full, mx, my - 5);
+  g.quadraticCurveTo(mx + lw * 0.4, my - 9 * full, mx + lw, my);
   g.quadraticCurveTo(mx, my + 2, mx - lw, my);
   g.fill();
   g.globalAlpha = 0.85;
   g.beginPath();
   g.moveTo(mx - lw * 0.9, my + 1);
-  g.quadraticCurveTo(mx, my + 14, mx + lw * 0.9, my + 1);
+  g.quadraticCurveTo(mx, my + 14 * full, mx + lw * 0.9, my + 1);
   g.quadraticCurveTo(mx, my + 3, mx - lw * 0.9, my + 1);
   g.fill();
   g.globalAlpha = 1;
@@ -757,6 +918,18 @@ function paintFace(look) {
   g.moveTo(mx - lw, my);
   g.quadraticCurveTo(mx, my + 2.5, mx + lw, my);
   g.stroke();
+
+  // Lines that come with age: forehead, crow's feet, under the eyes, nose to mouth.
+  if (age > 0) {
+    const a = (k) => `rgba(95,50,38,${(k * age).toFixed(3)})`;
+    for (const fy of [0.34, 0.4, 0.46]) curve([[-0.3, fy - 0.01], [0, fy + 0.02], [0.3, fy - 0.01]], 1.3, a(0.22));
+    for (const s of [-1, 1]) {
+      for (const d of [-1, 0, 1]) curve([[s * 0.47, 0.07 + d * 0.025], [s * 0.56, 0.07 + d * 0.06]], 1.1, a(0.3));
+      curve([[s * 0.24, -0.01], [s * 0.33, -0.05], [s * 0.43, -0.01]], 1.2, a(0.25));
+      curve([[s * 0.13, -0.2], [s * 0.2, -0.33], [s * 0.21, -0.48]], 1.6, a(0.3));
+      if (age > 0.5) curve([[s * 0.25, -0.55], [s * 0.3, -0.68], [s * 0.27, -0.8]], 1.4, a(0.2));
+    }
+  }
 
   // Stubble across the jaw.
   if (look.stubble && !look.beard) {
@@ -795,7 +968,7 @@ function mulberry(seed) {
  */
 const HAIR_FADE = 2.4;
 
-function hairMesh(look) {
+function hairMesh(look, S) {
   const style = look.hairStyle;
   const beard = look.beard;
   if (style === 'bald' && !beard) return null;
@@ -809,18 +982,19 @@ function hairMesh(look) {
     const nz = p.getZ(i);
     const f = hairField(look, nx, ny, nz);
     field.push(f);
-    const scalp = style === 'bald' ? -1 : ny - hairlineAt(style, Math.atan2(nx, nz));
+    const scalp = scalpField(look, nx, ny, nz);
     const isBeard = beard && scalp < f;
     const lump = Math.sin(nx * 23 + nz * 17) * Math.sin(ny * 19 + nx * 11) * 0.012;
     // Thick on the crown, close-cropped at the sides; beards by style.
-    let depth = 0.05 + 0.065 * smooth(-0.2, 0.9, ny) + (style === 'long' ? 0.02 : 0);
+    let depth = style === 'tonsure' ? 0.04 : style === 'bun' ? 0.035 + 0.02 * smooth(-0.2, 0.9, ny) : 0.05 + 0.065 * smooth(-0.2, 0.9, ny) + (style === 'long' ? 0.02 : 0);
     if (isBeard) depth = beard === 'full' ? 0.13 : 0.05;
     const vol = 1.01 + (depth + lump) * smooth(0, 0.28, f);
-    const [x, y, z] = sculpt(nx, ny, nz);
+    const [x, y, z] = sculpt(nx, ny, nz, S);
     // A full beard hangs a little below the chin.
     const hang = beard === 'full' && isBeard ? 0.03 * smooth(0, 0.2, f) * smooth(-0.35, -0.9, ny) : 0;
     p.setXYZ(i, HEAD_CENTRE[0] + x * vol - JOINTS.head[0], HEAD_CENTRE[1] + y * vol + 0.002 - hang - JOINTS.head[1], HEAD_CENTRE[2] + z * vol - JOINTS.head[2]);
-    alpha.set([1, 1, 1, HAIR_FADE * smooth(-0.02, 0.12, f)], i * 4);
+    // Swept-back hair ends cleanly; loose hair thins out into strands.
+    alpha.set([1, 1, 1, HAIR_FADE * (style === 'bun' && !isBeard ? smooth(-0.01, 0.05, f) : smooth(-0.02, 0.12, f))], i * 4);
   }
   g.setAttribute('color', new THREE.BufferAttribute(alpha, 4));
   const idx = g.index.array;
@@ -831,6 +1005,16 @@ function hairMesh(look) {
   g.setIndex(kept);
 
   let geo = g;
+  // A bun gathered at the back of the head.
+  if (style === 'bun') {
+    const bun = new THREE.SphereGeometry(0.047, 18, 12);
+    bun.scale(1, 0.9, 0.85);
+    bun.translate(HEAD_CENTRE[0] - JOINTS.head[0], HEAD_CENTRE[1] + 0.03 - JOINTS.head[1], HEAD_CENTRE[2] - 0.112 - JOINTS.head[2]);
+    const ba = new Float32Array(bun.attributes.position.count * 4);
+    for (let i = 0; i < ba.length; i += 4) ba.set([1, 1, 1, HAIR_FADE], i);
+    bun.setAttribute('color', new THREE.BufferAttribute(ba, 4));
+    geo = mergeGeometries([g.toNonIndexed(), bun.toNonIndexed()]);
+  }
   // Long hair falls behind the neck to the shoulders, its ends thinning out.
   if (style === 'long') {
     const tube = new THREE.CylinderGeometry(0.105, 0.082, 0.26, 20, 3, true);
@@ -867,10 +1051,16 @@ function hairMesh(look) {
 
 /*
  * Builds a ~1.8 m human facing +Z with its feet at y = 0. look sets colours and
- * style: skin, hair, hairStyle ('short' | 'long' | 'bald'), beard (null |
- * 'short' | 'full'), stubble, eyes, brows, lips, tunic, sleeves, trousers,
- * boots, belt, pouch, trim, cloak (null for none), seed. look.decorate({ bones,
- * attach }) may hang accessories (a crown, a hood, an apron) on bones.
+ * style:
+ *   body     female, belly (0..1), skirt ('tunic' | 'robe'), age (0..1),
+ *            scar (null | 'burn'), gloveL (a colour for a gloved left hand)
+ *   head     skin, hair, hairStyle ('short' | 'long' | 'bun' | 'tonsure' |
+ *            'bald'), beard (null | 'short' | 'full'), stubble, eyes, brows, lips
+ *   clothes  tunic, sleeves, trousers, boots, belt, pouch (null for none), trim,
+ *            cloak (null for none), cloakTrim
+ *   seed     varies the painted skin
+ * look.gear(api) adds accessories (a crown, an apron, a staff) to the figure's
+ * own mesh, so they cost no extra draw calls; see gearApi below.
  */
 export function createFigure(look = {}) {
   const L = {
@@ -890,10 +1080,18 @@ export function createFigure(look = {}) {
     pouch: 0x6a4a2e,
     trim: 0xb8923e,
     cloak: 0x6e2525,
+    cloakTrim: null,
+    female: false,
+    belly: 0,
+    skirt: 'tunic',
+    age: 0,
+    scar: null,
+    gloveL: null,
     seed: 7,
     ...look,
   };
   if (L.brows === null) L.brows = L.hair;
+  if (L.female && look.stubble === undefined) L.stubble = false;
   const c = {
     skin: colour(L.skin),
     earHollow: colour(L.skin).multiplyScalar(0.62),
@@ -904,22 +1102,25 @@ export function createFigure(look = {}) {
     bootCuff: colour(L.boots).multiplyScalar(1.25),
     sole: colour(0x1e150f),
     belt: colour(L.belt),
-    pouch: colour(L.pouch),
+    pouch: L.pouch === null ? null : colour(L.pouch),
     trim: colour(L.trim),
+    gloveL: L.gloveL === null ? null : colour(L.gloveL),
     cloak: L.cloak === null ? null : colour(L.cloak),
-    cloakHem: L.cloak === null ? null : colour(L.cloak).multiplyScalar(0.75),
+    cloakHem: L.cloak === null ? null : L.cloakTrim !== null ? colour(L.cloakTrim) : colour(L.cloak).multiplyScalar(0.75),
   };
+  const S = L.female ? FEMALE_HEAD : MALE_HEAD;
 
   const B = new SkinBuilder();
-  buildBody(B, c);
-  buildHead(B);
+  buildBody(B, c, L);
+  buildHead(B, S);
   if (c.cloak) buildCloak(B, c);
-  const geometry = B.build();
 
   const bones = {};
   for (const name of BONES) {
     const b = new THREE.Bone();
     b.name = name;
+    // Arms bend first, then twist about the parent bone, so poses can fold them across the body.
+    if (/Arm|forearm|hand/.test(name)) b.rotation.order = 'YXZ';
     bones[name] = b;
   }
   for (const name of BONES) {
@@ -933,32 +1134,150 @@ export function createFigure(look = {}) {
       bones[name].position.set(j[0], j[1], j[2]);
     }
   }
+  if (L.gear) L.gear(gearApi(B, bones));
+  const geometry = B.build();
 
   const shared = figureTextures();
   const face = new THREE.MeshStandardMaterial({ map: paintFace(L), roughness: 0.55, metalness: 0 });
-  const mesh = new THREE.SkinnedMesh(geometry, [shared.skin, shared.cloth, face]);
+  const mesh = new THREE.SkinnedMesh(geometry, [shared.skin, shared.cloth, face, shared.metal]);
   mesh.add(bones.hips);
   mesh.bind(new THREE.Skeleton(BONES.map((n) => bones[n])));
   mesh.castShadow = true;
   mesh.receiveShadow = true;
 
-  const hair = hairMesh(L);
+  const hair = hairMesh(L, S);
   if (hair) bones.head.add(hair);
 
   const root = new THREE.Group();
   root.add(mesh);
-  if (L.decorate) L.decorate({ bones, attach: (bone, object) => bones[bone].add(object), joint: (bone) => JOINTS[bone] });
-  return { root, mesh, bones, hipsY: JOINTS.hips[1] };
+  return { root, mesh, hair, bones, hipsY: JOINTS.hips[1], look: L };
 }
 
-// Procedural walk / run / idle on the skeleton: pelvis sway and twist, counter-
-// rotating shoulders, bending knees and elbows, heel-to-toe feet, a swaying cloak.
+/*
+ * What look.gear(api) gets:
+ *   add(bone, geometry, colorAt, metal)  geometry in bind-pose space (feet at 0,
+ *                                        facing +Z), bound rigidly to bone;
+ *                                        colorAt(i) gives vertex i's colour
+ *   grip(bone, action, time)             a matrix placing an item held in that
+ *                                        hand: item space has the grip at the
+ *                                        origin, and the item stands upright
+ *                                        (+Y up, +Z forward) in that pose
+ */
+function gearApi(B, bones) {
+  return {
+    add(bone, geometry, colorAt, metal = false) {
+      B.mesh(geometry, metal ? 'metal' : 'skin', bone, colorAt);
+    },
+    grip(bone, action, time = 0) {
+      const a = new FigureAnimator({ bones, hipsY: JOINTS.hips[1] });
+      a.action = action;
+      a.settle();
+      a.time = time;
+      a.update(0, 0);
+      bones.hips.updateMatrixWorld(true);
+      const q = bones[bone].getWorldQuaternion(new THREE.Quaternion()).invert();
+      // Back to the bind pose before the skeleton is bound.
+      for (const name of BONES) bones[name].rotation.set(0, 0, 0);
+      bones.hips.position.set(...JOINTS.hips);
+      bones.hips.updateMatrixWorld(true);
+      const j = JOINTS[bone];
+      const side = bone.endsWith('L') ? -1 : 1;
+      return new THREE.Matrix4().compose(new THREE.Vector3(j[0] + side * 0.003, j[1] - 0.055, j[2] + 0.012), q, new THREE.Vector3(1, 1, 1));
+    },
+  };
+}
+
+/*
+ * Poses layered over the walk cycle, as target rotations [x, y, z] per bone.
+ * A 'carry' pose (holding a staff) stays on while walking; the others fade in
+ * only while standing still. right: the pose uses the right arm, so talking
+ * gestures switch to the left.
+ */
+const ACTIONS = {
+  // Hands clasped behind the back.
+  behind: {
+    pose: () => ({
+      upperArmL: [0.42, 0, 0.12], forearmL: [-1.45, 1.45, 0], handL: [0, 0, 0],
+      upperArmR: [0.42, 0, -0.12], forearmR: [-1.45, -1.45, 0], handR: [0, 0, 0],
+    }),
+  },
+  // Hands together before the chest, head bowed.
+  pray: {
+    pose: () => ({
+      upperArmL: [-0.32, 0, 0.28], forearmL: [-1.55, 0.75, 0], handL: [0.2, 0, 0],
+      upperArmR: [-0.32, 0, -0.28], forearmR: [-1.55, -0.75, 0], handR: [0.2, 0, 0],
+      neck: [0.1, 0, 0], head: [0.28, 0, 0],
+    }),
+  },
+  // Raise the hammer slowly, strike fast, rest; the other hand steadies the work.
+  hammer: {
+    right: true,
+    pose: (t) => {
+      const p = (t * 0.9) % 1;
+      const k = p < 0.62 ? smooth(0, 0.62, p) : p < 0.74 ? 1 - smooth(0.62, 0.74, p) : 0;
+      return {
+        upperArmR: [-0.35 - 1.25 * k, 0, 0.12], forearmR: [-0.55 - 0.75 * k, 0, 0], handR: [0.85 - 0.6 * k, 0, 0],
+        upperArmL: [-0.55, 0, 0.1], forearmL: [-0.85, 0.3, 0], handL: [0.2, 0, 0],
+        spine: [0.12, 0, 0], chest: [0.06, 0, 0], neck: [0.1, 0, 0], head: [0.32, 0, 0],
+      };
+    },
+  },
+  // One hand holds a mug, the other polishes it.
+  wipe: {
+    right: true,
+    pose: (t) => ({
+      upperArmL: [-0.38, 0, 0.18], forearmL: [-1.4, 0.55, 0], handL: [0, 0, 0],
+      upperArmR: [-0.45 + 0.07 * Math.sin(t * 3.2), 0, -0.22], forearmR: [-1.3 + 0.15 * Math.cos(t * 3.2), -0.75, 0], handR: [0.1, 0, 0],
+      head: [0.22, 0, 0],
+    }),
+  },
+  // A staff or tool held upright in the right hand.
+  staff: {
+    carry: true,
+    right: true,
+    pose: () => ({ upperArmR: [-0.22, 0, 0.14], forearmR: [-1.0, 0, 0], handR: [0, 0, 0] }),
+  },
+};
+
+// Moves a bone's rotation towards [x, y, z] by weight w.
+function blendBone(bone, r, w) {
+  if (!r || w <= 0) return;
+  bone.rotation.x += (r[0] - bone.rotation.x) * w;
+  bone.rotation.y += (r[1] - bone.rotation.y) * w;
+  bone.rotation.z += (r[2] - bone.rotation.z) * w;
+}
+
+/*
+ * Procedural animation on the skeleton: walk, run and idle (pelvis sway and
+ * twist, counter-rotating shoulders, bending knees and elbows, heel-to-toe
+ * feet, a swaying cloak), with optional layers on top:
+ *   action   a pose from ACTIONS ('behind', 'pray', 'hammer', 'wipe', 'staff')
+ *   talking  hand gestures and nods while speaking
+ *   lookAt   { yaw, pitch } in radians relative to the body, or null
+ *   stoop    a permanent forward bend (0..1)
+ */
 export class FigureAnimator {
   constructor(figure) {
     this.figure = figure;
     this.phase = 0;
     this.moving = 0;
     this.time = Math.random() * 10;
+    this.action = null;
+    this.talking = false;
+    this.lookAt = null;
+    this.stoop = 0;
+    this._act = 0;
+    this._actName = null;
+    this._talk = 0;
+    this._lookYaw = 0;
+    this._lookPitch = 0;
+    this._looking = 0;
+  }
+
+  // Jumps straight to the current action pose (no fade), e.g. when a figure is first placed.
+  settle() {
+    this._actName = this.action;
+    this._act = this.action ? 1 : 0;
   }
 
   update(dt, speed) {
@@ -978,13 +1297,39 @@ export class FigureAnimator {
     const t = this.time;
     const breathe = Math.sin(t * 1.7);
 
+    // Layer weights: the action fades out to change, while walking (unless carried) and while talking.
+    const def = this.action ? ACTIONS[this.action] : null;
+    const kAct = 1 - Math.exp(-5 * dt);
+    if (this._actName !== this.action) {
+      this._act -= this._act * kAct * 1.6;
+      if (this._act < 0.03) {
+        this._actName = this.action;
+        this._act = 0;
+      }
+    } else {
+      const want = def && (def.carry || (m < 0.15 && !this.talking)) ? 1 : 0;
+      this._act += (want - this._act) * kAct;
+    }
+    this._talk += ((this.talking ? 1 : 0) - this._talk) * (1 - Math.exp(-6 * dt));
+    const look = this.lookAt;
+    this._looking += ((look ? 1 : 0) - this._looking) * (1 - Math.exp(-4 * dt));
+    const kLook = 1 - Math.exp(-6 * dt);
+    this._lookYaw += ((look ? clamp(look.yaw, -1.2, 1.2) : 0) - this._lookYaw) * kLook;
+    this._lookPitch += ((look ? clamp(look.pitch, -0.5, 0.5) : 0) - this._lookPitch) * kLook;
+    const free = 1 - this._looking;
+    const bend = this.stoop;
+
     // Pelvis: bob, twist with the stride, drop on the swinging side, idle weight shift.
-    b.hips.position.y = this.figure.hipsY + Math.abs(c) * 0.045 * m - m * 0.025 - r * 0.03;
+    b.hips.position.y = this.figure.hipsY + Math.abs(c) * 0.045 * m - m * 0.025 - r * 0.03 - bend * 0.03;
     b.hips.rotation.set(r * 0.05, -s * 0.1 * m, c * 0.035 * m + Math.sin(t * 0.5) * 0.02 * idle);
-    b.spine.rotation.set(r * 0.12 + breathe * 0.008 * idle, s * 0.05 * m, -c * 0.02 * m);
-    b.chest.rotation.set(r * 0.06 + breathe * 0.012 * idle, s * 0.07 * m, 0);
-    b.neck.rotation.set(-r * 0.08, -s * 0.05 * m, 0);
-    b.head.rotation.set(-r * 0.06 + Math.sin(t * 0.23) * 0.04 * idle, Math.sin(t * 0.37) * 0.3 * idle - s * 0.04 * m, 0);
+    b.spine.rotation.set(r * 0.12 + breathe * 0.008 * idle + bend * 0.32, s * 0.05 * m, -c * 0.02 * m);
+    b.chest.rotation.set(r * 0.06 + breathe * 0.012 * idle + bend * 0.2, s * 0.07 * m, 0);
+    b.neck.rotation.set(-r * 0.08 - bend * 0.28, -s * 0.05 * m + this._lookYaw * 0.4, 0);
+    b.head.rotation.set(
+      -r * 0.06 + Math.sin(t * 0.23) * 0.04 * idle * free - bend * 0.18 - this._lookPitch * 0.7,
+      (Math.sin(t * 0.37) * 0.3 * idle - s * 0.04 * m) * free + this._lookYaw * 0.6,
+      0,
+    );
 
     // Legs: thigh swing, knee bends while the leg comes forward, foot rolls heel to toe.
     const legs = [[b.thighL, b.shinL, b.footL, s, c], [b.thighR, b.shinR, b.footR, -s, -c]];
@@ -1003,8 +1348,26 @@ export class FigureAnimator {
       hand.rotation.set(-0.1 - r * 0.2, 0, 0);
     }
 
+    // Action pose.
+    const actDef = this._actName ? ACTIONS[this._actName] : null;
+    if (actDef && this._act > 0.001) {
+      const pose = actDef.pose(t);
+      for (const name in pose) blendBone(b[name], pose[name], this._act);
+    }
+
+    // Talking: a hand that gestures (whichever is free) and small nods.
+    if (this._talk > 0.001) {
+      const left = actDef && actDef.right && actDef.carry;
+      const side = left ? -1 : 1;
+      const S = left ? 'L' : 'R';
+      blendBone(b[`upperArm${S}`], [-0.3 - 0.1 * Math.sin(t * 1.7), 0, side * 0.1], this._talk);
+      blendBone(b[`forearm${S}`], [-1.1 - 0.25 * Math.sin(t * 2.9 + 1), -side * 0.35, 0], this._talk);
+      blendBone(b[`hand${S}`], [0.3 * Math.sin(t * 2.3), 0, 0], this._talk);
+      b.head.rotation.x += Math.sin(t * 5.1) * 0.035 * this._talk;
+    }
+
     // The cloak trails behind as speed builds.
-    b.cloak1.rotation.x = 0.08 + m * (0.12 + running * 0.35) + Math.sin(this.phase * 2) * 0.04 * m + Math.sin(t * 1.3) * 0.01;
+    b.cloak1.rotation.x = 0.08 + m * (0.12 + running * 0.35) + Math.sin(this.phase * 2) * 0.04 * m + Math.sin(t * 1.3) * 0.01 + bend * 0.15;
     b.cloak2.rotation.x = 0.04 + m * (0.1 + running * 0.25) + Math.sin(this.phase * 2 + 0.8) * 0.05 * m;
   }
 }
@@ -1066,6 +1429,15 @@ export class Player {
 
     this._visualY += (pos.y - this._visualY) * (1 - Math.exp(-30 * dt));
     this.animator.update(dt, this.speed);
+    this._sync();
+  }
+
+  // Stands still and turns towards (x, z), e.g. to face someone in a conversation.
+  faceTowards(x, z, dt) {
+    this.velocity.set(0, 0, 0);
+    this.speed = 0;
+    this.heading = dampAngle(this.heading, Math.atan2(x - this.position.x, z - this.position.z), 8, dt);
+    this.animator.update(dt, 0);
     this._sync();
   }
 

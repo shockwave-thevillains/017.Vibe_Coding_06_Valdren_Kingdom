@@ -22,6 +22,8 @@
   <div id="app"></div>
 
   <div id="hud">
+    <div id="labels"></div>
+    <div id="prompt" class="hidden"></div>
     <div id="hint" class="hidden"></div>
     <div id="toast" role="status" aria-live="polite"></div>
     <pre id="debug" class="hidden"></pre>
@@ -33,6 +35,18 @@
     <button type="button" class="tbtn" id="btn-interact" data-action="interact" aria-label="Interact">Interact</button>
     <button type="button" class="tbtn" id="btn-pause" data-action="pause" aria-label="Pause"><span class="bars"></span></button>
   </div>
+
+  <section id="dialogue" class="hidden" role="dialog" aria-labelledby="dlg-name">
+    <div class="dlg-panel">
+      <header class="dlg-head">
+        <span id="dlg-name"></span>
+        <span id="dlg-role"></span>
+      </header>
+      <p id="dlg-text" aria-live="polite"></p>
+      <div id="dlg-choices"></div>
+      <p class="dlg-help desktop-only"><kbd>1</kbd>–<kbd>3</kbd> answer · <kbd>Space</kbd> skip · <kbd>Esc</kbd> leave</p>
+    </div>
+  </section>
 
   <section id="start" class="overlay">
     <div class="panel">
