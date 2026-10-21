@@ -1222,6 +1222,12 @@ const ACTIONS = {
       head: [0.22, 0, 0],
     }),
   },
+  // The traveller's lantern held out in front in the right hand, swaying a little.
+  lantern: {
+    carry: true,
+    right: true,
+    pose: (t) => ({ upperArmR: [-0.38 + Math.sin(t * 1.9) * 0.02, 0, -0.08], forearmR: [-1.12, 0.12, 0], handR: [0.25, 0, 0] }),
+  },
   // A staff or tool held upright in the right hand.
   staff: {
     carry: true,
@@ -1289,8 +1295,8 @@ function blendBone(bone, r, w) {
  * Procedural animation on the skeleton: walk, run and idle (pelvis sway and
  * twist, counter-rotating shoulders, bending knees and elbows, heel-to-toe
  * feet, a swaying cloak), with optional layers on top:
- *   action   a pose from ACTIONS ('behind', 'hammer', 'wipe', 'staff', 'sit',
- *            'drink', 'knead')
+ *   action   a pose from ACTIONS ('behind', 'hammer', 'wipe', 'lantern', 'staff',
+ *            'sit', 'drink', 'knead')
  *   talking  hand gestures and nods while speaking
  *   lookAt   { yaw, pitch } in radians relative to the body, or null
  *   stoop    a permanent forward bend (0..1)
@@ -1427,6 +1433,9 @@ export class Player {
     this.position.y = world.getGroundHeight(this.position.x, this.position.z);
     this.velocity = new THREE.Vector3();
     this.heading = SITES.spawn.heading;
+    // While true and standing still, the traveller turns to face where the camera looks
+    // (to shine the lantern there).
+    this.aiming = false;
     this.speed = 0;
     this._visualY = this.position.y;
     this._sync();
@@ -1465,6 +1474,8 @@ export class Player {
     this.speed = dt > 0 ? Math.hypot(pos.x - px, pos.z - pz) / dt : 0;
     if (move.magnitude > 0.01 && Math.hypot(vel.x, vel.z) > 0.3) {
       this.heading = dampAngle(this.heading, Math.atan2(vel.x, vel.z), 12, dt);
+    } else if (this.aiming && move.magnitude <= 0.01) {
+      this.heading = dampAngle(this.heading, cameraYaw + Math.PI, 5, dt);
     }
 
     this._visualY += (pos.y - this._visualY) * (1 - Math.exp(-30 * dt));

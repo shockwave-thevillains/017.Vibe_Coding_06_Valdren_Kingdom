@@ -36,6 +36,7 @@ export class UI {
     this.promptEl = $('prompt');
     this.labelsEl = $('labels');
     this.interactBtn = $('btn-interact');
+    this.lanternBtn = $('btn-lantern');
     this.newBtn = $('btn-new');
     this.saveStatusEl = $('save-status');
     this.compassTrack = null;
@@ -160,6 +161,12 @@ export class UI {
   }
 
   // ----------------------------------------------------------------- HUD
+
+  // The lantern button glows while the lantern is lit.
+  setLantern(on) {
+    this.lanternBtn.classList.toggle('on', on);
+    this.lanternBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
 
   setPlaying(playing) {
     this.body.classList.toggle('playing', playing);

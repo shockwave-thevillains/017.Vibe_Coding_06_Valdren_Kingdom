@@ -7,6 +7,7 @@ import { Balloons } from './balloons.js';
 import { Boats } from './boats.js';
 import { Dragon } from './dragon.js';
 import { Post } from './post.js';
+import { Lantern } from './lantern.js';
 import { Dialogue } from './dialogue.js';
 import { Lore, Reader, Journal, Progress } from './lore.js';
 import { Input } from './input.js';
@@ -46,17 +47,17 @@ const PRESETS = {
   low: {
     pixelRatio: 1, antialias: false, shadows: false, shadowMap: 1024, shadowExtent: 34,
     textureSize: 256, anisotropy: 2, treeDetail: 0, cropSparse: true,
-    grass: 2500, grassTile: 38, lampLights: 0, lodRadius: 40, people: 40, bloom: false,
+    grass: 2500, grassTile: 38, lampLights: 0, lodRadius: 40, people: 40, bloom: false, lanternShadow: false,
   },
   medium: {
     pixelRatio: 1.5, antialias: true, shadows: true, shadowMap: 1024, shadowExtent: 34,
     textureSize: 256, anisotropy: 4, treeDetail: 0, cropSparse: true,
-    grass: 6000, grassTile: 46, lampLights: 2, lodRadius: 55, people: 60, bloom: false,
+    grass: 6000, grassTile: 46, lampLights: 2, lodRadius: 55, people: 60, bloom: false, lanternShadow: false,
   },
   high: {
     pixelRatio: 2, antialias: true, shadows: true, shadowMap: 2048, shadowExtent: 46,
     textureSize: 512, anisotropy: 8, treeDetail: 1, cropSparse: false,
-    grass: 18000, grassTile: 64, lampLights: 4, lodRadius: 75, people: 90, bloom: true,
+    grass: 18000, grassTile: 64, lampLights: 4, lodRadius: 75, people: 90, bloom: true, lanternShadow: true,
   },
 };
 const LOAD_TIME = ['antialias', 'textureSize', 'anisotropy', 'treeDetail', 'cropSparse'];
@@ -168,6 +169,7 @@ async function boot() {
   ui.setStatus('Summoning the traveller…');
   await nextFrame();
   const player = new Player(scene, world);
+  const lantern = new Lantern(scene, quality);
   const follow = new FollowCamera(camera, world);
   follow.yaw = 0.5;
   follow.pitch = 0.2;
@@ -293,7 +295,7 @@ async function boot() {
     setMode('playing');
     input.requestPointerLock();
     if (dataError) ui.toast(dataError, 6000);
-    else ui.toast(saved ? `Welcome back to Valdren. Journal: ${lore.found.length} of ${lore.total} discoveries.` : 'Welcome to Valdren. Press J for your journal, M for the map.', 4000);
+    else ui.toast(saved ? `Welcome back to Valdren. Journal: ${lore.found.length} of ${lore.total} discoveries.` : `Welcome to Valdren. ${input.touchMode ? 'Tap Journal for your journal and the minimap for the map' : 'Press J for your journal, M for the map'}.`, 4000);
   }
 
   // --------------------------------------------------------- conversation
@@ -427,6 +429,7 @@ async function boot() {
     // Let the menu show the choice before the materials recompile for the new lights.
     await nextFrame();
     world.setQuality(current);
+    lantern.setQuality(current);
     npcs.range = current.people;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, current.pixelRatio));
     post.setQuality(current);
@@ -488,6 +491,20 @@ async function boot() {
     if (mode === 'map') closeOverlay('key');
     else openMap();
   });
+  input.on('lantern', () => {
+    if (mode !== 'playing') return;
+    setLantern(!lantern.on);
+    ui.toast(lantern.on ? 'You light your lantern.' : 'You put out your lantern.', 1800);
+  });
+
+  // The hand lantern: held out in front while lit, and the traveller turns to shine it
+  // wherever the camera looks when standing still.
+  function setLantern(on) {
+    lantern.toggle(on);
+    player.aiming = on;
+    player.animator.action = on ? 'lantern' : null;
+    ui.setLantern(on);
+  }
 
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) return;
@@ -537,6 +554,8 @@ async function boot() {
   const look = { yaw: 0, pitch: 0 };
   const stats = { frames: 0, time: 0 };
   const slow = { time: 0, warned: false };
+  // Once a session, the first nightfall (after a few seconds of play) suggests the lantern.
+  const nightHint = { played: 0, shown: false };
   const head = new THREE.Vector3();
   const shotFocus = new THREE.Vector3();
   const sideDocked = window.matchMedia('(max-height: 520px) and (orientation: landscape)');
@@ -677,6 +696,12 @@ async function boot() {
       follow.update(dt, player.position);
       // Hide the player when an obstacle squeezes the camera right up to them.
       player.figure.root.visible = follow.actualDistance > 1.0;
+      lantern.update(dt, player, camera, world.night);
+      nightHint.played += dt;
+      if (!nightHint.shown && nightHint.played > 6 && world.night > 0.6 && !lantern.on) {
+        nightHint.shown = true;
+        ui.toast(`Night has fallen. ${input.touchMode ? 'Tap the lantern button' : 'Press F'} to light your lantern.`, 5000);
+      }
       reachable = balloons.riding ? null : findReachable();
       if (reachable && reachable.balloon) ui.setPrompt('the balloon', input.touchMode, 'Ride');
       else if (reachable && reachable.entry) ui.setPrompt(reachable.entry.title, input.touchMode, lore.kindOf(reachable.entry).verb);
@@ -699,6 +724,7 @@ async function boot() {
         frameConversation(dt, talkingTo);
       }
       player.figure.root.visible = true;
+      lantern.update(dt, player, camera, world.night);
       npcs.update(dt, player, dialogue.typing);
       animals.update(dt, player, npcs);
       balloons.update(dt);
@@ -717,6 +743,7 @@ async function boot() {
       dragon.update(dt);
       lore.update(dt);
       follow.update(dt, player.position);
+      lantern.update(dt, player, camera, world.night);
       world.update(dt, player.position, camera);
       draw();
     } else if (needsRender) {
@@ -734,7 +761,7 @@ async function boot() {
   ui.setReady(saved ? `Saved journey found: ${lore.found.length} of ${lore.total} discoveries.` : null, progress.available);
 
   // Handy from the browser console while developing.
-  window.valdren = { THREE, renderer, post, scene, camera, world, player, follow, input, ui, npcs, animals, balloons, boats, dragon, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
+  window.valdren = { THREE, renderer, post, scene, camera, world, player, lantern, setLantern, follow, input, ui, npcs, animals, balloons, boats, dragon, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
 }
 
 boot().catch((err) => {

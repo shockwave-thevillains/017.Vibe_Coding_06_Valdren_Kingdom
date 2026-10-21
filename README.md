@@ -98,7 +98,7 @@ shoulder, the line types itself out (click, tap or press `Space` to show it at
 once), and you pick a reply with the mouse, a tap or the keys `1`–`3`. `Esc`
 ends the conversation.
 
-## Animals, ships, balloons and the dragon
+## Animals, ships, balloons, the dragon and your lantern
 
 - **Animals** live all over the kingdom: horses in the paddock (Chestnut likes a
   scratch; Ash bites), sheep on the meadows, cows by the windmill, pigs in their
@@ -116,6 +116,12 @@ ends the conversation.
   beating her wings, banking into her turns, now and then breathing a plume of
   fire at the clouds, and every so often landing at her lair to rest before she
   takes off again.
+- **Your lantern:** press `F` (or tap the lantern button) to light a brass
+  bullseye lantern and again to put it out. You hold it out in front of you; its
+  lens throws a beam like a torch where you face, tilting with the camera, and
+  when you stand still you turn to shine it wherever you look. After dark the
+  beam shows faintly in the air. It works by day and indoors too, and the first
+  nightfall of a visit reminds you it is there.
 - **Hot-air balloons** drift high over the valley. On the Balloon Meadow, beyond
   the east gate, a tethered balloon waits on the grass: stand by its basket and
   press `E` (**Ride**) to go up on its rope for a look over the whole kingdom.
@@ -162,6 +168,7 @@ offer three presets. Touch devices start on **Medium**, everything else on
 | Full-detail trees within | 40 m | 55 m | 75 m |
 | Textures | 256 px | 256 px | 512 px |
 | Bloom (glowing lanterns, windows, sun) and vignette | off | off | on |
+| Shadows from your lantern's beam | off | off | on |
 
 On High the picture is drawn through a short chain of passes (bloom, then tone
 mapping and a light vignette), and its edges are smoothed in those passes
@@ -198,6 +205,7 @@ maps), on desktop and on phones, with WebGL 2.
 | Interact    | `E`                            | **Interact** button                       |
 | Read, examine | `E` by something that glints | **Interact** button                     |
 | Pet an animal | `E` next to it               | **Interact** button                       |
+| Lantern on / off | `F`                         | Lantern button (above **Journal**)        |
 | Ride the balloon | `E` by its basket on the meadow | **Interact** button                 |
 | Journal     | `J`                            | **Journal** button                        |
 | Map         | `M`, or click the minimap      | Tap the minimap                           |
@@ -337,6 +345,15 @@ left mouse button and drag to look around.
   and pitches into her turns, glides or beats her wings by how she is climbing,
   breathes a cone of fire every half minute or so, and every seventh flight
   lands at her lair.
+- **The lantern** (`src/lantern.js`): a small merged mesh (body, cone and
+  chimney, handle, lens tube) placed at the right hand every frame, a glowing
+  lens and horn panes, a `SpotLight` (warm, 42 m reach, soft edge, a slight
+  flicker) placed at the lens and aimed along the traveller's heading, pitched
+  with the camera and eased so it lags a little, and an additive open cone for
+  the visible shaft after dark. The spotlight is always in the scene and only
+  its intensity changes, so lighting the lantern never recompiles a material;
+  on High it casts shadows, and its shadow map is only redrawn while lit. A
+  `lantern` pose (layered like the staff) holds the arm out.
 - **Balloons** (`src/balloons.js`): one mesh each (a lathed envelope striped per
   face, skirt, ropes, wicker basket, sandbags, burner) and a flame that roars
   in bursts. Four follow wide loops above the land; the tethered one climbs to
@@ -397,6 +414,7 @@ src/balloons.js   the hot-air balloons and the ride on the tethered one
 src/boats.js      ships and boats on the lake and the river
 src/dragon.js     the dragon: its mesh, shader animation and flight
 src/post.js       bloom, tone mapping and vignette passes (High preset)
+src/lantern.js    the traveller's lantern: the prop, its beam and glow
 src/dialogue.js   branching conversations: typewriter, replies, flags
 src/lore.js       discoveries and their glints, the reader, the journal, the save
 data/npcs.json    the inhabitants: looks, outfits, routes, dialogue

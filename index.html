@@ -37,6 +37,12 @@
   <div id="touch-ui">
     <div id="joy-base"><div id="joy-knob"></div></div>
     <button type="button" class="tbtn" id="btn-journal" data-action="journal" aria-label="Journal">Journal</button>
+    <button type="button" class="tbtn" id="btn-lantern" data-action="lantern" aria-label="Lantern" aria-pressed="false">
+      <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 4.5a3 3 0 0 1 6 0"/><path d="M8 7.5h8l-1 1.5H9z"/><rect x="8.5" y="9" width="7" height="9" rx="1"/>
+        <path d="M7.5 19.5h9"/><path d="M12 11.5v4" class="flame"/>
+      </svg>
+    </button>
     <button type="button" class="tbtn" id="btn-interact" data-action="interact" aria-label="Interact">Interact</button>
     <button type="button" class="tbtn" id="btn-pause" data-action="pause" aria-label="Pause"><span class="bars"></span></button>
   </div>
@@ -146,6 +152,7 @@
         <dt><kbd>E</kbd></dt><dd>Interact</dd>
         <dt><kbd>J</kbd></dt><dd>Journal</dd>
         <dt><kbd>M</kbd></dt><dd>Map</dd>
+        <dt><kbd>F</kbd></dt><dd>Lantern on / off</dd>
         <dt><kbd>Esc</kbd></dt><dd>Pause</dd>
       </dl>
     </div>
@@ -157,6 +164,7 @@
         <dt>Interact</dt><dd>Talk, read, examine</dd>
         <dt>Journal</dt><dd>Your discoveries</dd>
         <dt>Minimap</dt><dd>Tap it for the full map</dd>
+        <dt>Lantern</dt><dd>Light it or put it out</dd>
         <dt><span class="bars inline"></span></dt><dd>Pause</dd>
       </dl>
     </div>

@@ -3,7 +3,7 @@
  * joystick and look area, and the on-screen buttons. Everything is reduced to
  * a movement vector, accumulated look/zoom deltas, and named action events.
  *
- * Events emitted: interact, journal, map, pause, debug, lockchange, lockerror, touchmode.
+ * Events emitted: interact, journal, map, lantern, pause, debug, lockchange, lockerror, touchmode.
  */
 
 const MOVE_KEYS = {
@@ -21,6 +21,7 @@ const ACTION_KEYS = {
   KeyE: 'interact',
   KeyJ: 'journal',
   KeyM: 'map',
+  KeyF: 'lantern',
   Escape: 'pause',
   Backquote: 'debug',
   F3: 'debug',

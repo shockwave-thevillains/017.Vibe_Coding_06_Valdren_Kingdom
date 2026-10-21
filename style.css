@@ -912,6 +912,28 @@ body.touch.playing #touch-ui {
   font-size: 12px;
 }
 
+#btn-lantern {
+  right: calc(127px + var(--safe-right));
+  bottom: calc(100px + var(--safe-bottom));
+  width: 52px;
+  height: 52px;
+}
+
+#btn-lantern.on {
+  border-color: #ffd890;
+  background: rgba(201, 150, 60, 0.6);
+  box-shadow: 0 0 16px rgba(255, 196, 100, 0.65);
+}
+
+#btn-lantern .flame {
+  opacity: 0.35;
+}
+
+#btn-lantern.on .flame {
+  opacity: 1;
+  stroke: #fff2c4;
+}
+
 #btn-pause {
   right: calc(14px + var(--safe-right));
   top: calc(14px + var(--safe-top));
