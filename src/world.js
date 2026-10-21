@@ -15,14 +15,15 @@ import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometr
 
 // =================================================================== layout
 
-export const WORLD_HALF = 400;        // terrain spans [-400, 400] on X and Z
-export const PLAY_HALF = 335;         // actors are kept inside this square
+export const WORLD_HALF = 640;        // terrain spans [-640, 640] on X and Z
+export const PLAY_HALF = 575;         // actors are kept inside this square
 export const WATER_LEVEL = 0.8;       // river surface height
 export const MAX_WADE_DEPTH = 0.95;   // deeper water cannot be walked into
 const RIVERBED_Y = -1.6;
 const MAX_GRADE = 1.0;                // rise over run above which a step is refused (45°)
 const STEP_UP = 0.45;                 // stairs and kerbs up to this height can be climbed
-const TERRAIN_SEGMENTS = 256;         // ~3.1 m grid
+const TERRAIN_SEGMENTS = 384;         // ~3.3 m grid
+const MOUNTAIN_EDGE = 540;            // the ring of mountains rises beyond this
 const SUN_TILT = 0.5;                 // tilts the sun's arc towards the south
 const DAY_MINUTES = 24;               // one full day at daytime speed; nights pass twice as fast
 const DEG = Math.PI / 180;
@@ -42,6 +43,11 @@ export const SITES = {
   bakery: { x: 88.5, z: 59 },
   stables: { x: -72, z: 30 },
   balloonField: { x: 214, z: 22 },
+  harbour: { x: 338, z: 44 },
+  lighthouse: { x: 470, z: -24 },
+  millbrook: { x: 40, z: 362 },
+  dragonPeak: { x: -455, z: -440 },
+  garden: { x: 58, z: -196 },
   farmland: { x: 40, z: 222, hw: 105, hd: 55, y: 3.2 },
   farmhouse: { x: -24, z: 199 },
   windmill: { x: 72, z: 194 },
@@ -147,9 +153,18 @@ function distToPolygonEdge(x, z, pts) {
 
 // ================================================================ the plan
 
-// Centre line of the river, which flows west to east south of the town.
+// Centre line of the river, which flows west to east south of the town into the lake.
 export function riverZ(x) {
   return 128 + 18 * Math.sin(x * 0.012) + 8 * Math.sin(x * 0.031 + 1.3);
+}
+
+// Mirrormere, the lake in the east: an ellipse with a ragged shore.
+export const LAKE = { x: 482, z: 92, rx: 122, rz: 108, bed: -4.5 };
+
+// 0 on dry land well away from the lake, 1 over its deep water.
+export function lakeWeight(x, z) {
+  const d = Math.hypot((x - LAKE.x) / LAKE.rx, (z - LAKE.z) / LAKE.rz) + (fbm(x * 0.02 + 9, z * 0.02 - 4, 2) - 0.5) * 0.12;
+  return 1 - smoothstep(0.84, 1.04, d);
 }
 
 function townY(z) {
@@ -190,7 +205,8 @@ const CASTLE_GATE_Z = SITES.castle.z + 34 * Math.cos(22.5 * DEG);
 
 const MARKET = { x0: -20, x1: 20, z0: -4, z1: 28 };
 const FOUNTAIN_SQ = { x0: 69, x1: 99, z0: 28, z1: 52 };
-const SQUARES = [MARKET, FOUNTAIN_SQ];
+const HARBOUR_SQ = { x0: 340, x1: 362, z0: 39, z1: 53 };
+const SQUARES = [MARKET, FOUNTAIN_SQ, HARBOUR_SQ];
 
 // Paved squares, where kerbs and lamp posts stay out of the way.
 function inSquare(x, z, pad = 0) {
@@ -222,6 +238,13 @@ export const PLACES = [
   { name: 'Fountain Square', x: 84, z: 40, size: 0 },
   { name: 'Stables', x: -72, z: 30, size: 0 },
   { name: 'Balloon Meadow', x: 214, z: 22, size: 1 },
+  { name: 'Riverside', x: 42, z: 104, size: 0 },
+  { name: 'Mirrormere', x: 510, z: 120, size: 2 },
+  { name: 'Aldra’s Haven', x: 326, z: 40, size: 1 },
+  { name: 'Lighthouse', x: 470, z: -36, size: 0 },
+  { name: 'Millbrook', x: 40, z: 375, size: 1 },
+  { name: 'Dragon’s Peak', x: -455, z: -440, size: 1 },
+  { name: 'Royal Garden', x: 58, z: -208, size: 0 },
   { name: 'Old Bridge', x: 14, z: RIVER_MID, size: 1 },
   { name: 'Farmstead', x: -24, z: 208, size: 1 },
   { name: 'Windmill', x: 72, z: 186, size: 0 },
@@ -251,7 +274,22 @@ const ROAD_DEFS = [
   { kind: 'dirt', w: 4.5, pts: [[0, BRIDGE.zS - 0.3], [2, 170], [6, 190], [12, 205], [40, 205], [66, 199]] },
   { kind: 'dirt', w: 3.5, pts: [[6, 190], [-8, 196], [-19.5, 199]] },
   { kind: 'dirt', w: 3.2, pts: [[GATE.west[0] - 10, GATE.west[1]], [-140, -6], [-180, -22], [-212, -34], [-233, -38]] },
-  { kind: 'dirt', w: 3.6, pts: [[GATE.east[0] + 10, GATE.east[1]], [180, 6], [202, 16]] },
+  { kind: 'dirt', w: 3.6, district: 'suburb', pts: [[GATE.east[0] + 10, GATE.east[1]], [180, 6], [202, 10], [226, -4], [262, -2], [296, 6], [318, 14]] },
+  // Outside the walls: the riverside quarter between the south wall and the river...
+  { kind: 'cobble', w: 4.5, district: 'riverside', pts: [[-40, 90], [-14, 99], [GATE.south[0], 103], [30, 110], [60, 113], [95, 111], [124, 103]] },
+  // ...the harbour town of Aldra's Haven on the shore of Mirrormere...
+  { kind: 'cobble', w: 5, district: 'harbour', pts: [[318, 14], [334, 30], [346, 52], [350, 82]] },
+  { kind: 'cobble', w: 4.5, district: 'harbour', pts: [[376, 12], [368, 36], [360, 60], [355, 84]] },
+  { kind: 'cobble', w: 4, district: 'harbour', pts: [[334, 30], [368, 36]] },
+  { kind: 'cobble', w: 4, district: 'harbour', pts: [[346, 52], [362, 57]] },
+  { kind: 'cobble', w: 4, district: 'harbour', pts: [[318, 14], [304, 40], [312, 66], [350, 82]] },
+  // ...the village of Millbrook beyond the fields...
+  { kind: 'dirt', w: 3.6, pts: [[12, 205], [8, 232], [5, 280], [22, 330], [40, 352]] },
+  { kind: 'dirt', w: 3, pts: [[376, 12], [410, -4], [444, -18], [462, -26]] },
+  { kind: 'dirt', w: 3.6, district: 'millbrook', pts: [[40, 352], [64, 368], [52, 392]] },
+  { kind: 'dirt', w: 3.6, district: 'millbrook', pts: [[40, 352], [16, 372], [30, 394], [52, 392]] },
+  // ...and the path up to the princess's garden.
+  { kind: 'dirt', w: 2.6, pts: [[8, -152], [28, -160], [44, -176], [52, -186]] },
 ];
 
 // ============================================================ height field
@@ -283,13 +321,25 @@ function baseHeight(x, z) {
   const wm = SITES.windmill;
   h += (1 - smoothstep(7, 18, Math.hypot(x - wm.x, z - wm.z))) * 2.4;
 
-  // Mountains ring the kingdom.
-  const edge = Math.max(Math.abs(x), Math.abs(z)) + (fbm(x * 0.008 + 7, z * 0.008 + 3, 3) - 0.5) * 50;
-  const mountain = smoothstep(300, 385, edge);
+  // Terraces for the harbour town on the lake shore, the village of Millbrook
+  // and the princess's garden below the castle.
+  const hb = SITES.harbour;
+  h = lerp(h, 3.6 + (hb.x - x) * 0.02, 1 - smoothstep(48, 78, Math.hypot(x - hb.x, z - hb.z)));
+  const mb = SITES.millbrook;
+  h = lerp(h, 4.2, 1 - smoothstep(46, 70, Math.hypot(x - mb.x, z - mb.z)));
+  const gd = SITES.garden;
+  h = lerp(h, c.y - 0.6, 1 - smoothstep(15, 26, Math.hypot(x - gd.x, z - gd.z)));
+
+  // Mountains ring the kingdom; the dragon's peak towers over the north-west.
+  const edge = Math.max(Math.abs(x), Math.abs(z)) + (fbm(x * 0.008 + 7, z * 0.008 + 3, 3) - 0.5) * 60;
+  const mountain = smoothstep(MOUNTAIN_EDGE, MOUNTAIN_EDGE + 90, edge);
   if (mountain > 0) {
     const ridge = 1 - Math.abs(fbm(x * 0.012 + 3, z * 0.012 - 5, 4) * 2 - 1);
-    h += mountain * (30 + ridge * 55);
+    h += mountain * (30 + ridge * 60);
   }
+  const dp = SITES.dragonPeak;
+  const peak = 1 - smoothstep(0, 150, Math.hypot(x - dp.x, z - dp.z));
+  if (peak > 0) h += peak * peak * (125 + fbm(x * 0.03, z * 0.03, 3) * 30);
 
   FIELD.town = town;
   FIELD.farm = farm;
@@ -372,9 +422,13 @@ function preRiverHeight(x, z) {
 // The analytic shape of the land. The terrain mesh samples this on a grid;
 // gameplay queries go through Terrain.getHeight so they match the mesh exactly.
 export function heightAt(x, z) {
-  const h = preRiverHeight(x, z);
-  const bank = smoothstep(5, 17, Math.abs(z - riverZ(x)));
-  return lerp(RIVERBED_Y, h, bank);
+  let h = preRiverHeight(x, z);
+  // The river runs from the western mountains to the lake, where it ends.
+  const riverOn = 1 - smoothstep(400, 440, x);
+  if (riverOn > 0) h = lerp(h, lerp(RIVERBED_Y, h, smoothstep(5, 17, Math.abs(z - riverZ(x)))), riverOn);
+  const lake = lakeWeight(x, z);
+  if (lake > 0) h = lerp(h, Math.min(h, LAKE.bed), lake);
+  return h;
 }
 
 BRIDGE.hN = preRiverHeight(0, BRIDGE.zN);
@@ -2713,6 +2767,16 @@ const CLOCK_RIM = new THREE.RingGeometry(1.08, 1.2, 32);
 
 const STAINED = [C(0x3a64c8), C(0xc83a3a), C(0xd8b040), C(0x3aa060), C(0x8a4ac0)];
 
+const MOUND_GEO = (() => {
+  const g = new THREE.SphereGeometry(1, 18, 8, 0, TAU, 0, Math.PI / 2);
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) p.setY(i, p.getY(i) * (1 + Math.sin(p.getX(i) * 7 + p.getZ(i) * 5) * 0.06));
+  g.computeVertexNormals();
+  return g;
+})();
+const PEBBLE_GEO = new THREE.IcosahedronGeometry(0.07, 0);
+
+// The old burial ground: a low wall round rows of grassy mounds.
 function buildGraveyard(ctx) {
   const { x, z } = SITES.graveyard;
   const hw = 7;
@@ -2730,30 +2794,39 @@ function buildGraveyard(ctx) {
     F.collideBox((ax + bx) / 2, (az + bz) / 2, along ? len / 2 + 0.3 : 0.3, along ? 0.3 : len / 2, g - 1, g + 1.2);
   }
   for (const s of [-1, 1]) F.box('stone', hw, g + 0.8, s * 1.6, 0.8, 1.8, 0.8, TINT.darkStone);
+  // Plain mounds of earth under the turf, in rows.
   for (let r = 0; r < 3; r++) {
     for (let c = 0; c < 5; c++) {
       const tx = -4.5 + c * 2.2 + (ctx.rng() - 0.5) * 0.4;
       const tz = -5.5 + r * 4 + (ctx.rng() - 0.5) * 0.5;
       if (r === 0 && c === 0) continue;
-      const tilt = (ctx.rng() - 0.5) * 0.18;
-      F.inst('tomb', tx, F.ground(tx, tz) - 0.05, tz, tilt, Math.PI / 2 + (ctx.rng() - 0.5) * 0.15, 0, 1, 1, 1, ctx.vary(TINT.mossy, 0.1));
-      F.collideCircle(tx, tz, 0.35, g - 1, g + 1.2);
+      const s = 0.85 + ctx.rng() * 0.25;
+      F.geo('terrain', MOUND_GEO, tx, F.ground(tx, tz) - 0.06, tz, 0, (ctx.rng() - 0.5) * 0.2, 0, 0.62 * s, 0.32 * s, 1.0 * s, ctx.vary(C(0x6e9a48), 0.12));
+      F.collideCircle(tx, tz, 0.55, g - 1, g + 0.3);
     }
   }
-  // An old tomb beneath a yew in the north-west corner.
-  F.box('stone', -4.5, g + 0.35, -6.3, 1.4, 0.7, 2.4, TINT.darkStone);
-  F.box('stone', -4.5, g + 0.78, -6.3, 1.6, 0.16, 2.6, TINT.mossy);
-  F.collideBox(-4.5, -6.3, 0.8, 1.3, g - 1, g + 1);
-  // A fresh bunch of wild heather on the lid, tied with bark.
+  // The prince's mound beneath a yew in the north-west corner: larger, kept
+  // trimmed, ringed with white river stones.
+  const pg = F.ground(-4.5, -6.3);
+  F.geo('terrain', MOUND_GEO, -4.5, pg - 0.08, -6.3, 0, 0, 0, 0.85, 0.42, 1.45, C(0x7aa850));
+  for (let k = 0; k < 26; k++) {
+    const a = (k / 26) * TAU;
+    const sx = -4.5 + Math.sin(a) * 1.0;
+    const sz = -6.3 + Math.cos(a) * 1.62;
+    F.geo('stone', PEBBLE_GEO, sx, F.ground(sx, sz) + 0.03, sz, 0, ctx.rng() * TAU, 0, 1, 0.7, 1, C(0xf2eee6));
+  }
+  F.collideBox(-4.5, -6.3, 0.9, 1.5, g - 1, g + 0.45);
+  // A fresh bunch of wild heather at its head, tied with bark.
   const heather = C(0x8e5a9e);
+  const top = pg + 0.33;
   for (let k = 0; k < 9; k++) {
     const hx = -4.5 + (ctx.rng() - 0.5) * 0.3;
     const hz = -5.55 + k * 0.045;
-    F.geo('plainCloth', new THREE.IcosahedronGeometry(0.045 + ctx.rng() * 0.02, 0), hx, g + 0.89, hz - 0.1, 0, 0, 0, 1, 0.7, 1.6, ctx.vary(heather, 0.15));
+    F.geo('plainCloth', new THREE.IcosahedronGeometry(0.045 + ctx.rng() * 0.02, 0), hx, top + 0.05, hz - 0.1, 0, 0, 0, 1, 0.7, 1.6, ctx.vary(heather, 0.15));
   }
-  for (let k = 0; k < 5; k++) F.box('plainCloth', -4.5 + (k - 2) * 0.03, g + 0.875, -5.18, 0.012, 0.012, 0.42, C(0x4a5a2e), 0, (k - 2) * 0.12, 0);
-  F.box('timber', -4.5, g + 0.885, -5.25, 0.14, 0.03, 0.04, TINT.beam);
-  anchor(ctx, 'grave', x - 4.5, z - 4.2, [x - 4.5, g + 1.1, z - 5.6]);
+  for (let k = 0; k < 5; k++) F.box('plainCloth', -4.5 + (k - 2) * 0.03, top + 0.035, -5.18, 0.012, 0.012, 0.42, C(0x4a5a2e), 0, (k - 2) * 0.12, 0);
+  F.box('timber', -4.5, top + 0.045, -5.25, 0.14, 0.03, 0.04, TINT.beam);
+  anchor(ctx, 'grave', x - 4.5, z - 4.2, [x - 4.5, top + 0.35, z - 5.6]);
   ctx.occupy(rect(x, z, hw + 0.5, hd + 0.5));
   ctx.trees.push({ x: x - 5.8, z: z - 8, kind: 'pine', s: 0.75 });
 }
@@ -3177,11 +3250,333 @@ function fillYards(ctx) {
   }
 }
 
-// Houses lining the streets, wherever they fit.
-function placeTownHouses(ctx) {
+// ============================================================ the realm
+
+const PILE_GEO = new THREE.CylinderGeometry(0.16, 0.18, 1, 7);
+const BOLLARD_GEO = new THREE.CylinderGeometry(0.14, 0.17, 0.5, 8);
+const NET_GEO = new THREE.SphereGeometry(1, 10, 6, 0, TAU, 0, Math.PI / 2);
+
+// The first point east of (x0, z) where the ground drops into the lake.
+function shoreX(ctx, x0, z) {
+  for (let x = x0; x < x0 + 200; x += 0.5) if (ctx.ground(x, z) < WATER_LEVEL - 0.2) return x;
+  return x0 + 200;
+}
+
+/*
+ * A wooden pier on piles from (x0, z0) running length metres along rot, its
+ * deck a walkable surface at height y. Boats can tie up alongside (berths).
+ */
+function pier(ctx, x0, z0, rot, length, width, y, berths) {
+  const F = new Frame(ctx, x0, z0, rot);
+  F.box('planks', 0, y - 0.08, length / 2, width, 0.16, length, TINT.boards);
+  for (let s = 0; s <= length; s += 2.6) {
+    for (const sx of [-1, 1]) {
+      const g = Math.min(F.ground(sx * (width / 2 - 0.1), s), y - 0.5);
+      F.geo('timber', PILE_GEO, sx * (width / 2 - 0.1), (g - 0.4 + y) / 2, s, 0, 0, 0, 1, y - g + 0.4, 1, TINT.beam);
+    }
+  }
+  for (const s of [length * 0.35, length * 0.75]) for (const sx of [-1, 1]) F.geo('timber', BOLLARD_GEO, sx * (width / 2 - 0.25), y + 0.25, s, 0, 0, 0, 1, 1, 1, TINT.beam);
+  const [cx, cz] = F.world(0, length / 2);
+  ctx.world.surfaces.push({ ...rect(cx, cz, width / 2, length / 2, rot), height: () => y });
+  ctx.occupy(rect(cx, cz, width / 2 + 0.3, length / 2, rot));
+  // A lantern on a post at the far end.
+  F.box('timber', width / 2 - 0.2, y + 1.2, length - 0.3, 0.12, 2.4, 0.12, TINT.beam);
+  F.box('lamp', width / 2 - 0.2, y + 2.3, length - 0.05, 0.22, 0.32, 0.22);
+  F.box('metal', width / 2 - 0.2, y + 2.5, length - 0.05, 0.3, 0.05, 0.3);
+  if (berths) {
+    for (const side of [-1, 1]) {
+      const [bx, bz] = F.world(side * (width / 2 + berths), length * 0.6);
+      ctx.world.berths.push({ x: bx, z: bz, heading: rot, side });
+    }
+  }
+  return F;
+}
+
+/*
+ * Aldra's Haven, the harbour town on the west shore of Mirrormere: a
+ * cobbled harbour square with a fish market and a treadwheel crane, three
+ * piers out into the lake with berths for ships, and nets and stores along
+ * the quay. Its houses come from placeOuterHouses.
+ */
+function buildHarbour(ctx) {
   const { rng } = ctx;
-  const streets = ROADS.filter((r) => r.town);
+  const q = HARBOUR_SQ;
+  const cx = (q.x0 + q.x1) / 2;
+  const cz = (q.z0 + q.z1) / 2;
+  ctx.occupy(rect(cx, cz, (q.x1 - q.x0) / 2, (q.z1 - q.z0) / 2));
+  // Fish market stalls along the square's west side, facing in.
+  for (const sz of [q.z0 + 2.5, cz, q.z1 - 2.5]) {
+    const S = new Frame(ctx, q.x0 + 2.2, sz, Math.PI / 2);
+    const g = S.ground(0, 0);
+    S.inst('stallWood', 0, g, 0);
+    S.inst('stallAwning', 0, g, 0, 0, 0, 0, 1, 1, 1, ctx.pick(TINT.awning));
+    S.inst('stallGoods', 0, g, 0, 0, 0, 0, 1, 1, 1, C(0x9ab0b8));
+    S.collideBox(0, 0, 1.5, 1.2, g - 1, g + 3);
+  }
+  // A treadwheel crane on the quay.
+  {
+    const F = new Frame(ctx, q.x1 - 2.5, q.z0 + 2.5, -0.4);
+    const g = F.ground(0, 0);
+    F.box('timber', 0, g + 0.3, 0, 3.2, 0.6, 3.2, TINT.beam);
+    F.geo('timber', new THREE.TorusGeometry(1.5, 0.12, 6, 20), 0, g + 2.1, 0, 0, Math.PI / 2, 0, 1, 1, 1, TINT.beam);
+    for (let k = 0; k < 8; k++) F.box('timber', 0, g + 2.1, 0, 0.08, 3.0, 0.1, TINT.beam, (k / 8) * Math.PI, 0, 0);
+    F.box('timber', 0, g + 4.2, 0, 0.3, 4.2, 0.3, TINT.beam);
+    F.box('timber', 0, g + 6.2, 2.0, 0.24, 0.24, 4.6, TINT.beam, -0.35, 0, 0);
+    F.box('metal', 0, g + 4.6, 4.0, 0.02, 3.4, 0.02);
+    F.inst('crate', 0, g + 2.6, 4.0, 0, 0.3, 0, 1, 1, 1);
+    F.collideBox(0, 0, 1.7, 1.7, g - 1, g + 7);
+    ctx.occupy(rect(...F.world(0, 0), 2, 2));
+  }
+  // Barrels and crates stacked about the square.
+  for (let k = 0; k < 14; k++) {
+    const x = q.x0 + 5 + rng() * (q.x1 - q.x0 - 9);
+    const z = q.z0 + 1.5 + rng() * (q.z1 - q.z0 - 3);
+    if (Math.abs(x - cx) < 3 && Math.abs(z - cz) < 3) continue;
+    const F = new Frame(ctx, x, z, rng() * TAU);
+    F.inst(rng() < 0.5 ? 'crate' : 'barrel', 0, ctx.ground(x, z), 0, 0, 0, 0, 1, 1, 1);
+    ctx.colliders.addCircle(x, z, 0.45, -Infinity, Infinity);
+  }
+  for (const [lx, lz] of [[q.x0 + 1, q.z0 + 1], [q.x1 - 1, q.z1 - 1], [q.x0 + 1, q.z1 - 1]]) ctx.lamps.push([lx, lz, Math.atan2(cx - lx, cz - lz)]);
+
+  // Piers out into the lake, each with two berths.
+  const deck = WATER_LEVEL + 1.1;
+  [26, 50, 74].forEach((z, i) => {
+    const xs = shoreX(ctx, 340, z);
+    const P = pier(ctx, xs - 4, z, Math.PI / 2, 30, 3.2, deck, 3.4);
+    const [ex, ez] = P.world(0, 29.3);
+    ctx.world.spots[`pierEnd${i}`] = { x: ex, z: ez, heading: Math.PI / 2 };
+    // Nets drying on the shore and a rowing boat pulled up beside each pier.
+    const F = new Frame(ctx, xs - 7, z + 4, rng() * TAU);
+    F.geo('plainCloth', NET_GEO, 0, F.ground(0, 0) - 0.05, 0, 0, 0, 0, 1.2, 0.35, 0.9, C(0x8a7a5a));
+    ctx.world.beached.push({ x: xs - 3, z: z - 4, heading: Math.PI / 2 + 0.3 });
+  });
+}
+
+
+// The lighthouse on the north shore of the lake: a banded stone tower with a lantern room.
+function buildLighthouse(ctx) {
+  const { x, z } = SITES.lighthouse;
+  const F = new Frame(ctx, x, z, 0);
+  const g = F.ground(0, 0);
+  F.geo('stone', new THREE.CylinderGeometry(4.6, 5.4, 2.4, 18), 0, g + 0.6, 0, 0, 0, 0, 1, 1, 1, TINT.darkStone);
+  const H = 20;
+  for (let k = 0; k < 5; k++) {
+    const y0 = g + 1.8 + (k * H) / 5;
+    const r0 = 3.2 - (k * 0.9) / 5;
+    const r1 = 3.2 - ((k + 1) * 0.9) / 5;
+    F.geo('plaster', new THREE.CylinderGeometry(r1, r0, H / 5, 20), 0, y0 + H / 10, 0, 0, 0, 0, 1, 1, 1, k % 2 ? C(0xb83a2e) : C(0xf2eee6));
+  }
+  const top = g + 1.8 + H;
+  F.geo('stone', new THREE.CylinderGeometry(3.0, 2.4, 0.5, 20), 0, top + 0.25, 0, 0, 0, 0, 1, 1, 1, TINT.darkStone);
+  F.geo('metal', new THREE.TorusGeometry(2.8, 0.05, 4, 24), 0, top + 1.3, 0, Math.PI / 2, 0, 0);
+  for (let k = 0; k < 12; k++) {
+    const a = (k / 12) * TAU;
+    F.box('metal', Math.sin(a) * 2.8, top + 0.9, Math.cos(a) * 2.8, 0.05, 0.8, 0.05);
+  }
+  F.geo('lamp', new THREE.CylinderGeometry(1.5, 1.5, 2.2, 12), 0, top + 1.6, 0);
+  for (let k = 0; k < 6; k++) {
+    const a = (k / 6) * TAU;
+    F.box('metal', Math.sin(a) * 1.55, top + 1.6, Math.cos(a) * 1.55, 0.1, 2.2, 0.1);
+  }
+  F.geo('shingle', new THREE.ConeGeometry(2.2, 2.4, 12, 1, true), 0, top + 3.9, 0, 0, 0, 0, 1, 1, 1, C(0xb83a2e));
+  F.geo('gold', new THREE.SphereGeometry(0.3, 10, 8), 0, top + 5.2, 0);
+  F.box('planks', 0, g + 2.9, 3.2, 1.2, 2.2, 0.1, TINT.door, 0, 0, 0);
+  ctx.colliders.addCircle(x, z, 5.4, g - 1, top + 6);
+  ctx.occupy(rect(x, z, 6, 6));
+  ctx.world.lighthouse = new THREE.Vector3(x, top + 1.6, z);
+}
+
+// Short piers along the river's north bank by the riverside quarter, for rowing boats.
+function buildRiverDocks(ctx) {
+  for (const x of [28, 48, 68]) {
+    const zc = riverZ(x);
+    const deck = WATER_LEVEL + 0.9;
+    pier(ctx, x, zc - 13, 0, 8, 2.2, deck, 1.6);
+  }
+}
+
+/*
+ * Millbrook, the village beyond the fields: a green with a great oak, a well
+ * and benches, a duck pond, and the Millstone inn (walk in) on the road in.
+ */
+function buildMillbrook(ctx) {
+  const { rng } = ctx;
+  const { x, z } = SITES.millbrook;
+  const gx = x - 2;
+  const gz = z + 12;
+  ctx.trees.push({ x: gx + 4, z: gz - 3, kind: 'oakA', s: 1.25 });
+  ctx.occupy(rect(gx + 4, gz - 3, 2.5, 2.5));
+  // Well.
+  {
+    const F = new Frame(ctx, gx - 4, gz + 2, 0.3);
+    const g = F.ground(0, 0);
+    F.geo('stone', new THREE.CylinderGeometry(1.0, 1.1, 0.9, 14, 1, true), 0, g + 0.4, 0, 0, 0, 0, 1, 1, 1, TINT.stone);
+    F.geo('stone', new THREE.RingGeometry(0.78, 1.1, 14).rotateX(-Math.PI / 2), 0, g + 0.85, 0, 0, 0, 0, 1, 1, 1, TINT.stone);
+    F.geo('pool', new THREE.CircleGeometry(0.78, 14).rotateX(-Math.PI / 2), 0, g + 0.25, 0);
+    for (const s of [-1, 1]) F.box('timber', s * 0.95, g + 1.3, 0, 0.14, 1.9, 0.14, TINT.beam);
+    F.box('thatch', 0, g + 2.35, 0, 2.4, 0.2, 1.6, WHITE);
+    ctx.colliders.addCircle(gx - 4, gz + 2, 1.15, g - 1, g + 2.5);
+    ctx.occupy(rect(gx - 4, gz + 2, 1.5, 1.5));
+  }
+  for (const [bx, bz, r] of [[gx + 4, gz + 1.5, Math.PI], [gx + 7, gz - 3, -Math.PI / 2]]) streetBench(ctx, bx, bz, r);
+  // Duck pond, ringed with stones and reeds.
+  {
+    const px = gx - 2;
+    const pz = gz - 10;
+    const g = ctx.ground(px, pz);
+    const F = new Frame(ctx, px, pz, 0.4);
+    F.geo('pool', new THREE.CircleGeometry(1, 28).rotateX(-Math.PI / 2), 0, g + 0.08, 0, 0, 0, 0, 4.6, 1, 3.2);
+    for (let k = 0; k < 30; k++) {
+      const a = (k / 30) * TAU;
+      F.geo('stone', PEBBLE_GEO, Math.sin(a) * 4.75, g + 0.05, Math.cos(a) * 3.35, 0, rng() * TAU, 0, 3, 2, 3, ctx.vary(TINT.darkStone, 0.15));
+    }
+    for (let k = 0; k < 9; k++) {
+      const a = rng() * TAU;
+      F.box('plainCloth', Math.sin(a) * 4.7, g + 0.2, Math.cos(a) * 3.3, 0.04, 0.5 + rng() * 0.4, 0.04, C(0x5a7a3a), (rng() - 0.5) * 0.3, 0, (rng() - 0.5) * 0.3);
+    }
+    ctx.colliders.addCircle(px, pz, 4.2, g - 1, g + 1);
+    ctx.occupy(rect(px, pz, 5.6, 4.2, 0.4));
+    ctx.world.pens.pond = { x: px, z: pz, r: 3.4, species: 'duck', pond: g + 0.08 };
+  }
+  // The Millstone inn.
+  buildHouse(ctx, {
+    x: x + 24, z: z - 16, rot: -Math.PI / 2, w: 14, d: 9, floors: 2, style: 'plaster', roof: 'thatch', chimney: true,
+    wallTint: TINT.plaster[3], shutter: TINT.shutter[0], doorAt: 2.5, heights: [3.4, 2.6], pitch: 50,
+    room: furnishTavern, name: 'The Millstone',
+  });
+  for (const [lx, lz] of [[x + 14, z - 6], [x - 10, z + 4], [x + 6, z + 24]]) ctx.lamps.push([lx, lz, rng() * TAU]);
+}
+
+const HEDGE = C(0x3e6a2e);
+const ROSES = [C(0xd8344a), C(0xf2eef0), C(0xe86a9a), C(0xf0c040)];
+
+/*
+ * The Royal Garden on the castle hill: clipped hedges round four flower beds
+ * and gravel walks, a domed pavilion in the middle, a lily pond, benches, a
+ * swing, and a rose arch at the gate.
+ */
+function buildRoyalGarden(ctx) {
+  const { rng } = ctx;
+  const { x, z } = SITES.garden;
+  const rot = 0.55;
+  const F = new Frame(ctx, x, z, rot);
+  const g = F.ground(0, 0);
+  const R = 11;
+  groundPatch(ctx, 'dirtRoad', rect(x, z, R, R, rot), 1, 0.06, (lx, lz) => [lx / 2.5, lz / 2.5]);
+  // Hedge walls with a gate in the front (+Z) side.
+  for (const [ax, az, bx, bz] of [[-R, -R, R, -R], [-R, -R, -R, R], [R, -R, R, R], [-R, R, -2, R], [2, R, R, R]]) {
+    const len = Math.hypot(bx - ax, bz - az);
+    const along = bz === az;
+    F.box('terrain', (ax + bx) / 2, g + 0.65, (az + bz) / 2, along ? len + 0.8 : 0.8, 1.3, along ? 0.8 : len + 0.8, HEDGE);
+    F.collideBox((ax + bx) / 2, (az + bz) / 2, along ? len / 2 + 0.4 : 0.4, along ? 0.4 : len / 2 + 0.4, g - 1, g + 1.3);
+  }
+  // Rose arch over the gate.
+  for (const sx of [-2, 2]) F.box('timber', sx, g + 1.2, R, 0.14, 2.4, 0.14, TINT.beam);
+  F.geo('timber', new THREE.TorusGeometry(2, 0.08, 6, 16, Math.PI), 0, g + 2.4, R, 0, 0, 0, 1, 0.7, 1, TINT.beam);
+  for (let k = 0; k < 22; k++) {
+    const a = (k / 21) * Math.PI;
+    F.geo('plainCloth', FLOWER_GEO, Math.cos(a) * 2, g + 2.4 + Math.sin(a) * 1.4, R + (rng() - 0.5) * 0.2, 0, 0, 0, 1.6, 1.6, 1.6, ROSES[k % 2]);
+  }
+  // Four flower beds between the walks.
+  for (const [bx, bz] of [[-6, -6], [6, -6], [-6, 6], [6, 6]]) {
+    F.box('stone', bx, g + 0.12, bz, 6.4, 0.24, 6.4, TINT.stone);
+    F.box('soil', bx, g + 0.2, bz, 6, 0.2, 6, C(0x5a4630));
+    for (let k = 0; k < 60; k++) {
+      const fx = bx + (rng() - 0.5) * 5.4;
+      const fz = bz + (rng() - 0.5) * 5.4;
+      F.geo('plainCloth', FLOWER_GEO, fx, g + 0.45 + rng() * 0.25, fz, 0, 0, 0, 1.3, 1.3, 1.3, FLOWERS[Math.floor(rng() * FLOWERS.length)]);
+      if (k % 2) F.box('plainCloth', fx, g + 0.36, fz, 0.04, 0.3, 0.04, C(0x3e6a2e));
+    }
+    F.geo('terrain', new THREE.ConeGeometry(0.5, 1.8, 8), bx, g + 1.2, bz, 0, 0, 0, 1, 1, 1, HEDGE);
+    F.collideBox(bx, bz, 3.2, 3.2, g - 1, g + 0.5);
+  }
+  // Pavilion: a round stone platform, columns and a dome.
+  F.geo('stone', new THREE.CylinderGeometry(3.2, 3.4, 0.4, 20), 0, g + 0.2, 0, 0, 0, 0, 1, 1, 1, TINT.stone);
+  ctx.world.surfaces.push({ ...rect(x, z, 2.6, 2.6, rot), height: () => g + 0.4 });
+  for (let k = 0; k < 6; k++) {
+    const a = (k / 6) * TAU;
+    F.geo('stone', new THREE.CylinderGeometry(0.16, 0.2, 3, 10), Math.sin(a) * 2.7, g + 1.9, Math.cos(a) * 2.7, 0, 0, 0, 1, 1, 1, C(0xf2eee6));
+    F.collideCircle(Math.sin(a) * 2.7, Math.cos(a) * 2.7, 0.22, g - 1, g + 3.4);
+  }
+  F.geo('stone', new THREE.CylinderGeometry(3.1, 3.1, 0.35, 20), 0, g + 3.55, 0, 0, 0, 0, 1, 1, 1, C(0xf2eee6));
+  F.geo('gold', new THREE.SphereGeometry(3.0, 20, 8, 0, TAU, 0, Math.PI / 2), 0, g + 3.7, 0, 0, 0, 0, 1, 0.55, 1, C(0x9ab8c0));
+  F.geo('gold', new THREE.SphereGeometry(0.25, 10, 8), 0, g + 5.5, 0);
+  // Lily pond with stepping stones, behind the pavilion.
+  F.geo('stone', new THREE.CylinderGeometry(2.0, 2.1, 0.4, 20, 1, true), 0, g + 0.2, -7.4, 0, 0, 0, 1, 1, 1, TINT.stone);
+  F.geo('pool', new THREE.CircleGeometry(1.95, 20).rotateX(-Math.PI / 2), 0, g + 0.3, -7.4);
+  for (let k = 0; k < 5; k++) F.geo('plainCloth', new THREE.CircleGeometry(0.28, 8).rotateX(-Math.PI / 2), (rng() - 0.5) * 2.4, g + 0.32, -7.4 + (rng() - 0.5) * 2.4, 0, 0, 0, 1, 1, 1, C(0x4a8a3a));
+  F.collideCircle(0, -7.4, 2.1, g - 1, g + 0.5);
+  // Benches and a swing.
+  streetBench(ctx, ...F.world(-3, -7.6), rot + Math.PI / 2);
+  streetBench(ctx, ...F.world(3, -7.6), rot - Math.PI / 2);
+  {
+    const S = new Frame(ctx, ...F.world(8.6, 0), rot + Math.PI / 2);
+    for (const sx of [-1.1, 1.1]) for (const sz of [-0.6, 0.6]) S.box('timber', sx, g + 1.3, sz, 0.12, 2.7, 0.12, TINT.beam, sz > 0 ? 0.2 : -0.2, 0, 0);
+    S.box('timber', 0, g + 2.6, 0, 2.5, 0.14, 0.14, TINT.beam);
+    for (const sx of [-0.35, 0.35]) S.box('metal', sx, g + 1.65, 0, 0.02, 1.9, 0.02);
+    S.box('planks', 0, g + 0.68, 0, 0.9, 0.06, 0.32, C(0xd8a8b8));
+    S.collideBox(0, 0, 1.2, 0.7, g - 1, g + 2.7);
+  }
+  ctx.occupy(rect(x, z, R + 1, R + 1, rot));
+  ctx.world.garden = { x, z, rot, y: g };
+}
+
+// The dragon's lair: a cave mouth high on the south-east face of Dragon's Peak, with old bones and a glint of gold.
+function buildDragonLair(ctx) {
+  const { rng } = ctx;
+  const p = SITES.dragonPeak;
+  const x = p.x + 52;
+  const z = p.z + 52;
+  const rot = Math.PI / 4;
+  const F = new Frame(ctx, x, z, rot);
+  const g = F.ground(0, 2);
+  F.geo('rock', extrude(archShape(14, 10, [{ x: 0, w: 8, y0: 0.2, spring: 5 }]), 3, 12), 0, g - 0.5, 0, 0, 0, 0, 1, 1, 1, C(0x6a6460));
+  F.box('stone', 0, g + 3.5, -1.6, 7.8, 7.4, 0.3, C(0x14110f));
+  for (let k = 0; k < 10; k++) {
+    const bx = (rng() - 0.5) * 9;
+    const bz = 2.5 + rng() * 6;
+    F.geo('plaster', new THREE.CylinderGeometry(0.08, 0.1, 1.2 + rng(), 6), bx, F.ground(bx, bz) + 0.12, bz, Math.PI / 2, rng() * TAU, 0, 1, 1, 1, C(0xe8e0cc));
+  }
+  for (let k = 0; k < 7; k++) {
+    const r = (k / 7) * TAU;
+    F.geo('plaster', new THREE.TorusGeometry(0.9, 0.08, 5, 10, Math.PI), -2, F.ground(-2, 4) + 0.3, 4 + k * 0.32, 0, Math.PI / 2, r * 0.05, 1, 1, 1, C(0xe8e0cc));
+  }
+  for (let k = 0; k < 16; k++) F.geo('gold', new THREE.IcosahedronGeometry(0.22, 0), (rng() - 0.5) * 3, g + 0.1 + rng() * 0.4, -0.5 + rng(), 0, rng() * TAU, 0, 1, 0.5, 1);
+  const [lx, lz] = F.world(0, 6);
+  ctx.world.lair = new THREE.Vector3(lx, F.ground(0, 6) + 0.2, lz);
+}
+
+// Houses lining the town's streets inside the wall, wherever they fit.
+function placeTownHouses(ctx) {
+  return placeHouses(ctx, ROADS.filter((r) => r.town), (x, z) => pointInPolygon(x, z, TOWN_WALL) && distToPolygonEdge(x, z, TOWN_WALL) >= 5.5);
+}
+
+// Houses outside the walls: the riverside quarter, the road east, the harbour town and Millbrook.
+function placeOuterHouses(ctx) {
+  const dry = (x, z) => ctx.ground(x, z) > WATER_LEVEL + 0.9 && lakeWeight(x, z) < 0.01 && (x > 410 || Math.abs(z - riverZ(x)) > 19);
+  const outside = (x, z) => townEdge(x, z) > 7;
+  const near = (site, r) => (x, z) => Math.hypot(x - site.x, z - site.z) < r;
+  const inHarbour = near(SITES.harbour, 64);
+  const inVillage = near(SITES.millbrook, 60);
+  const of = (name) => ROADS.filter((r) => r.district === name);
+  let n = 0;
+  n += placeHouses(ctx, of('riverside'), (x, z) => outside(x, z) && dry(x, z));
+  n += placeHouses(ctx, of('suburb'), (x, z) => outside(x, z) && dry(x, z) && x < 196);
+  n += placeHouses(ctx, of('harbour'), (x, z) => dry(x, z) && inHarbour(x, z), { styles: ['stone', 'plaster', 'timber'], slate: 0.5 });
+  n += placeHouses(ctx, of('millbrook'), (x, z) => dry(x, z) && inVillage(x, z), { styles: ['plaster', 'timber'], thatch: 0.7, floors: 0.2 });
+  return n;
+}
+
+/*
+ * Lines streets with houses, each facing its street, wherever a house fits:
+ * every corner must pass cornerOk(x, z), stay off every road, keep clear of
+ * the gates and of everything already built. opts: styles, and the chances of
+ * a slate or thatch roof and of a second floor.
+ */
+function placeHouses(ctx, streets, cornerOk, opts = {}) {
+  const { rng } = ctx;
   const gates = Object.values(GATE);
+  const styles = opts.styles || ['timber', 'timber', 'timber', 'plaster'];
   let count = 0;
   for (const road of streets) {
     const pts = road.pts;
@@ -3210,20 +3605,20 @@ function placeTownHouses(ctx) {
         const r = rect(hx, hz, w / 2, d / 2, rot);
         let ok = true;
         for (const [cx, cz] of rectCorners(r, 0.3)) {
-          if (!pointInPolygon(cx, cz, TOWN_WALL) || distToPolygonEdge(cx, cz, TOWN_WALL) < 5.5) ok = false;
-          if (roadClearance(cx, cz, (rr) => rr.town || rr.kind === 'cobble') < 0.6) ok = false;
+          if (!cornerOk(cx, cz) || roadClearance(cx, cz) < 0.6) ok = false;
         }
         if (ok && roadClearance(hx, hz) < 0.6) ok = false;
         if (ok && gates.some(([gx, gz]) => Math.hypot(hx - gx, hz - gz) < 11)) ok = false;
         if (ok && ctx.footprints.some((f) => rectsOverlap(f, r, 0.6))) ok = false;
         if (ok) {
-          const floors = rng() < 0.6 ? 2 : 1;
-          const style = rng() < 0.75 ? 'timber' : 'plaster';
+          const floors = rng() < (opts.floors ?? 0.6) ? 2 : 1;
+          const style = styles[Math.floor(rng() * styles.length)];
           // Every third roomy house can be walked into.
           const walkIn = w >= 7 && d >= 7.4 && rng() < 0.34;
+          const roofRoll = rng();
           buildHouse(ctx, {
             x: hx, z: hz, rot, w, d, floors, style,
-            roof: rng() < 0.85 ? 'tile' : 'slate',
+            roof: roofRoll < (opts.thatch || 0) ? 'thatch' : roofRoll < (opts.thatch || 0) + (opts.slate ?? 0.15) ? 'slate' : 'tile',
             jetty: floors === 2 && style === 'timber' && rng() < 0.7,
             chimney: rng() < 0.7,
             wallTint: ctx.pick(TINT.plaster),
@@ -4343,11 +4738,19 @@ export class World {
     this.stats = { houses: 0, rooms: 0, trees: 0, meshes: 0 };
     // Fenced places where animals are kept: { ...rect, species }.
     this.pens = {};
+    // Where boats tie up ({ x, z, heading }) or lie pulled up on the shore.
+    this.berths = [];
+    this.beached = [];
+    // Named places people can be put at: { x, z, heading }.
+    this.spots = {};
+    this.garden = null;
+    this.lair = null;
+    this.lighthouse = null;
     ANISOTROPY = quality.anisotropy;
 
     this.sky = new SkyDome();
     scene.add(this.sky.mesh);
-    this.fog = new THREE.Fog(0xbfd8ee, 90, 700);
+    this.fog = new THREE.Fog(0xbfd8ee, 110, 820);
     scene.fog = this.fog;
     this.hemi = new THREE.HemisphereLight(0xc0d8f2, 0x5c533c, 0.4);
     scene.add(this.hemi);
@@ -4404,13 +4807,20 @@ export class World {
     buildBakery(ctx);
     buildStables(ctx);
     buildBalloonField(ctx);
+    buildHarbour(ctx);
+    buildLighthouse(ctx);
+    buildRiverDocks(ctx);
+    buildMillbrook(ctx);
+    buildRoyalGarden(ctx);
+    buildDragonLair(ctx);
     wallRing(ctx, TOWN_WALL, TOWN_GATES, {
       cx: SITES.town.x, cz: SITES.town.z, H: 6.5, T: 2.2, towerR: 3.3, towerH: 9.5,
       gateW: 4.6, gateTowerW: 5, gateH: 11, spring: 2.6,
       tint: TINT.stone, roofs: (k) => k % 3 !== 1, roofTint: TINT.roof[1], portcullis: false, banners: true,
     });
     this.stats.houses = placeTownHouses(ctx);
-    streetLamps(ctx, (r) => r.town, 19);
+    this.stats.outerHouses = placeOuterHouses(ctx);
+    streetLamps(ctx, (r) => r.town || r.district === 'harbour' || r.district === 'riverside', 19);
     streetBunting(ctx);
     fillYards(ctx);
 
@@ -4607,9 +5017,11 @@ export class World {
   // --------------------------------------------------------------- water
 
   _water() {
-    const geometry = new THREE.PlaneGeometry(WORLD_HALF * 2, 116, 200, 28);
+    // The river: a strip from the western edge to where it opens into the lake.
+    const riverEnd = 392;
+    const geometry = new THREE.PlaneGeometry(WORLD_HALF + riverEnd, 116, 260, 28);
     geometry.rotateX(-Math.PI / 2);
-    geometry.translate(0, WATER_LEVEL, 128);
+    geometry.translate((riverEnd - WORLD_HALF) / 2, WATER_LEVEL, 128);
     const uv = geometry.attributes.uv;
     const pos = geometry.attributes.position;
     for (let i = 0; i < uv.count; i++) uv.setXY(i, pos.getX(i) / 14, pos.getZ(i) / 14);
@@ -4640,6 +5052,25 @@ export class World {
     this.water.name = 'river';
     this.water.receiveShadow = true;
     this.scene.add(this.water);
+
+    // The lake: an ellipse a little larger than its shore, drawn just over the river's end.
+    const lake = new THREE.CircleGeometry(1, 96, 0, TAU);
+    lake.rotateX(-Math.PI / 2);
+    lake.scale(LAKE.rx * 1.2, 1, LAKE.rz * 1.2);
+    lake.translate(LAKE.x, WATER_LEVEL, LAKE.z);
+    const luv = lake.attributes.uv;
+    const lp = lake.attributes.position;
+    for (let i = 0; i < luv.count; i++) luv.setXY(i, lp.getX(i) / 14, lp.getZ(i) / 14);
+    const lakeMat = material.clone();
+    lakeMat.polygonOffset = true;
+    lakeMat.polygonOffsetFactor = -1;
+    lakeMat.polygonOffsetUnits = -1;
+    lakeMat.onBeforeCompile = material.onBeforeCompile;
+    lakeMat.customProgramCacheKey = () => 'lake';
+    this.lake = new THREE.Mesh(lake, lakeMat);
+    this.lake.name = 'lake';
+    this.lake.receiveShadow = true;
+    this.scene.add(this.lake);
   }
 
   // Ground-hugging meshes (roads, squares, fields) are kept separate from the batch.
@@ -4665,7 +5096,6 @@ export class World {
       crate: [geos.crate, this.mat.planks, true],
       fencePost: [geos.fencePost, this.mat.timber, true],
       fenceRail: [geos.fenceRail, this.mat.timber, true],
-      tomb: [geos.tomb, this.mat.stone, true],
       wheat: [geos.wheat, this.mat.crop, false],
       barley: [geos.wheat, this.mat.crop, false],
       cabbage: [geos.cabbage, this.mat.cabbage, false],
@@ -4767,8 +5197,9 @@ export class World {
 
     for (const t of ctx.trees) place(t.kind, t.x, t.z, t.s, vrng() * TAU);
     const step = 7.5;
-    for (let gx = -395; gx < 395; gx += step) {
-      for (let gz = -395; gz < 395; gz += step) {
+    const span = WORLD_HALF - 5;
+    for (let gx = -span; gx < span; gx += step) {
+      for (let gz = -span; gz < span; gz += step) {
         const x = gx + vrng() * step;
         const z = gz + vrng() * step;
         const edge = Math.max(Math.abs(x), Math.abs(z));
@@ -4776,11 +5207,13 @@ export class World {
         const h = this.terrain.getHeight(x, z);
         const dr = Math.abs(z - riverZ(x));
         // Pines climb the lower mountain slopes but stop well short of the ridges.
-        const mountain = smoothstep(285, 320, edge) * (1 - smoothstep(34, 44, h)) * (edge < 372 ? 1 : 0);
-        let p = forest * 0.9;
-        if (dr > 19 && dr < 32) p = Math.max(p, 0.1);
-        if (edge < 300) p = Math.max(p, 0.014);
+        const mountain = smoothstep(MOUNTAIN_EDGE - 15, MOUNTAIN_EDGE + 20, edge) * (1 - smoothstep(34, 44, h)) * (edge < MOUNTAIN_EDGE + 72 ? 1 : 0);
+        // The far woods are thinner, so the bigger kingdom costs fewer trees.
+        let p = forest * (edge > 420 ? 0.45 : 0.9);
+        if (dr > 19 && dr < 32 && x < 380) p = Math.max(p, 0.1);
+        if (edge < MOUNTAIN_EDGE) p = Math.max(p, 0.014);
         p = Math.max(p, mountain * 0.5);
+        if (lakeWeight(x, z) > 0.02 || h < WATER_LEVEL + 0.4) continue;
         if (vrng() > p) continue;
         if (!this._canPlant(ctx, x, z, 2.5)) continue;
         const pineChance = mountain > 0.3 ? 0.9 : forest > 0.5 ? 0.4 : 0.12;
@@ -4864,7 +5297,7 @@ export class World {
     heightTex.needsUpdate = true;
 
     // Density mask: paint exclusions with the 2D canvas, then fold in water, slope and rock.
-    const S = 512;
+    const S = 768;
     const canvas = document.createElement('canvas');
     canvas.width = S;
     canvas.height = S;
@@ -5021,6 +5454,8 @@ export class World {
     const { castle, farmland, ruins, balloonField } = SITES;
     if (townEdge(x, z) < 26) return false;
     if (Math.hypot(x - balloonField.x, z - balloonField.z) < 30) return false;
+    if (lakeWeight(x, z) > 0) return false;
+    for (const site of [SITES.harbour, SITES.millbrook]) if (Math.hypot(x - site.x, z - site.z) < 75) return false;
     if (Math.hypot(x - castle.x, z - castle.z) < castle.r + 34) return false;
     if (roadClearance(x, z) < 4) return false;
     if (Math.abs(z - riverZ(x)) < 24) return false;
@@ -5398,16 +5833,6 @@ function instanceGeometries() {
   const fencePost = withColor(new THREE.CylinderGeometry(0.07, 0.085, 1.3, 6).translate(0, 0.6, 0));
   const fenceRail = boxes([[1, 0.09, 0.06, 0, 0, 0]], 1.5);
 
-  const tombShape = new THREE.Shape();
-  tombShape.moveTo(-0.32, 0);
-  tombShape.lineTo(0.32, 0);
-  tombShape.lineTo(0.32, 0.75);
-  tombShape.absarc(0, 0.75, 0.32, 0, Math.PI, false);
-  tombShape.lineTo(-0.32, 0);
-  const tomb = extrude(tombShape, 0.16, 8);
-  tomb.translate(0, -0.15, 0);
-  projectUV(tomb, 1.5);
-  withColor(tomb);
 
   const cabbageParts = [];
   for (let k = 0; k < 4; k++) {
@@ -5424,5 +5849,5 @@ function instanceGeometries() {
   const cabbage = mergeGeometries(cabbageParts);
   cabbage.computeVertexNormals();
 
-  return { tile, stallWood, stallAwning, stallGoods, barrel, crate, fencePost, fenceRail, tomb, wheat: wheatGeometry(), cabbage };
+  return { tile, stallWood, stallAwning, stallGoods, barrel, crate, fencePost, fenceRail, wheat: wheatGeometry(), cabbage };
 }

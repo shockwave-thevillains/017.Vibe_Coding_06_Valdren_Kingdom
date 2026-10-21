@@ -4604,6 +4604,1338 @@
           }
         }
       }
+    },
+    {
+      "id": "elinor",
+      "name": "Princess Elinor",
+      "role": "Daughter of King Osric",
+      "position": {
+        "x": 60.4,
+        "z": -192.08
+      },
+      "heading": 0.55,
+      "patrol": {
+        "mode": "loop",
+        "speed": 0.75,
+        "points": [
+          {
+            "x": 60.4,
+            "z": -192.08,
+            "wait": 6
+          },
+          {
+            "x": 61.44,
+            "z": -195.18,
+            "wait": 0.2
+          },
+          {
+            "x": 61.92,
+            "z": -198.4,
+            "wait": 7,
+            "face": 2.1208
+          },
+          {
+            "x": 58.82,
+            "z": -199.44,
+            "wait": 0.2
+          },
+          {
+            "x": 55.6,
+            "z": -199.92,
+            "wait": 9,
+            "face": 3.6916
+          },
+          {
+            "x": 54.56,
+            "z": -196.82,
+            "wait": 0.2
+          },
+          {
+            "x": 54.08,
+            "z": -193.6,
+            "wait": 7,
+            "face": -1.0208
+          },
+          {
+            "x": 57.18,
+            "z": -192.56,
+            "wait": 0.2
+          }
+        ]
+      },
+      "look": {
+        "female": true,
+        "skin": "#f0d4bc",
+        "hair": "#d8b060",
+        "hairStyle": "long",
+        "eyes": "#3a6a9a",
+        "lips": "#c06070",
+        "age": 0,
+        "tunic": "#8ab0e0",
+        "sleeves": "#f2eee6",
+        "skirt": "robe",
+        "trim": "#e8c060",
+        "belt": "#e8c060",
+        "pouch": null,
+        "boots": "#e8e0d0",
+        "cloak": "#f0e0f0",
+        "cloakTrim": "#e8c060"
+      },
+      "outfit": {
+        "tiara": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "told_king"
+            ],
+            "node": "after"
+          },
+          {
+            "if": [
+              "met_elinor"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Oh! A visitor in my garden. Don't bow, nobody's watching. I'm Elinor.",
+            "choices": [
+              {
+                "text": "Your Highness.",
+                "next": "highness"
+              },
+              {
+                "text": "What do you do here all day?",
+                "next": "day"
+              },
+              {
+                "text": "I'll leave you be."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back again? Tell me something that happened outside these hedges.",
+            "choices": [
+              {
+                "text": "About your uncle…",
+                "next": "uncle"
+              },
+              {
+                "text": "Tell me about the dragon.",
+                "next": "dragon"
+              },
+              {
+                "text": "Just passing, Elinor."
+              }
+            ]
+          },
+          "highness": {
+            "text": "Please, just Elinor. Father insists on the ‘Highness’. Father insists on a great many things.",
+            "choices": [
+              {
+                "text": "What is your father like?",
+                "next": "father"
+              },
+              {
+                "text": "Is that a dragon over the mountains?",
+                "next": "dragon"
+              }
+            ]
+          },
+          "day": {
+            "text": "Read, walk, count the ships on Mirrormere from the tower, and wait for something to happen. The most exciting thing this year was the balloon festival.",
+            "choices": [
+              {
+                "text": "Have you flown in a balloon?",
+                "next": "balloon"
+              },
+              {
+                "text": "Is that a dragon over the mountains?",
+                "next": "dragon"
+              }
+            ]
+          },
+          "father": {
+            "text": "Kind, underneath. Sad, mostly. He wears that one glove even in summer and won't say why. And he never, ever speaks of his brother.",
+            "choices": [
+              {
+                "text": "His brother?",
+                "next": "uncle"
+              },
+              {
+                "text": "Thank you, Elinor."
+              }
+            ]
+          },
+          "uncle": {
+            "text": "Uncle Edmund. He died before I was born, in the fire at the Greywatch. There's a grave in the town with his name on it, but Father has never once taken me there.",
+            "choices": [
+              {
+                "text": "Maybe I can find out more.",
+                "next": "promise"
+              },
+              {
+                "text": "I'm sorry."
+              }
+            ]
+          },
+          "promise": {
+            "text": "Would you? If you learn anything, anything at all, come back and tell me. I'm tired of being kept in a garden.",
+            "leave": "Bow, and promise."
+          },
+          "dragon": {
+            "text": "Old Ember! She circles the peaks most evenings. The farmers say she takes a sheep now and then and leaves a gold coin in its place. I'd give anything to see her up close.",
+            "choices": [
+              {
+                "text": "Isn't she dangerous?",
+                "next": "danger"
+              },
+              {
+                "text": "I hope you do."
+              }
+            ]
+          },
+          "danger": {
+            "text": "Father says so. The lighthouse keeper says she only breathes fire at clouds, and I believe the lighthouse keeper.",
+            "leave": "Smile, and take your leave."
+          },
+          "balloon": {
+            "text": "Once, tied to the stake, for all of thirty yards. Captain Gale says she'll take me over Mirrormere next summer if Father allows it. He won't.",
+            "choices": [
+              {
+                "text": "Is that a dragon over the mountains?",
+                "next": "dragon"
+              },
+              {
+                "text": "Good luck, Elinor."
+              }
+            ]
+          },
+          "after": {
+            "text": "Father came down to the garden this morning and took off his glove to hold my hand. He's riding to the Greywatch, he says, to see his brother. Whatever you did, thank you.",
+            "leave": "Bow, and leave her smiling."
+          }
+        }
+      }
+    },
+    {
+      "id": "rosamund",
+      "name": "Lady Rosamund",
+      "role": "Lady-in-waiting",
+      "position": {
+        "x": 51.47,
+        "z": -200.91
+      },
+      "heading": 2.1208,
+      "action": "sit",
+      "look": {
+        "female": true,
+        "skin": "#c49577",
+        "hair": "#1a1410",
+        "eyes": "#5a6e3a",
+        "tunic": "#6a3a5a",
+        "trousers": "#6a5a44",
+        "boots": "#4a3322",
+        "belt": "#4a3020",
+        "trim": "#8a6a3a",
+        "cloak": null,
+        "age": 0.45,
+        "skirt": "robe",
+        "hairStyle": "bun",
+        "lips": "#c06060",
+        "stubble": false,
+        "sleeves": "#e8dcc4"
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_rosamund"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Her Highness is not receiving visitors. …Oh, very well. Be brief, and bow.",
+            "choices": [
+              {
+                "text": "Do you serve the princess?",
+                "next": "t0"
+              },
+              {
+                "text": "Is she allowed outside the castle?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "You again. Her Highness seems to like you. I reserve judgement.",
+            "choices": [
+              {
+                "text": "Do you serve the princess?",
+                "next": "t0"
+              },
+              {
+                "text": "Is she allowed outside the castle?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Since she was six. She has climbed every tree in this garden and two of the castle towers. I have the grey hairs to prove it.",
+            "choices": [
+              {
+                "text": "Is she allowed outside the castle?",
+                "next": "t1"
+              },
+              {
+                "text": "Why is the dragon called Old Ember?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "To the garden, and to the harbour once a year to see the ships. She talks of nothing else for weeks.",
+            "choices": [
+              {
+                "text": "Do you serve the princess?",
+                "next": "t0"
+              },
+              {
+                "text": "Why is the dragon called Old Ember?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "Because she is old, and because the last time anyone got close enough to ask her name, that is what was left of his hat.",
+            "choices": [
+              {
+                "text": "Do you serve the princess?",
+                "next": "t0"
+              },
+              {
+                "text": "Is she allowed outside the castle?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "brenna",
+      "name": "Brenna",
+      "role": "Guard of the Royal Garden",
+      "position": {
+        "x": 66.97,
+        "z": -186.72
+      },
+      "heading": 0.55,
+      "action": "behind",
+      "look": {
+        "female": true,
+        "skin": "#d9a882",
+        "hair": "#b85a2a",
+        "eyes": "#3a4a5a",
+        "tunic": "#24356e",
+        "trousers": "#5a4a3a",
+        "boots": "#2e2118",
+        "belt": "#2e2116",
+        "trim": "#b8923e",
+        "cloak": null,
+        "age": 0.0,
+        "skirt": "robe",
+        "hairStyle": "long",
+        "lips": "#c06060",
+        "stubble": false
+      },
+      "outfit": {
+        "helmet": true,
+        "breastplate": true,
+        "sword": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_brenna"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "The Royal Garden. Her Highness is within. Behave.",
+            "choices": [
+              {
+                "text": "Do you guard her from the dragon?",
+                "next": "t0"
+              },
+              {
+                "text": "Has the dragon ever come close?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Still behaving? Good.",
+            "choices": [
+              {
+                "text": "Do you guard her from the dragon?",
+                "next": "t0"
+              },
+              {
+                "text": "Has the dragon ever come close?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "From the dragon, from boredom, and from climbing out over the hedge. The dragon is the easiest of the three.",
+            "choices": [
+              {
+                "text": "Has the dragon ever come close?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Once, over the lake. Every ship in the harbour dropped its sails and every gull went quiet. Then she simply flew on.",
+            "choices": [
+              {
+                "text": "Do you guard her from the dragon?",
+                "next": "t0"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "corwin",
+      "name": "Corwin",
+      "role": "Harbour Master",
+      "position": {
+        "x": 351.0,
+        "z": 46.0
+      },
+      "heading": 1.5708,
+      "action": "behind",
+      "look": {
+        "female": false,
+        "skin": "#c49577",
+        "hair": "#6e6258",
+        "eyes": "#6a4a2a",
+        "tunic": "#2e5e6e",
+        "trousers": "#5a4a3a",
+        "boots": "#4a3322",
+        "belt": "#4a3020",
+        "trim": "#d8d0c0",
+        "cloak": "#24356e",
+        "age": 0.55,
+        "hairStyle": "short",
+        "beard": "full"
+      },
+      "outfit": {
+        "hat": "#24356e"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_corwin"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Welcome to Aldra's Haven! Mind the ropes, mind the gulls, and mind your purse when the Saltmere sailors are in.",
+            "choices": [
+              {
+                "text": "What ships call here?",
+                "next": "t0"
+              },
+              {
+                "text": "Why is the lake called Mirrormere?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back on the quay? The tide's the same as ever. That is, there isn't one. It's a lake.",
+            "choices": [
+              {
+                "text": "What ships call here?",
+                "next": "t0"
+              },
+              {
+                "text": "Why is the lake called Mirrormere?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Cogs from Saltmere with salt and wine, our own fishing boats, and the green carrack, which belongs to a merchant who thinks very highly of himself.",
+            "choices": [
+              {
+                "text": "Why is the lake called Mirrormere?",
+                "next": "t1"
+              },
+              {
+                "text": "Do you ever see the dragon?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "On a still morning it holds the whole sky. The mountains stand on their heads in it. You'll see.",
+            "choices": [
+              {
+                "text": "What ships call here?",
+                "next": "t0"
+              },
+              {
+                "text": "Do you ever see the dragon?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "Every few evenings, over the peaks. She's never touched a boat. We keep a lookout anyway; old habits.",
+            "choices": [
+              {
+                "text": "What ships call here?",
+                "next": "t0"
+              },
+              {
+                "text": "Why is the lake called Mirrormere?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "nessa",
+      "name": "Nessa",
+      "role": "Fisherwoman",
+      "position": {
+        "x": 363.0,
+        "z": 57.0
+      },
+      "heading": 1.5708,
+      "action": "wipe",
+      "look": {
+        "female": true,
+        "skin": "#c49577",
+        "hair": "#c8a060",
+        "eyes": "#4a5e72",
+        "tunic": "#5a6a4a",
+        "trousers": "#5a4a3a",
+        "boots": "#2e2118",
+        "belt": "#4a3020",
+        "trim": "#8a6a3a",
+        "cloak": null,
+        "age": 0.4,
+        "skirt": "robe",
+        "hairStyle": "long",
+        "lips": "#c06060",
+        "stubble": false,
+        "sleeves": "#c8b48a"
+      },
+      "outfit": {
+        "apron": "#8a7a5a"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_nessa"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Mind the nets. Took me all morning to untangle the last lot.",
+            "choices": [
+              {
+                "text": "What do you catch?",
+                "next": "t0"
+              },
+              {
+                "text": "Is the lake deep?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Nets are still tangled, thank you for asking.",
+            "choices": [
+              {
+                "text": "What do you catch?",
+                "next": "t0"
+              },
+              {
+                "text": "Is the lake deep?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Perch, pike, and once an eel as long as my arm that bit the boy who caught it.",
+            "choices": [
+              {
+                "text": "Is the lake deep?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Deep enough that nobody's found the bottom in the middle. Grandfather said there's a sunken ship out there full of salt.",
+            "choices": [
+              {
+                "text": "What do you catch?",
+                "next": "t0"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "jonas",
+      "name": "Jonas",
+      "role": "Sailor",
+      "position": {
+        "x": 372.0,
+        "z": 18.0
+      },
+      "heading": 0,
+      "patrol": {
+        "mode": "pingpong",
+        "speed": 1.1,
+        "points": [
+          {
+            "x": 375.0,
+            "z": 14.0,
+            "wait": 6
+          },
+          {
+            "x": 368.0,
+            "z": 36.0,
+            "wait": 0.2
+          },
+          {
+            "x": 360.5,
+            "z": 60.0,
+            "wait": 0.2
+          },
+          {
+            "x": 355.5,
+            "z": 82.0,
+            "wait": 8
+          }
+        ]
+      },
+      "look": {
+        "female": false,
+        "skin": "#e8c0a0",
+        "hair": "#7a4a24",
+        "eyes": "#6a4a2a",
+        "tunic": "#f2eee6",
+        "trousers": "#2f4a7a",
+        "boots": "#3a2a1e",
+        "belt": "#2e2116",
+        "trim": "#c8b48a",
+        "cloak": null,
+        "age": 0.25,
+        "hairStyle": "long",
+        "beard": null
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_jonas"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Ahoy! You've the look of someone who's never been to sea. Lucky you.",
+            "choices": [
+              {
+                "text": "Where have you sailed?",
+                "next": "t0"
+              },
+              {
+                "text": "Is the carrack yours?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Ahoy again!",
+            "choices": [
+              {
+                "text": "Where have you sailed?",
+                "next": "t0"
+              },
+              {
+                "text": "Is the carrack yours?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Saltmere, the islands past it, and once all the way to the edge of the map, where the cook nearly started a mutiny.",
+            "choices": [
+              {
+                "text": "Is the carrack yours?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "I wish! I only haul her ropes. Her captain has a green coat and a voice like a foghorn.",
+            "choices": [
+              {
+                "text": "Where have you sailed?",
+                "next": "t0"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "fin",
+      "name": "Fin",
+      "role": "Child",
+      "position": {
+        "x": 387.0,
+        "z": 74.0
+      },
+      "heading": 1.5708,
+      "spot": "pierEnd2",
+      "child": true,
+      "action": "sit",
+      "look": {
+        "female": false,
+        "skin": "#e8c0a0",
+        "hair": "#5a4a40",
+        "eyes": "#6a4a2a",
+        "tunic": "#e0a030",
+        "trousers": "#4c3d31",
+        "boots": "#3a2a1e",
+        "belt": "#2e2116",
+        "trim": "#8a6a3a",
+        "cloak": null,
+        "age": 0,
+        "hairStyle": "short",
+        "beard": null,
+        "stubble": false,
+        "pouch": null
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_fin"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Shh! You'll scare the fish.",
+            "choices": [
+              {
+                "text": "Caught anything?",
+                "next": "t0"
+              },
+              {
+                "text": "Have you seen the dragon?",
+                "next": "t1"
+              },
+              {
+                "text": "Bye, Fin."
+              }
+            ]
+          },
+          "again": {
+            "text": "Still shh.",
+            "choices": [
+              {
+                "text": "Caught anything?",
+                "next": "t0"
+              },
+              {
+                "text": "Have you seen the dragon?",
+                "next": "t1"
+              },
+              {
+                "text": "Bye, Fin."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Two little ones and a boot. The boot was the biggest.",
+            "choices": [
+              {
+                "text": "Have you seen the dragon?",
+                "next": "t1"
+              },
+              {
+                "text": "Bye, Fin."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Loads of times! She flies over the lighthouse when the sun goes down. One day I'll ride her.",
+            "choices": [
+              {
+                "text": "Caught anything?",
+                "next": "t0"
+              },
+              {
+                "text": "Bye, Fin."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "morwen",
+      "name": "Morwen",
+      "role": "Keeper of the Lighthouse",
+      "position": {
+        "x": 471.5,
+        "z": -17.4
+      },
+      "heading": 0.2,
+      "action": "behind",
+      "look": {
+        "female": true,
+        "skin": "#6e4630",
+        "hair": "#8a8580",
+        "eyes": "#5a7a4a",
+        "tunic": "#3a4a5a",
+        "trousers": "#6a5a44",
+        "boots": "#2e2118",
+        "belt": "#3a2a1a",
+        "trim": "#c8b48a",
+        "cloak": "#5a4a38",
+        "age": 0.65,
+        "skirt": "robe",
+        "hairStyle": "bun",
+        "lips": "#c06060",
+        "stubble": false
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_morwen"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Welcome to the light. A hundred and eighty steps to the top, and I climb them twice a day.",
+            "choices": [
+              {
+                "text": "What does the light do?",
+                "next": "t0"
+              },
+              {
+                "text": "Do you see the dragon from up there?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back for the view?",
+            "choices": [
+              {
+                "text": "What does the light do?",
+                "next": "t0"
+              },
+              {
+                "text": "Do you see the dragon from up there?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Brings the night boats home across Mirrormere. The lake is calm, but the rocks under the north shore are not.",
+            "choices": [
+              {
+                "text": "Do you see the dragon from up there?",
+                "next": "t1"
+              },
+              {
+                "text": "Isn't it lonely?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Most evenings. She breathes fire at the clouds, then circles the light three times as if she's checking it's still lit. I've grown fond of her.",
+            "choices": [
+              {
+                "text": "What does the light do?",
+                "next": "t0"
+              },
+              {
+                "text": "Isn't it lonely?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "I have the gulls, the ships, the dragon and the stars. Lonely is a town full of people who never look up.",
+            "choices": [
+              {
+                "text": "What does the light do?",
+                "next": "t0"
+              },
+              {
+                "text": "Do you see the dragon from up there?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "gwen",
+      "name": "Gwen",
+      "role": "Keeper of the Millstone",
+      "position": {
+        "x": 67.25,
+        "z": 343.6
+      },
+      "heading": -1.5708,
+      "action": "wipe",
+      "look": {
+        "female": true,
+        "skin": "#f0d0b4",
+        "hair": "#a0703a",
+        "eyes": "#6a4a2a",
+        "tunic": "#8a3a3a",
+        "trousers": "#2e2a26",
+        "boots": "#2e2118",
+        "belt": "#4a3020",
+        "trim": "#c8b48a",
+        "cloak": null,
+        "age": 0.35,
+        "skirt": "robe",
+        "hairStyle": "long",
+        "lips": "#c06060",
+        "stubble": false,
+        "belly": 0.4,
+        "sleeves": "#e8dcc4"
+      },
+      "outfit": {
+        "apron": "#ece4d2",
+        "mug": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_gwen"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Welcome to the Millstone! Warm fire, cold ale, and the best mutton pie south of the river.",
+            "choices": [
+              {
+                "text": "Is Millbrook a big village?",
+                "next": "t0"
+              },
+              {
+                "text": "Do you go to the town?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Another pie? I'll put it on your tab. You don't have a tab. You do now.",
+            "choices": [
+              {
+                "text": "Is Millbrook a big village?",
+                "next": "t0"
+              },
+              {
+                "text": "Do you go to the town?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Twenty houses, one well, one pond, too many ducks and not enough husbands. Ask anyone.",
+            "choices": [
+              {
+                "text": "Do you go to the town?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Every market day, with pies. Hilde and I trade: my pies for her honey bread. Best bargain in the valley.",
+            "choices": [
+              {
+                "text": "Is Millbrook a big village?",
+                "next": "t0"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "tom",
+      "name": "Old Tom",
+      "role": "Villager",
+      "position": {
+        "x": 42.0,
+        "z": 375.5
+      },
+      "heading": 3.1416,
+      "stoop": 0.2,
+      "action": "sit",
+      "look": {
+        "female": false,
+        "skin": "#8a5a3a",
+        "hair": "#b0aca6",
+        "eyes": "#4a3a2a",
+        "tunic": "#2e5e6e",
+        "trousers": "#2e2a26",
+        "boots": "#2e2118",
+        "belt": "#2e2116",
+        "trim": "#b8923e",
+        "cloak": null,
+        "age": 0.9,
+        "hairStyle": "short",
+        "beard": "full",
+        "belly": 0.3
+      },
+      "outfit": {
+        "strawHat": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_tom"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Sit a while. The green doesn't charge.",
+            "choices": [
+              {
+                "text": "Have you lived here long?",
+                "next": "t0"
+              },
+              {
+                "text": "What's the news in Millbrook?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Still here. So am I.",
+            "choices": [
+              {
+                "text": "Have you lived here long?",
+                "next": "t0"
+              },
+              {
+                "text": "What's the news in Millbrook?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "I was born in that house there, and I'll die on this bench if the ducks let me.",
+            "choices": [
+              {
+                "text": "What's the news in Millbrook?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "The Hollis girl's pears are the best in years, the pond's full of ducks again, and someone saw the dragon over the south hills.",
+            "choices": [
+              {
+                "text": "Have you lived here long?",
+                "next": "t0"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "hob",
+      "name": "Hob",
+      "role": "Shepherd",
+      "position": {
+        "x": -50.0,
+        "z": 213.0
+      },
+      "heading": -2.0,
+      "action": "staff",
+      "look": {
+        "female": false,
+        "skin": "#8a5a3a",
+        "hair": "#1a1410",
+        "eyes": "#5a6e3a",
+        "tunic": "#6a5a3a",
+        "trousers": "#5a4a3a",
+        "boots": "#2e2118",
+        "belt": "#4a3020",
+        "trim": "#d8d0c0",
+        "cloak": "#5a4a38",
+        "age": 0.5,
+        "hairStyle": "bald",
+        "beard": "short"
+      },
+      "outfit": {
+        "staff": true,
+        "strawHat": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_hob"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Steady now, they spook easy. Sheep are mostly fear held together with wool.",
+            "choices": [
+              {
+                "text": "Do you lose sheep to the dragon?",
+                "next": "t0"
+              },
+              {
+                "text": "How many sheep do you keep?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Counted them again. Got a different number again.",
+            "choices": [
+              {
+                "text": "Do you lose sheep to the dragon?",
+                "next": "t0"
+              },
+              {
+                "text": "How many sheep do you keep?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "One a year, maybe. She leaves a gold coin where it stood, every time. I've four in a jar. Best bargain I ever made.",
+            "choices": [
+              {
+                "text": "How many sheep do you keep?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Eight here and eleven on the east meadow. I count them every night and get a different number every time.",
+            "choices": [
+              {
+                "text": "Do you lose sheep to the dragon?",
+                "next": "t0"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
     }
   ]
 }

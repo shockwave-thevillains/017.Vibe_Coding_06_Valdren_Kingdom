@@ -4,6 +4,8 @@ import { Player, FollowCamera, dampAngle } from './player.js';
 import { NPCManager } from './npc.js';
 import { Animals } from './animals.js';
 import { Balloons } from './balloons.js';
+import { Boats } from './boats.js';
+import { Dragon } from './dragon.js';
 import { Dialogue } from './dialogue.js';
 import { Lore, Reader, Journal, Progress } from './lore.js';
 import { Input } from './input.js';
@@ -147,6 +149,8 @@ async function boot() {
   npcs.range = quality.people;
   const animals = new Animals(scene, world, npcs);
   const balloons = new Balloons(scene, world);
+  const boats = new Boats(scene, world);
+  const dragon = new Dragon(scene, world);
   const BOARD_RANGE = 2.4;
   const flags = new Set();
   const lore = new Lore(scene, world, secrets || { entries: [] });
@@ -642,6 +646,8 @@ async function boot() {
       }
       world.advanceTime(dt);
       if (balloons.update(dt) === 'landed') landBalloon();
+      boats.update(dt);
+      dragon.update(dt);
       if (balloons.riding) {
         player.ride(balloons.basketFloor, dt);
       } else {
@@ -680,6 +686,8 @@ async function boot() {
       npcs.update(dt, player, dialogue.typing);
       animals.update(dt, player, npcs);
       balloons.update(dt);
+      boats.update(dt);
+      dragon.update(dt);
       lore.update(dt);
       world.update(dt, player.position, camera);
       renderer.render(scene, camera);
@@ -689,6 +697,8 @@ async function boot() {
       npcs.update(dt, player);
       animals.update(dt, player, npcs);
       balloons.update(dt);
+      boats.update(dt);
+      dragon.update(dt);
       lore.update(dt);
       follow.update(dt, player.position);
       world.update(dt, player.position, camera);
@@ -708,7 +718,7 @@ async function boot() {
   ui.setReady(saved ? `Saved journey found: ${lore.found.length} of ${lore.total} discoveries.` : null, progress.available);
 
   // Handy from the browser console while developing.
-  window.valdren = { THREE, renderer, scene, camera, world, player, follow, input, ui, npcs, animals, balloons, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
+  window.valdren = { THREE, renderer, scene, camera, world, player, follow, input, ui, npcs, animals, balloons, boats, dragon, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
 }
 
 boot().catch((err) => {

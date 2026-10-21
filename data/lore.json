@@ -14,7 +14,7 @@
     },
     "grave": {
       "label": "Grave",
-      "verb": "Read the epitaph on"
+      "verb": "Examine"
     },
     "door": {
       "label": "Door",
@@ -96,8 +96,8 @@
       "title": "The Prince's Grave",
       "place": "Beneath the yew in the old burial ground",
       "text": [
-        "A plain tomb in the oldest corner of the graveyard: ‘EDMUND, PRINCE OF VALDREN, FIRSTBORN OF HARALD. FELL AT THE GREYWATCH, 271.’",
-        "A bunch of wild heather lies on the lid, still fresh, tied with a strip of bark. Heather does not grow in the town. The nearest is on the ridge above the western woods."
+        "A long mound of earth in the oldest corner of the burial ground, larger than the others and kept trimmed. White river stones are set into the turf around it, and at its head they spell out: ‘EDMUND, PRINCE OF VALDREN. FELL AT THE GREYWATCH, 271.’",
+        "A bunch of wild heather lies on the turf, still fresh, tied with a strip of bark. Heather does not grow in the town. The nearest is on the ridge above the western woods."
       ],
       "note": "Someone still brings the prince heather from the hills by the Greywatch. A light coffin, fresh flowers: who mourns him so faithfully?"
     },
@@ -111,7 +111,7 @@
       "text": [
         "A song sheet, folded small and tucked under a tankard, the ink smudged by many thumbs:",
         "♪ The king kept the bread in his tower of stone, / the prince drove the carts down the frost-bitten road; / they burned the grey watch with the prince in its keep, / but the valley remembers, and the valley won't sleep.",
-        "They searched in the ashes and found not a bone, / so the tomb by the yew lies over a stone; / and up on the ridge where the grey heather grows / an old man keeps bees, and the old valley knows. ♪"
+        "They searched in the ashes and found not a bone, / so the mound by the yew lies over a stone; / and up on the ridge where the grey heather grows / an old man keeps bees, and the old valley knows. ♪"
       ],
       "note": "The verse nobody sings: no bones in the ashes, and an old man keeping bees on the heather ridge. The hermit pays for his bread with honey…"
     },

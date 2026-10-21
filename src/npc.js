@@ -226,6 +226,18 @@ const OUTFIT = {
     kit.add('head', new THREE.SphereGeometry(1, 10, 8), '#b8322c', { matrix: M(0.075, HY + 0.11, HZ - 0.05, -0.6, 0.35, 0, 0.008, 0.016, 0.105) });
   },
 
+  // A slender gold circlet with five points and a blue stone at the front.
+  tiara(kit) {
+    kit.add('head', new THREE.CylinderGeometry(1.02, 1, 1, 40, 1, true, -1.35, 2.7), GOLD, { metal: true, matrix: M(0, HY + 0.068, HZ - 0.004, -0.12, 0, 0, 0.081, 0.016, 0.098) });
+    kit.add('head', new THREE.CylinderGeometry(1, 1, 1, 30, 1, true, Math.PI - 1.9, 3.8), GOLD, { metal: true, matrix: M(0, HY + 0.062, HZ - 0.004, -0.12, 0, 0, 0.079, 0.008, 0.096) });
+    for (let k = -2; k <= 2; k++) {
+      const a = k * 0.32;
+      const h = k === 0 ? 0.034 : 0.022 - Math.abs(k) * 0.003;
+      kit.add('head', new THREE.ConeGeometry(0.006, h, 4), GOLD, { metal: true, matrix: M(Math.sin(a) * 0.083, HY + 0.078 + h / 2, HZ - 0.004 + Math.cos(a) * 0.1 - 0.012, -0.12, a, 0) });
+    }
+    kit.add('head', new THREE.SphereGeometry(0.008, 10, 8), '#2f6fd0', { metal: true, matrix: M(0, HY + 0.08, HZ + 0.094, 0, 0, 0, 1, 1.3, 0.7) });
+  },
+
   strawHat(kit) {
     kit.add('head', new THREE.CylinderGeometry(0.23, 0.23, 0.01, 32), '#d9bd78', { jitter: 0.1, matrix: M(0, HY + 0.064, HZ - 0.006, -0.06, 0, 0, 1, 1, 1.1) });
     kit.add('head', new THREE.CylinderGeometry(0.062, 0.092, 0.1, 24), '#d2b46c', { jitter: 0.1, matrix: M(0, HY + 0.112, HZ - 0.006, -0.06, 0, 0, 1, 1, 1.12) });
@@ -279,8 +291,13 @@ class NPC {
     this.walkAction = this.baseAction && this.baseAction === 'staff' ? 'staff' : null;
     this.rng = mulberry32(77 + index * 131);
 
+    // A named spot the world built (e.g. the end of a pier) overrides the position and heading.
+    const spot = def.spot && world.spots ? world.spots[def.spot] : null;
+    const place = spot ? { x: spot.x, z: spot.z } : def.position;
+    const facing = spot ? spot.heading : def.heading;
+
     // Patrol route: points with optional wait, facing and pose.
-    const pts = def.patrol && def.patrol.points && def.patrol.points.length ? def.patrol.points : [{ ...def.position, face: def.heading, wait: 1e9 }];
+    const pts = def.patrol && def.patrol.points && def.patrol.points.length ? def.patrol.points : [{ ...place, face: facing, wait: 1e9 }];
     this.route = pts.map((p) => ({ x: p.x, z: p.z, wait: p.wait ?? 6, face: p.face ?? null, action: p.action ?? this.baseAction }));
     this.loop = !!(def.patrol && def.patrol.mode === 'loop');
     this.speed = (def.patrol && def.patrol.speed) || 1.2;
@@ -289,10 +306,10 @@ class NPC {
     this.state = 'wait';
     this.timer = this.route[this.index].wait * (0.4 + this.rng() * 0.6);
 
-    const start = def.position || this.route[this.index];
+    const start = (def.patrol ? null : place) || def.position || this.route[this.index];
     this.position = new THREE.Vector3(start.x, 0, start.z);
     this.position.y = world.getGroundHeight(this.position.x, this.position.z);
-    this.heading = def.heading ?? this.route[this.index].face ?? 0;
+    this.heading = facing ?? this.route[this.index].face ?? 0;
     this._visualY = this.position.y;
     this.talking = false;
     this.moveSpeed = 0;

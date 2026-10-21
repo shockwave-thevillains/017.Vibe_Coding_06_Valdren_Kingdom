@@ -757,6 +757,11 @@ ul.rumours li {
   color: var(--ink-soft);
 }
 
+.map-zoom {
+  margin-left: 14px;
+  font-size: 14px;
+}
+
 .map-legend .key {
   margin: 0 3px 0 12px;
   vertical-align: -1px;

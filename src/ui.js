@@ -8,7 +8,13 @@
 
 const COMPASS_PX_PER_DEG = 2.4;
 const MINIMAP_RADIUS = 70;   // metres from the centre to the rim
-const MAP_VIEW = { x: -50, z: 30, half: 290 }; // the full map: from the Greywatch to the farms
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+// The full map's two views: the town and its surroundings, and the whole kingdom.
+const MAP_VIEWS = [
+  { name: 'town', x: 20, z: 40, half: 190 },
+  { name: 'kingdom', x: 0, z: -10, half: 610 },
+];
 const QUALITY_ABOUT = {
   low: 'No shadows or lantern light, sparse grass. For older phones and laptops.',
   medium: 'Soft shadows, lantern light at night, lighter grass and textures.',
@@ -39,6 +45,13 @@ export class UI {
     this.mapCanvas = $('map-canvas');
     this.mapMarks = $('map-marks');
     this.mapImage = null;
+    this.mapZoomBtn = $('map-zoom');
+    this.mapView = 0;
+    this._mapData = null;
+    this.mapZoomBtn.addEventListener('click', () => {
+      this.mapView = 1 - this.mapView;
+      if (this._mapData) this.showMap(this._mapData);
+    });
     this._labels = new Map();
     this._prompt = null;
     this._clock = '';
@@ -340,7 +353,9 @@ export class UI {
 
   // The whole kingdom, north up. view: { x, z, heading, places, people: [{ x, z, name }], finds: [{ x, z, title }] }
   showMap(view) {
+    this._mapData = view;
     this.mapEl.classList.remove('hidden');
+    this.mapZoomBtn.textContent = this.mapView === 0 ? 'Show the whole kingdom' : 'Show the town';
     const cv = this.mapCanvas;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const size = Math.max(64, Math.round(cv.clientWidth * dpr));
@@ -348,7 +363,7 @@ export class UI {
     const g = cv.getContext('2d');
     const half = this.mapHalf;
     const px = this.mapImage.width / (half * 2);
-    const V = MAP_VIEW;
+    const V = MAP_VIEWS[this.mapView];
     g.imageSmoothingQuality = 'high';
     g.drawImage(this.mapImage, (V.x - V.half + half) * px, (V.z - V.half + half) * px, V.half * 2 * px, V.half * 2 * px, 0, 0, size, size);
     // Aged edges.
@@ -375,12 +390,14 @@ export class UI {
       marks.push(el);
       return el;
     };
-    // On a small map only the larger places and no people are named, or the town's labels pile up.
-    const roomy = cv.clientWidth >= 620;
-    for (const p of view.places) if (roomy || p.size > 0) mark(`place${p.size === 2 ? ' big' : ''}`, p.x, p.z, p.name);
-    for (const f of view.finds) mark('dot find', f.x, f.z).title = f.title;
-    for (const p of view.people) mark('dot person', p.x, p.z, null, roomy ? p.name : null).title = p.name;
-    const you = mark('you', view.x, view.z);
+    // On a small map (or the whole kingdom) only the larger places and no people are named,
+    // or the town's labels pile up. Marks outside the view are left out.
+    const roomy = cv.clientWidth >= 620 && this.mapView === 0;
+    const inView = (x, z) => Math.abs(x - V.x) < V.half * 0.98 && Math.abs(z - V.z) < V.half * 0.98;
+    for (const p of view.places) if ((roomy || p.size > 0) && inView(p.x, p.z)) mark(`place${p.size === 2 ? ' big' : ''}`, p.x, p.z, p.name);
+    for (const f of view.finds) if (inView(f.x, f.z)) mark('dot find', f.x, f.z).title = f.title;
+    for (const p of view.people) if (inView(p.x, p.z)) mark('dot person', p.x, p.z, null, roomy ? p.name : null).title = p.name;
+    const you = mark('you', clamp(view.x, V.x - V.half, V.x + V.half), clamp(view.z, V.z - V.half, V.z + V.half));
     // Bearing of the facing direction (north = -z, east = +x).
     you.style.transform = `translate(-50%, -50%) rotate(${Math.atan2(Math.sin(view.heading), -Math.cos(view.heading))}rad)`;
     this.mapMarks.replaceChildren(...marks);
