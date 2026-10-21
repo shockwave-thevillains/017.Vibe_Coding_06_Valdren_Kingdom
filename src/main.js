@@ -381,10 +381,12 @@ async function boot() {
   dialogue.onClose = (npc, reason) => {
     npc.talking = false;
     talkingTo = null;
+    const shop = pendingShop;
+    const line = afterTalk;
+    pendingShop = null;
+    afterTalk = null;
     if (mode !== 'talking') return;
     restoreView = 0.9;
-    const shop = pendingShop;
-    pendingShop = null;
     if (shop) {
       quests.touch = input.touchMode;
       quests.showShop(shop);
@@ -392,9 +394,8 @@ async function boot() {
     } else {
       backToPlay(reason);
     }
-    if (afterTalk) ui.toast(afterTalk, 4500);
+    if (line) ui.toast(line, 4500);
     else if (rumourCount() > rumoursBefore) ui.toast('Noted in your journal under Rumours (J).', 2600);
-    afterTalk = null;
     saveNow();
   };
 
@@ -695,16 +696,19 @@ async function boot() {
   async function knockedOut() {
     if (mode !== 'playing') return;
     setMode('sleeping');
-    if (player.flying) setFlying(false);
     music.hush(true);
     await ui.fade(true, 'Everything goes dark…');
     for (const n of npcs.list) if (n.mood === 'fight' || n.mood === 'flee') n.goHome();
     world.setTime((world.timeOfDay + 3) % 24);
     combat.health = MAX_HEALTH * 0.5;
+    // Teleporting puts the traveller back on their feet (out of the air, too).
     if (world.home) {
       const { stand, face } = world.home.bed;
       player.teleport(stand[0], stand[1], Math.atan2(face[0] - stand[0], face[1] - stand[1]));
+    } else {
+      player.teleport(SITES.spawn.x, SITES.spawn.z, SITES.spawn.heading);
     }
+    ui.setFlying(false);
     follow.yaw = player.heading + Math.PI;
     follow.update(0, player.position, true);
     saveNow();
@@ -895,7 +899,7 @@ async function boot() {
       z: player.position.z,
       heading: player.heading,
       yaw: follow.yaw,
-      people: npcs.list.filter((n) => n.figure.root.visible).map((n) => ({ x: n.position.x, z: n.position.z, met: flags.has(`met_${n.id}`) })),
+      people: npcs.list.filter((n) => n.figure.root.visible).map((n) => ({ x: n.position.x, z: n.position.z, met: flags.has(`met_${n.id}`), foe: n.mood === 'flee' || n.mood === 'fight' })),
       finds: lore.found.map((id) => lore.byId.get(id).pos),
       home: world.home,
       mark,

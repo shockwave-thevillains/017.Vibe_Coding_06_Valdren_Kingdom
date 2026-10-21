@@ -54,7 +54,7 @@ export const CASES = [
     id: 'case2', title: 'The Smuggler of Aldra’s Haven', culprit: 'silas', witness: 'Nessa the fisherwoman', who: 'Nessa', place: 'the harbour at Aldra’s Haven', bounty: 40,
     at: { x: 362, z: 52 },
     brief: 'Barrels of Saltmere wine keep vanishing off the night boats. Nessa the fisherwoman is out before dawn.',
-    clue: 'A dockhand in a grey cowl, with a scar right across his cheek.',
+    clue: 'A young, clean-shaven dockhand in a grey cowl, with a scar right across his cheek.',
   },
   {
     id: 'case3', title: 'The Sheep Thief of Millbrook', culprit: 'dunstan', witness: 'Old Tom on the Millbrook green', who: 'Tom', place: 'Millbrook', bounty: 55,

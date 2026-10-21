@@ -15,8 +15,10 @@ generated in code at load time; the project ships no art assets.
 > lighthouse, a riverside quarter, the village of Millbrook, the princess and her
 > garden, a dragon over the mountains, many more birds and street cats, and a
 > prettier sky, water and light. Since then: a hand lantern, your own cottage
-> with a bed to sleep in, music composed as you play, and the Milky Way across
-> the night sky. The kingdom has no religious buildings or symbols, so it sits
+> with a bed to sleep in, music composed as you play, the Milky Way across the
+> night sky, and adventuring: jumping and flying, fist and sword fights, marks
+> on the map with a pointer to follow, market shops, and bounties from the
+> Wardens' Guild for catching wrongdoers. The kingdom has no religious buildings or symbols, so it sits
 > comfortably with every faith.
 
 ## The kingdom
@@ -92,12 +94,14 @@ round her garden with her lady-in-waiting Lady Rosamund and her guard Brenna
 (she has things to say about her uncle, and about the dragon); Corwin the
 harbour master, Nessa the fisherwoman and Jonas the sailor in Aldra's Haven;
 Morwen, keeper of the lighthouse; Gwen behind the Millstone's bar and Old Tom on
-the village bench; and Hob the shepherd with his flock.
+the village bench; and Hob the shepherd with his flock. Edric Vane keeps the
+door of the Wardens' Guild, and a few new faces loiter at the market, on the
+docks and in Millbrook: some honest, some not.
 
 Walk up to someone and a prompt appears (their name also floats above their
 head). Press `E`, or tap **Interact**, to talk. The camera moves over your
 shoulder, the line types itself out (click, tap or press `Space` to show it at
-once), and you pick a reply with the mouse, a tap or the keys `1`–`3`. `Esc`
+once), and you pick a reply with the mouse, a tap or the keys `1`–`4`. `Esc`
 ends the conversation.
 
 ## Animals, ships, balloons, the dragon and your lantern
@@ -151,6 +155,47 @@ ends the conversation.
   band of faint light with a warmer core, ragged edges and dark dust lanes, the
   stars thicker within it. Clouds drift across it, and it fades at dawn.
 
+## Adventuring: jump, fly, fight, shop and catch wrongdoers
+
+- **Jump** with `Space`. You clear kerbs, crates and low walls, and step off
+  ledges and fall.
+- **Fly** with `G`: you rise into the air and can go anywhere, over walls,
+  roofs, the river and the lake. Hold `Space` to climb and `C` to sink, hold
+  `Shift` to speed along; your cloak streams behind you and you lean into the
+  flight. Press `G` again to come down (not over deep water). On a phone: **Fly**,
+  then hold **Up** / **Down**, and **Land**.
+- **Fight:** click (or press `Q`, or tap **Attack**) to punch; press `R` (or tap
+  **Sword**) to draw your sword, and then the same button swings it, sweeping
+  everyone within reach. A blow turns you towards whoever is close in the
+  direction you are looking. People who are struck flinch and protest, show a
+  health bar above their name and limp when badly hurt; enough blows knock them
+  to the ground for a while. Children just dodge. A guard who sees you hit
+  someone for no reason fines you 5 crowns. Your own health is the red bar at
+  the top left; it comes back slowly when nobody has hit you for a while, or at
+  once with food. If it runs out, you wake up in your cottage.
+- **Mark the map:** open the map (`M`) and click or tap anywhere to set your
+  mark, a red pin. A pointer then shows the way on screen, with the distance
+  (at the edge of the screen when the spot is out of view), and the mark rides
+  along the compass and the minimap. Click it again to clear it; reaching it
+  clears it too.
+- **Coins and shops:** you start with 30 crowns (the purse under the health
+  bar). Ask a shopkeeper what they have for sale: Jory's fruit, Hilde's bread,
+  cakes and pies, ale and cheese at the Broken Oar, Mila's ribbons and toys,
+  Tobias Fenn's healing salve, and at the forge Brannoc's steel sword, which
+  hits harder than your old one. What you buy goes into the **Bag** page of the
+  journal, where you eat or use it.
+- **The Wardens' Guild** has its house on the street west of the market, with a
+  painted sign and a notice board at the door. Its guildmaster, Edric Vane,
+  offers three bounties, one after another: a cutpurse at the market (25
+  crowns), a smuggler at the harbour of Aldra's Haven (40) and a sheep thief in
+  Millbrook (55). For each, ask the witness he names what they saw; then find
+  the person who matches the description, looking closely at hats, cloaks,
+  beards and scars, because someone else will match part of it. Accuse them in
+  conversation and they run. Catch them and beat them until they yield, press
+  `E` to **bind** them, and lead them back to the guildmaster (the guild is
+  marked on your map) to be paid. Accuse the wrong person and they just put you
+  right. The **Bounties** page of the journal keeps each case and its clues.
+
 ## The mystery
 
 Valdren is hiding something about the Red Winter, thirty-one years ago, when the
@@ -171,7 +216,8 @@ into your journal.
 - **Day and night:** the sun crosses the sky in about fourteen minutes and the
   night passes in about five. Windows and street lanterns light up after dusk.
 - **Saving:** progress (discoveries, conversations, where you stand, the time of
-  day) is saved in this browser as you play, and the title screen offers to
+  day, your health, purse and bag, your bounties and your map mark) is saved in
+  this browser as you play, and the title screen offers to
   continue or to start a new journey. If the browser blocks storage the game
   still runs; it just cannot remember you.
 
@@ -230,6 +276,13 @@ maps), on desktop and on phones, with WebGL 2.
 | Read, examine | `E` by something that glints | **Interact** button                     |
 | Pet an animal | `E` next to it               | **Interact** button                       |
 | Lantern on / off | `F`                         | Lantern button (above **Journal**)        |
+| Jump        | `Space`                        | **Jump** button                           |
+| Fly / land  | `G` (`Space` climbs, `C` sinks) | **Fly** / **Land**, hold **Up** / **Down** |
+| Punch, swing the sword | Left click (while looking around) or `Q` | **Attack** button       |
+| Draw / sheathe the sword | `R`                 | **Sword** button                          |
+| Bind a beaten culprit | `E` next to them        | **Interact** button                       |
+| Buy something | Ask a shopkeeper, then **Buy**  | The same                                  |
+| Mark the map | Click the full map             | Tap the full map                          |
 | Sleep       | `E` by the bed in your cottage | **Interact** button                       |
 | Ride the balloon | `E` by its basket on the meadow | **Interact** button                 |
 | Journal     | `J`                            | **Journal** button                        |
@@ -237,7 +290,7 @@ maps), on desktop and on phones, with WebGL 2.
 | Map: town / kingdom | The button on the full map | The button on the full map           |
 | Close a page | `Esc`, `E` / `J` / `M` again  | The × button                              |
 | Pause       | `Esc`                          | Pause button (top right)                  |
-| Talk: reply | Click a reply, or `1`–`3`      | Tap a reply                               |
+| Talk: reply | Click a reply, or `1`–`4`      | Tap a reply                               |
 | Talk: skip  | Click the text, `Space`, `E`   | Tap the text                              |
 | Talk: leave | `Esc` or the last reply        | The last reply                            |
 
@@ -294,6 +347,26 @@ left mouse button and drag to look around.
   move by step between them, repeat the piece's motif in bars 1-2 and 5-6, and
   end each phrase on the tonic. The game chooses the theme from the time of day
   and whether you are inside an inn.
+- **Movement:** the traveller has a vertical speed: a jump launches it and
+  gravity (22 m/s²) brings it down, and walking off a drop steeper than a slope
+  starts a fall. In the air the step rules relax to "whatever your feet clear",
+  so a jump lands on crates and kerbs. Flight drops the step rules altogether
+  (walls still stop you) and keeps you under room ceilings, above the water and
+  below 150 m over the land.
+- **Fights:** blows are keyframed arm (and chest) rotations layered over every
+  other pose, so you can punch while walking or flying, holding the lantern in
+  the other hand. A blow lands at a set moment of its swing: on the nearest
+  person in a cone in front for a punch, on everyone in reach for a sword stroke.
+  People have health; their reactions (a flinch layer, being knocked down,
+  kneeling to yield, walking with bound hands) are poses too. An accused culprit
+  flees (a little slower than you run), turns to fight when caught, and slips
+  back to their haunts if you lose them for long.
+- **Bounties:** each case is a handful of dialogue flags (taken, clue heard,
+  exposed, bound, handed over), so it is saved with the conversations; a reply
+  can carry an action for the game (open a shop, bolt, mark the map, hand over).
+  The guild's house is chosen from the town's walk-in houses after everything
+  else is placed, and its sign and notice board use no random numbers, so
+  nothing else in the town moves.
 - **Sleep:** your cottage is the walk-in house nearest the start; furnishing a
   room records where its bed is, and the bed becomes something to interact with
   inside that room. Sleeping sets the clock, puts you beside the bed and saves.
@@ -456,15 +529,16 @@ left mouse button and drag to look around.
 index.html        page shell, import map, overlays and touch controls
 style.css         UI styles (parchment panels, HUD, touch controls)
 src/main.js       renderer, graphics presets, game loop, states (title,
-                  playing, paused, talking, reading, journal, map),
-                  interaction, saving
+                  playing, paused, talking, reading, journal, map, shop,
+                  sleeping), interaction, map mark and pointer, saving
 src/world.js      terrain, textures, sky, day-night and lighting, every building
                   and prop, vegetation, grass, colliders, walkable surfaces,
                   lore spots, lantern lights, the painted map
 src/player.js     skinned human figure (shared with NPCs), its animation and
                   poses, player controller, follow camera
 src/npc.js        the people: figures and accessories from data, patrols,
-                  who can be talked to, name labels
+                  who can be talked to, name labels, being struck, fleeing,
+                  fighting back, yielding and being led away
 src/animals.js    the animals: instanced species, their shader animation,
                   wandering, following, petting
 src/balloons.js   the hot-air balloons and the ride on the tethered one
@@ -472,6 +546,9 @@ src/boats.js      ships and boats on the lake and the river
 src/dragon.js     the dragon: its mesh, shader animation and flight
 src/post.js       bloom, tone mapping and vignette passes (High preset)
 src/lantern.js    the traveller's lantern: the prop, its beam and glow
+src/gear.js       the traveller's sword and scabbard
+src/combat.js     blows, the traveller's health, aiming at whoever is near
+src/quests.js     purse, bag, shops, and the Wardens' Guild's bounties
 src/music.js      the music: synthesised instruments and a tune generator
 src/dialogue.js   branching conversations: typewriter, replies, flags
 src/lore.js       discoveries and their glints, the reader, the journal, the save

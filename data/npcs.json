@@ -5426,7 +5426,7 @@
             ]
           },
           "case2_w": {
-            "text": "I was out before dawn and saw a rowing boat slip in to the quay, no lantern. The man at the oars wore a grey cowl, and when he turned there was a scar right across his cheek. Went off with a barrel on his shoulder like it weighed nothing.",
+            "text": "I was out before dawn and saw a rowing boat slip in to the quay, no lantern. The man at the oars was young, no beard, in a grey cowl, and when he turned there was a scar right across his cheek. Went off with a barrel on his shoulder like it weighed nothing.",
             "set": [
               "case2_clue"
             ],
@@ -5441,7 +5441,7 @@
             ]
           },
           "case2_w2": {
-            "text": "Along the quay. He works the docks, I'd swear to it. There's more than one grey cowl on this quay, mind; it's cold before dawn. Look for the scar.",
+            "text": "Along the quay. He works the docks, I'd swear to it. There's more than one grey cowl on this quay, mind; it's cold before dawn. Look for the scar, and a smooth chin.",
             "choices": [
               {
                 "text": "I'll find him."
@@ -6946,7 +6946,7 @@
                 "next": "t0"
               },
               {
-                "text": "A grey cowl and a scar across your cheek. You're the smuggler, Silas.",
+                "text": "A grey cowl, a smooth chin and a scar across your cheek. You're the smuggler, Silas.",
                 "next": "accuse",
                 "if": [
                   "case2_clue",
@@ -6966,7 +6966,7 @@
                 "next": "t1"
               },
               {
-                "text": "A grey cowl and a scar across your cheek. You're the smuggler, Silas.",
+                "text": "A grey cowl, a smooth chin and a scar across your cheek. You're the smuggler, Silas.",
                 "next": "accuse",
                 "if": [
                   "case2_clue",

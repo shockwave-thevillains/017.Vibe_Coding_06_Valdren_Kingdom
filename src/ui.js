@@ -426,7 +426,7 @@ export class UI {
 
   /*
    * The minimap turns with the camera, so "up" is the way you are looking.
-   * view: { x, z, heading, yaw, people: [{ x, z, met }], finds: [{ x, z }], home: { x, z }, mark: { x, z } }
+   * view: { x, z, heading, yaw, people: [{ x, z, met, foe }], finds: [{ x, z }], home: { x, z }, mark: { x, z } }
    */
   drawMinimap(view) {
     const el = this.miniEl;
@@ -484,7 +484,7 @@ export class UI {
     for (const p of view.people) {
       g.beginPath();
       g.arc(p.x, p.z, 3.4 * px * dpr, 0, Math.PI * 2);
-      g.fillStyle = p.met ? '#e8c066' : '#9a9080';
+      g.fillStyle = p.foe ? '#d0392b' : p.met ? '#e8c066' : '#9a9080';
       g.fill();
       g.lineWidth = 1.2 * px * dpr;
       g.strokeStyle = '#2e2014';

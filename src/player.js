@@ -801,14 +801,15 @@ function paintFace(look) {
   }
   if (look.scar === 'cut') {
     // An old blade cut from under the left eye down across the cheek to the jaw.
-    const line = [[-0.74, 0.0], [-0.56, -0.3], [-0.3, -0.66]];
-    curve(line, 5, 'rgba(125,45,38,0.6)');
-    curve(line, 1.8, 'rgba(235,190,175,0.65)');
+    // Bold enough to pick out at talking distance.
+    const line = [[-0.74, 0.02], [-0.56, -0.3], [-0.3, -0.68]];
+    curve(line, 18, 'rgba(105,30,25,0.75)');
+    curve(line, 6, 'rgba(240,195,180,0.8)');
     for (let i = 1; i < 5; i++) {
       const t = i / 5;
       const x = -0.74 + 0.44 * t;
-      const y = 0.0 - 0.66 * t;
-      curve([[x - 0.06, y - 0.03], [x + 0.06, y + 0.03]], 1.4, 'rgba(110,40,35,0.5)');
+      const y = 0.02 - 0.7 * t;
+      curve([[x - 0.08, y - 0.04], [x + 0.08, y + 0.04]], 4, 'rgba(95,28,22,0.7)');
     }
   }
 
