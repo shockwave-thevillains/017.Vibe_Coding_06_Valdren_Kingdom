@@ -39,17 +39,17 @@ const PRESETS = {
   low: {
     pixelRatio: 1, antialias: false, shadows: false, shadowMap: 1024, shadowExtent: 34,
     textureSize: 256, anisotropy: 2, treeDetail: 0, cropSparse: true,
-    grass: 2500, grassTile: 38, lampLights: 0, lodRadius: 40,
+    grass: 2500, grassTile: 38, lampLights: 0, lodRadius: 40, people: 45,
   },
   medium: {
     pixelRatio: 1.5, antialias: true, shadows: true, shadowMap: 1024, shadowExtent: 34,
     textureSize: 256, anisotropy: 4, treeDetail: 0, cropSparse: true,
-    grass: 6000, grassTile: 46, lampLights: 2, lodRadius: 55,
+    grass: 6000, grassTile: 46, lampLights: 2, lodRadius: 55, people: 75,
   },
   high: {
     pixelRatio: 2, antialias: true, shadows: true, shadowMap: 2048, shadowExtent: 46,
     textureSize: 512, anisotropy: 8, treeDetail: 1, cropSparse: false,
-    grass: 18000, grassTile: 64, lampLights: 4, lodRadius: 75,
+    grass: 18000, grassTile: 64, lampLights: 4, lodRadius: 75, people: 120,
   },
 };
 const LOAD_TIME = ['antialias', 'textureSize', 'anisotropy', 'treeDetail', 'cropSparse'];
@@ -142,6 +142,7 @@ async function boot() {
   const missing = [!people && 'data/npcs.json', !secrets && 'data/lore.json'].filter(Boolean);
   const dataError = missing.length ? `Some of Valdren could not be loaded (${missing.join(', ')}).` : null;
   const npcs = new NPCManager(scene, world, people ? people.npcs || [] : []);
+  npcs.range = quality.people;
   const flags = new Set();
   const lore = new Lore(scene, world, secrets || { entries: [] });
 
@@ -396,6 +397,7 @@ async function boot() {
     // Let the menu show the choice before the materials recompile for the new lights.
     await nextFrame();
     world.setQuality(current);
+    npcs.range = current.people;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, current.pixelRatio));
     onResize();
     slow.warned = true;

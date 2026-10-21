@@ -741,11 +741,29 @@
       "name": "Maera",
       "role": "Keeper of the Broken Oar",
       "position": {
-        "x": 11,
-        "z": -7
+        "x": 9.6,
+        "z": -16.25
       },
       "heading": 0,
       "action": "wipe",
+      "patrol": {
+        "mode": "pingpong",
+        "speed": 0.9,
+        "points": [
+          {
+            "x": 9.6,
+            "z": -16.25,
+            "wait": 12,
+            "face": 0
+          },
+          {
+            "x": 7.6,
+            "z": -16.25,
+            "wait": 7,
+            "face": 0
+          }
+        ]
+      },
       "look": {
         "female": true,
         "skin": "#e0b08e",
@@ -1606,6 +1624,2856 @@
               "hermit_challenge"
             ],
             "leave": "Leave him by the fire."
+          }
+        }
+      }
+    },
+    {
+      "id": "rolf",
+      "name": "Rolf",
+      "role": "Guard of the South Gate",
+      "position": {
+        "x": -2.0,
+        "z": 97.5
+      },
+      "heading": 0,
+      "action": "behind",
+      "look": {
+        "female": false,
+        "skin": "#f0d0b4",
+        "hair": "#c8a060",
+        "eyes": "#3a4a5a",
+        "tunic": "#24356e",
+        "trousers": "#5a4a3a",
+        "boots": "#2e2118",
+        "belt": "#4a3020",
+        "trim": "#d8d0c0",
+        "cloak": "#24356e",
+        "age": 0.0,
+        "hairStyle": "long",
+        "beard": null
+      },
+      "outfit": {
+        "helmet": true,
+        "breastplate": true,
+        "sword": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_rolf"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Halt. Oh, just a traveller. Welcome to Valdren. Keep your blade sheathed and your purse closer.",
+            "choices": [
+              {
+                "text": "Why does the town have four gates now?",
+                "next": "t0"
+              },
+              {
+                "text": "Balloon meadow?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Still here? Mind the pickpockets.",
+            "choices": [
+              {
+                "text": "Why does the town have four gates now?",
+                "next": "t0"
+              },
+              {
+                "text": "Balloon meadow?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "It outgrew the old wall. The council raised this ring last spring: an east gate for the balloon meadow, a west gate for the woods road.",
+            "choices": [
+              {
+                "text": "Balloon meadow?",
+                "next": "t1"
+              },
+              {
+                "text": "Anything I should watch out for?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Out past the east gate. The aeronauts from Saltmere fly their silk balloons there. Mad, the lot of them. Wonderful, though.",
+            "choices": [
+              {
+                "text": "Why does the town have four gates now?",
+                "next": "t0"
+              },
+              {
+                "text": "Anything I should watch out for?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "Pickpockets at the market, geese at the farm, and Maera's stew if you've a weak stomach.",
+            "choices": [
+              {
+                "text": "Why does the town have four gates now?",
+                "next": "t0"
+              },
+              {
+                "text": "Balloon meadow?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "hedda",
+      "name": "Hedda",
+      "role": "Guard of the South Gate",
+      "position": {
+        "x": 2.4,
+        "z": 97.5
+      },
+      "heading": 0,
+      "action": "behind",
+      "look": {
+        "female": true,
+        "skin": "#6e4630",
+        "hair": "#b85a2a",
+        "eyes": "#4a3a2a",
+        "tunic": "#24356e",
+        "trousers": "#2e2a26",
+        "boots": "#3a2a1e",
+        "belt": "#2e2116",
+        "trim": "#d8d0c0",
+        "cloak": null,
+        "age": 0.0,
+        "skirt": "robe",
+        "hairStyle": "long",
+        "lips": "#a8484a",
+        "stubble": false
+      },
+      "outfit": {
+        "helmet": true,
+        "breastplate": true,
+        "sword": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_hedda"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Market's straight ahead, the Broken Oar is just past it, and the Town Hall's up the north street. Anything else?",
+            "choices": [
+              {
+                "text": "Is the town always this busy?",
+                "next": "t0"
+              },
+              {
+                "text": "Where can I buy bread?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Lost again?",
+            "choices": [
+              {
+                "text": "Is the town always this busy?",
+                "next": "t0"
+              },
+              {
+                "text": "Where can I buy bread?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Since the new wall went up, aye. More houses, more people, more children underfoot.",
+            "choices": [
+              {
+                "text": "Where can I buy bread?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Hilde's bakery, on Fountain Square in the east quarter. Follow your nose.",
+            "choices": [
+              {
+                "text": "Is the town always this busy?",
+                "next": "t0"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "osk",
+      "name": "Osk",
+      "role": "Guard of the East Gate",
+      "position": {
+        "x": 149.5,
+        "z": 11.0
+      },
+      "heading": 1.5708,
+      "action": "behind",
+      "look": {
+        "female": false,
+        "skin": "#f0d0b4",
+        "hair": "#1a1410",
+        "eyes": "#3a4a5a",
+        "tunic": "#24356e",
+        "trousers": "#4c3d31",
+        "boots": "#4a3322",
+        "belt": "#3a2a1a",
+        "trim": "#c8b48a",
+        "cloak": null,
+        "age": 0.35,
+        "hairStyle": "long",
+        "beard": null
+      },
+      "outfit": {
+        "helmet": true,
+        "breastplate": true,
+        "sword": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_osk"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "East gate. Balloon meadow that way, town this way. Pick one.",
+            "choices": [
+              {
+                "text": "Have you ever flown in a balloon?",
+                "next": "t0"
+              },
+              {
+                "text": "What's out at the meadow?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Made up your mind yet?",
+            "choices": [
+              {
+                "text": "Have you ever flown in a balloon?",
+                "next": "t0"
+              },
+              {
+                "text": "What's out at the meadow?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Once. Never again. My stomach's still up there somewhere.",
+            "choices": [
+              {
+                "text": "What's out at the meadow?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Balloons, ropes, aeronauts, and half the town's children trying to sneak into the baskets.",
+            "choices": [
+              {
+                "text": "Have you ever flown in a balloon?",
+                "next": "t0"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "garrick",
+      "name": "Old Garrick",
+      "role": "Regular at the Broken Oar",
+      "position": {
+        "x": 6.95,
+        "z": -12.22
+      },
+      "heading": 0,
+      "action": "drink",
+      "look": {
+        "female": false,
+        "skin": "#a8774f",
+        "hair": "#6e6258",
+        "eyes": "#4a3a2a",
+        "tunic": "#8a6a2a",
+        "trousers": "#4c3d31",
+        "boots": "#2e2118",
+        "belt": "#4a3020",
+        "trim": "#8a6a3a",
+        "cloak": null,
+        "age": 0.7,
+        "hairStyle": "short",
+        "beard": "full",
+        "belly": 0.4
+      },
+      "outfit": {
+        "mug": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_garrick"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Pull up a bench, stranger. The ale's honest and the company's… well, it's me.",
+            "choices": [
+              {
+                "text": "Have you lived here long?",
+                "next": "t0"
+              },
+              {
+                "text": "Any news?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back for another? Good lad. Good lass. Good whoever you are.",
+            "choices": [
+              {
+                "text": "Have you lived here long?",
+                "next": "t0"
+              },
+              {
+                "text": "Any news?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Born in the old quarter, back when the wall was half the size. Now look at it: houses all the way to the meadows.",
+            "choices": [
+              {
+                "text": "Any news?",
+                "next": "t1"
+              },
+              {
+                "text": "What do you think of the king?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "The aeronauts are back from Saltmere with a red-and-gold balloon. Biggest one yet, they say.",
+            "choices": [
+              {
+                "text": "Have you lived here long?",
+                "next": "t0"
+              },
+              {
+                "text": "What do you think of the king?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "I think the king's a sad man in a big hall. Maera says he never smiles. Neither would I, with that crown on.",
+            "choices": [
+              {
+                "text": "Have you lived here long?",
+                "next": "t0"
+              },
+              {
+                "text": "Any news?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "elsa",
+      "name": "Elsa",
+      "role": "Waiting at the Broken Oar",
+      "position": {
+        "x": 13.1,
+        "z": -10.58
+      },
+      "heading": 3.1416,
+      "action": "sit",
+      "look": {
+        "female": true,
+        "skin": "#c49577",
+        "hair": "#1a1410",
+        "eyes": "#4a3a2a",
+        "tunic": "#7a2e2a",
+        "trousers": "#5a4a3a",
+        "boots": "#4a3322",
+        "belt": "#2e2116",
+        "trim": "#c8b48a",
+        "cloak": null,
+        "age": 0.3,
+        "skirt": "robe",
+        "hairStyle": "long",
+        "lips": "#a8484a",
+        "stubble": false
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_elsa"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Mm? Oh, hello. Don't mind me, I'm waiting for my husband. He's been ‘just one more minute’ for an hour.",
+            "choices": [
+              {
+                "text": "Where is he?",
+                "next": "t0"
+              },
+              {
+                "text": "Is the food good here?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Still no sign of him.",
+            "choices": [
+              {
+                "text": "Where is he?",
+                "next": "t0"
+              },
+              {
+                "text": "Is the food good here?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Arguing about horses at the stables, most likely. If you see a red-faced man shouting about hooves, that's my Godric.",
+            "choices": [
+              {
+                "text": "Is the food good here?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Maera's stew is the best in the valley. With Hilde's bread it's better still.",
+            "choices": [
+              {
+                "text": "Where is he?",
+                "next": "t0"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "fenwick",
+      "name": "Fenwick",
+      "role": "Wool Trader",
+      "position": {
+        "x": 16.0,
+        "z": -12.92
+      },
+      "heading": 0,
+      "action": "drink",
+      "look": {
+        "female": false,
+        "skin": "#e8c0a0",
+        "hair": "#b85a2a",
+        "eyes": "#5a6e3a",
+        "tunic": "#5a3a6a",
+        "trousers": "#4c3d31",
+        "boots": "#3a2a1e",
+        "belt": "#3a2a1a",
+        "trim": "#8a6a3a",
+        "cloak": null,
+        "age": 0.4,
+        "hairStyle": "short",
+        "beard": "full",
+        "belly": 0.6
+      },
+      "outfit": {
+        "mug": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_fenwick"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "To the traveller! May your boots stay dry and your cup stay full.",
+            "choices": [
+              {
+                "text": "What brings you to Valdren?",
+                "next": "t0"
+              },
+              {
+                "text": "What's the Town Hall like?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Another toast? To you, then!",
+            "choices": [
+              {
+                "text": "What brings you to Valdren?",
+                "next": "t0"
+              },
+              {
+                "text": "What's the Town Hall like?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Wool. I trade it. The sheep do the hard part; I do the talking.",
+            "choices": [
+              {
+                "text": "What's the Town Hall like?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Stone, cold, full of ledgers. The clock on its tower keeps better time than the council does.",
+            "choices": [
+              {
+                "text": "What brings you to Valdren?",
+                "next": "t0"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "hilde",
+      "name": "Hilde",
+      "role": "Baker",
+      "position": {
+        "x": 89.1,
+        "z": 60.0
+      },
+      "heading": 3.1416,
+      "action": "knead",
+      "look": {
+        "female": true,
+        "skin": "#e8c0a0",
+        "hair": "#b85a2a",
+        "eyes": "#4a5e72",
+        "tunic": "#c8b48a",
+        "trousers": "#5a4a3a",
+        "boots": "#4a3322",
+        "belt": "#2e2116",
+        "trim": "#8a6a3a",
+        "cloak": null,
+        "age": 0.35,
+        "skirt": "robe",
+        "hairStyle": "long",
+        "lips": "#a8484a",
+        "stubble": false,
+        "belly": 0.5,
+        "sleeves": "#efe8d8"
+      },
+      "outfit": {
+        "apron": "#f2ece0"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_hilde"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Fresh loaves! Rye, barley, honey bread. Oh, a new face! Welcome, welcome.",
+            "choices": [
+              {
+                "text": "Honey bread?",
+                "next": "t0"
+              },
+              {
+                "text": "Do the children bother you?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back for more? The honey bread's just out.",
+            "choices": [
+              {
+                "text": "Honey bread?",
+                "next": "t0"
+              },
+              {
+                "text": "Do the children bother you?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Made with honey from the old beekeeper out west. He trades it at the market. Best honey in the valley, and he never says a word more than he must.",
+            "choices": [
+              {
+                "text": "Do the children bother you?",
+                "next": "t1"
+              },
+              {
+                "text": "How's business?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Those rascals at the fountain? They bring me luck. And they buy the burnt ends for a farthing.",
+            "choices": [
+              {
+                "text": "Honey bread?",
+                "next": "t0"
+              },
+              {
+                "text": "How's business?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "Better than ever. A bigger town means more mouths, and every mouth wants bread.",
+            "choices": [
+              {
+                "text": "Honey bread?",
+                "next": "t0"
+              },
+              {
+                "text": "Do the children bother you?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "aldwin",
+      "name": "Aldwin",
+      "role": "Clerk of the Town Hall",
+      "position": {
+        "x": -27.3,
+        "z": -26.0
+      },
+      "heading": 1.5708,
+      "action": "behind",
+      "look": {
+        "female": false,
+        "skin": "#6e4630",
+        "hair": "#6e6258",
+        "eyes": "#5a6e3a",
+        "tunic": "#3a3a4a",
+        "trousers": "#5a4a3a",
+        "boots": "#3a2a1e",
+        "belt": "#2e2116",
+        "trim": "#d8d0c0",
+        "cloak": null,
+        "age": 0.55,
+        "hairStyle": "short",
+        "beard": "full"
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_aldwin"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "The Town Hall is open to every citizen. Mind the ledgers; some are older than the bridge.",
+            "choices": [
+              {
+                "text": "What happens here?",
+                "next": "t0"
+              },
+              {
+                "text": "Tell me about the clock.",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Something else for the record?",
+            "choices": [
+              {
+                "text": "What happens here?",
+                "next": "t0"
+              },
+              {
+                "text": "Tell me about the clock.",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "The council meets, argues, and writes it all down. I write it down twice.",
+            "choices": [
+              {
+                "text": "Tell me about the clock.",
+                "next": "t1"
+              },
+              {
+                "text": "Who runs the town?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Made by a clockmaker from Saltmere. It strikes nothing and rings nothing; it simply keeps the time. The council likes it that way.",
+            "choices": [
+              {
+                "text": "What happens here?",
+                "next": "t0"
+              },
+              {
+                "text": "Who runs the town?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "The council of guilds, under the Crown. The king rarely comes down from the castle these days.",
+            "choices": [
+              {
+                "text": "What happens here?",
+                "next": "t0"
+              },
+              {
+                "text": "Tell me about the clock.",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "jory",
+      "name": "Jory",
+      "role": "Fruit Seller",
+      "position": {
+        "x": -15.9,
+        "z": 10.0
+      },
+      "heading": 1.5708,
+      "look": {
+        "female": false,
+        "skin": "#d9a882",
+        "hair": "#c8a060",
+        "eyes": "#3a4a5a",
+        "tunic": "#5a7a3a",
+        "trousers": "#2e2a26",
+        "boots": "#4a3322",
+        "belt": "#4a3020",
+        "trim": "#b8923e",
+        "cloak": null,
+        "age": 0.25,
+        "hairStyle": "long",
+        "beard": "short"
+      },
+      "outfit": {
+        "apron": "#e6dccb"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_jory"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Apples! Pears! Plums from the south orchards! Taste one, go on.",
+            "choices": [
+              {
+                "text": "How much for an apple?",
+                "next": "t0"
+              },
+              {
+                "text": "Where does the fruit grow?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Changed your mind about those plums?",
+            "choices": [
+              {
+                "text": "How much for an apple?",
+                "next": "t0"
+              },
+              {
+                "text": "Where does the fruit grow?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "For you? Free. Tell your friends, and they'll pay double.",
+            "choices": [
+              {
+                "text": "Where does the fruit grow?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Orchards past the river, beyond the farms. Wynn Hollis grows the best pears, though don't tell her I said so.",
+            "choices": [
+              {
+                "text": "How much for an apple?",
+                "next": "t0"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "mila",
+      "name": "Mila",
+      "role": "Toy and Ribbon Seller",
+      "position": {
+        "x": 81.0,
+        "z": 29.3
+      },
+      "heading": 0,
+      "look": {
+        "female": true,
+        "skin": "#f0d0b4",
+        "hair": "#7a4a24",
+        "eyes": "#3a4a5a",
+        "tunic": "#b05ac0",
+        "trousers": "#6a5a44",
+        "boots": "#3a2a1e",
+        "belt": "#2e2116",
+        "trim": "#d8d0c0",
+        "cloak": null,
+        "age": 0.2,
+        "skirt": "robe",
+        "hairStyle": "long",
+        "lips": "#c06060",
+        "stubble": false
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_mila"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Ribbons, flowers, wooden toys! Something for the little ones?",
+            "choices": [
+              {
+                "text": "Wooden toys?",
+                "next": "t0"
+              },
+              {
+                "text": "Why is there bunting everywhere?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back again? The wooden balloons are going fast.",
+            "choices": [
+              {
+                "text": "Wooden toys?",
+                "next": "t0"
+              },
+              {
+                "text": "Why is there bunting everywhere?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Carved by my father: horses, ducks, a little balloon on a string. The children love the balloon.",
+            "choices": [
+              {
+                "text": "Why is there bunting everywhere?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "The balloon festival! The aeronauts fly over the town every summer, and we deck the streets for them.",
+            "choices": [
+              {
+                "text": "Wooden toys?",
+                "next": "t0"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "bartholomew",
+      "name": "Bartholomew",
+      "role": "Town Crier",
+      "position": {
+        "x": -6.0,
+        "z": 19.0
+      },
+      "heading": 2.3,
+      "action": "behind",
+      "look": {
+        "female": false,
+        "skin": "#8a5a3a",
+        "hair": "#7a4a24",
+        "eyes": "#5a6e3a",
+        "tunic": "#8a2a2a",
+        "trousers": "#3a2e24",
+        "boots": "#2e2118",
+        "belt": "#2e2116",
+        "trim": "#b8923e",
+        "cloak": "#24356e",
+        "age": 0.5,
+        "hairStyle": "short",
+        "beard": null,
+        "belly": 0.5,
+        "cloakTrim": "#d4a640"
+      },
+      "outfit": {
+        "hat": "#24356e"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_bartholomew"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Hear ye, hear ye! News of Valdren, fresh as Hilde's bread!",
+            "choices": [
+              {
+                "text": "What's the news?",
+                "next": "t0"
+              },
+              {
+                "text": "Any news from the castle?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Hear ye, again!",
+            "choices": [
+              {
+                "text": "What's the news?",
+                "next": "t0"
+              },
+              {
+                "text": "Any news from the castle?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "The new wall is finished! Four gates! The east quarter is open for houses! And the aeronauts fly again from the meadow!",
+            "choices": [
+              {
+                "text": "Any news from the castle?",
+                "next": "t1"
+              },
+              {
+                "text": "Where is the balloon meadow?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "The castle keeps its own counsel, traveller. I cry what I'm paid to cry.",
+            "choices": [
+              {
+                "text": "What's the news?",
+                "next": "t0"
+              },
+              {
+                "text": "Where is the balloon meadow?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "Through the east gate and along the cart track. You can't miss them; they're the size of houses!",
+            "choices": [
+              {
+                "text": "What's the news?",
+                "next": "t0"
+              },
+              {
+                "text": "Any news from the castle?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "tam",
+      "name": "Tam",
+      "role": "Stablehand",
+      "position": {
+        "x": -66.5,
+        "z": 39.0
+      },
+      "heading": 3.1416,
+      "action": "behind",
+      "look": {
+        "female": false,
+        "skin": "#c49577",
+        "hair": "#1a1410",
+        "eyes": "#4a3a2a",
+        "tunic": "#6a5a3a",
+        "trousers": "#6a5a44",
+        "boots": "#4a3322",
+        "belt": "#2e2116",
+        "trim": "#c8b48a",
+        "cloak": null,
+        "age": 0.15,
+        "hairStyle": "short",
+        "beard": null
+      },
+      "outfit": {
+        "strawHat": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_tam"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Easy there, don't spook the horses. They're shy of strangers.",
+            "choices": [
+              {
+                "text": "Can I pet them?",
+                "next": "t0"
+              },
+              {
+                "text": "Whose horses are these?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "They're getting used to you.",
+            "choices": [
+              {
+                "text": "Can I pet them?",
+                "next": "t0"
+              },
+              {
+                "text": "Whose horses are these?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Walk up slow, hand flat. Chestnut likes a scratch behind the ears. The grey bites.",
+            "choices": [
+              {
+                "text": "Whose horses are these?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Town horses, mostly: the carters', the council's, and one old warhorse the Captain retired.",
+            "choices": [
+              {
+                "text": "Can I pet them?",
+                "next": "t0"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "godric",
+      "name": "Godric",
+      "role": "Carter",
+      "position": {
+        "x": -60.6,
+        "z": 30.0
+      },
+      "heading": -1.5708,
+      "action": "behind",
+      "look": {
+        "female": false,
+        "skin": "#c49577",
+        "hair": "#c8a060",
+        "eyes": "#4a5e72",
+        "tunic": "#7a2e2a",
+        "trousers": "#3a2e24",
+        "boots": "#4a3322",
+        "belt": "#3a2a1a",
+        "trim": "#d8d0c0",
+        "cloak": null,
+        "age": 0.45,
+        "hairStyle": "short",
+        "beard": "short",
+        "belly": 0.3
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_godric"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "The grey is worth twice what they're asking, I tell you! Twice!",
+            "choices": [
+              {
+                "text": "Your wife is waiting at the Broken Oar.",
+                "next": "t0"
+              },
+              {
+                "text": "You know horses?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Still twice, I say!",
+            "choices": [
+              {
+                "text": "Your wife is waiting at the Broken Oar.",
+                "next": "t0"
+              },
+              {
+                "text": "You know horses?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Is she? Is she! Oh, pickled pears. Tell her I'm coming. Tell her I've been coming for an hour.",
+            "choices": [
+              {
+                "text": "You know horses?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Thirty years a carter. I know a sound hoof when I see one.",
+            "choices": [
+              {
+                "text": "Your wife is waiting at the Broken Oar.",
+                "next": "t0"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "ida",
+      "name": "Ida",
+      "role": "Mother of Four (Two Her Own)",
+      "position": {
+        "x": 90.84,
+        "z": 42.83
+      },
+      "heading": -1.9635,
+      "action": "sit",
+      "look": {
+        "female": true,
+        "skin": "#6e4630",
+        "hair": "#7a4a24",
+        "eyes": "#5a7a4a",
+        "tunic": "#8a6a2a",
+        "trousers": "#3a2e24",
+        "boots": "#2e2118",
+        "belt": "#4a3020",
+        "trim": "#d8d0c0",
+        "cloak": null,
+        "age": 0.3,
+        "skirt": "robe",
+        "hairStyle": "long",
+        "lips": "#b4504e",
+        "stubble": false
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_ida"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Hello there. Just keeping an eye on that lot.",
+            "choices": [
+              {
+                "text": "Are those your children?",
+                "next": "t0"
+              },
+              {
+                "text": "Is this a good town for children?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Still running, the little terrors.",
+            "choices": [
+              {
+                "text": "Are those your children?",
+                "next": "t0"
+              },
+              {
+                "text": "Is this a good town for children?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Two of them are. The other two just follow mine home for supper.",
+            "choices": [
+              {
+                "text": "Is this a good town for children?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "The best. A fountain to splash in, horses to watch and balloons in the sky. What more could a child want?",
+            "choices": [
+              {
+                "text": "Are those your children?",
+                "next": "t0"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "merel",
+      "name": "Merel",
+      "role": "Townswoman",
+      "position": {
+        "x": 19.0,
+        "z": 10.0
+      },
+      "heading": 1.2,
+      "patrol": {
+        "mode": "pingpong",
+        "speed": 1.15,
+        "points": [
+          {
+            "x": 19.0,
+            "z": 10.5,
+            "wait": 4
+          },
+          {
+            "x": 30.0,
+            "z": 15.5,
+            "wait": 0.2
+          },
+          {
+            "x": 38.0,
+            "z": 17.0,
+            "wait": 0.2
+          },
+          {
+            "x": 46.0,
+            "z": 11.0,
+            "wait": 0.2
+          },
+          {
+            "x": 52.0,
+            "z": 5.0,
+            "wait": 0.2
+          },
+          {
+            "x": 63.0,
+            "z": 6.0,
+            "wait": 0.2
+          },
+          {
+            "x": 74.0,
+            "z": 8.5,
+            "wait": 0.2
+          },
+          {
+            "x": 76.0,
+            "z": 20.0,
+            "wait": 0.2
+          },
+          {
+            "x": 79.0,
+            "z": 33.0,
+            "wait": 8
+          }
+        ]
+      },
+      "look": {
+        "female": true,
+        "skin": "#6e4630",
+        "hair": "#1a1410",
+        "eyes": "#5a6e3a",
+        "tunic": "#2e5e6e",
+        "trousers": "#5a4a3a",
+        "boots": "#4a3322",
+        "belt": "#2e2116",
+        "trim": "#c8b48a",
+        "cloak": null,
+        "age": 0.4,
+        "skirt": "robe",
+        "hairStyle": "long",
+        "lips": "#a8484a",
+        "stubble": false
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_merel"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Lovely day for a walk, isn't it? I go round the whole town twice before supper.",
+            "choices": [
+              {
+                "text": "How big is the town now?",
+                "next": "t0"
+              },
+              {
+                "text": "Is there anywhere I should see?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Once more round the town?",
+            "choices": [
+              {
+                "text": "How big is the town now?",
+                "next": "t0"
+              },
+              {
+                "text": "Is there anywhere I should see?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Big enough to get lost in. Four gates, two squares, and more lanes than I can name.",
+            "choices": [
+              {
+                "text": "Is there anywhere I should see?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Fountain Square at dusk, when the lamps come on. And the balloons, if they're up.",
+            "choices": [
+              {
+                "text": "How big is the town now?",
+                "next": "t0"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "bess",
+      "name": "Old Bess",
+      "role": "Oldest Woman in Valdren",
+      "position": {
+        "x": 1.0,
+        "z": 30.0
+      },
+      "heading": 3.1416,
+      "stoop": 0.5,
+      "patrol": {
+        "mode": "pingpong",
+        "speed": 0.6,
+        "points": [
+          {
+            "x": 0.5,
+            "z": 30.0,
+            "wait": 10
+          },
+          {
+            "x": -2.0,
+            "z": 40.0,
+            "wait": 0.5
+          },
+          {
+            "x": -2.5,
+            "z": 47.0,
+            "wait": 0.5
+          },
+          {
+            "x": 1.5,
+            "z": 56.0,
+            "wait": 0.5
+          },
+          {
+            "x": 3.5,
+            "z": 64.0,
+            "wait": 0.5
+          },
+          {
+            "x": 1.0,
+            "z": 74.0,
+            "wait": 12
+          }
+        ]
+      },
+      "look": {
+        "female": true,
+        "skin": "#d9a882",
+        "hair": "#6e6258",
+        "eyes": "#5a6e3a",
+        "tunic": "#2f4a7a",
+        "trousers": "#4c3d31",
+        "boots": "#2e2118",
+        "belt": "#3a2a1a",
+        "trim": "#c8b48a",
+        "cloak": null,
+        "age": 0.95,
+        "skirt": "robe",
+        "hairStyle": "bun",
+        "lips": "#b4504e",
+        "stubble": false
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_bess"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Mind your step, young one. These cobbles have tripped better feet than yours.",
+            "choices": [
+              {
+                "text": "Have you always lived here?",
+                "next": "t0"
+              },
+              {
+                "text": "What do you remember of the old days?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "You again. Still in one piece?",
+            "choices": [
+              {
+                "text": "Have you always lived here?",
+                "next": "t0"
+              },
+              {
+                "text": "What do you remember of the old days?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Ninety winters. I remember when the town wall was a ditch and a fence.",
+            "choices": [
+              {
+                "text": "What do you remember of the old days?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Hunger, mostly. Then bread. Then more houses than I can count.",
+            "choices": [
+              {
+                "text": "Have you always lived here?",
+                "next": "t0"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "hugh",
+      "name": "Hugh",
+      "role": "Petitioner",
+      "position": {
+        "x": -1.0,
+        "z": -3.0
+      },
+      "heading": 3.1416,
+      "patrol": {
+        "mode": "pingpong",
+        "speed": 1.2,
+        "points": [
+          {
+            "x": -0.5,
+            "z": -3.0,
+            "wait": 6
+          },
+          {
+            "x": -4.0,
+            "z": -13.0,
+            "wait": 0.2
+          },
+          {
+            "x": -6.0,
+            "z": -22.0,
+            "wait": 0.2
+          },
+          {
+            "x": -9.0,
+            "z": -24.5,
+            "wait": 0.2
+          },
+          {
+            "x": -12.5,
+            "z": -26.0,
+            "wait": 9
+          }
+        ]
+      },
+      "look": {
+        "female": false,
+        "skin": "#8a5a3a",
+        "hair": "#4a2e1a",
+        "eyes": "#5a7a4a",
+        "tunic": "#5a3a6a",
+        "trousers": "#2e2a26",
+        "boots": "#4a3322",
+        "belt": "#2e2116",
+        "trim": "#b8923e",
+        "cloak": null,
+        "age": 0.3,
+        "hairStyle": "short",
+        "beard": null
+      },
+      "outfit": {
+        "hat": "#3a2a1a"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_hugh"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Off to the Town Hall with a petition. Wish me luck.",
+            "choices": [
+              {
+                "text": "A petition about what?",
+                "next": "t0"
+              },
+              {
+                "text": "What's in it for you?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "They sent me away again. I'll try tomorrow.",
+            "choices": [
+              {
+                "text": "A petition about what?",
+                "next": "t0"
+              },
+              {
+                "text": "What's in it for you?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "A new well for the east quarter. The fountain's pretty, but you can't draw a bucket from it.",
+            "choices": [
+              {
+                "text": "What's in it for you?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Clean water, and a seat on the well committee. I do love a committee.",
+            "choices": [
+              {
+                "text": "A petition about what?",
+                "next": "t0"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "pip",
+      "name": "Pip",
+      "role": "Child",
+      "position": {
+        "x": 84.0,
+        "z": 45.3
+      },
+      "heading": 0,
+      "child": true,
+      "patrol": {
+        "mode": "loop",
+        "speed": 2.4,
+        "start": 0,
+        "points": [
+          {
+            "x": 84.0,
+            "z": 45.3,
+            "wait": 0.05
+          },
+          {
+            "x": 86.65,
+            "z": 44.59,
+            "wait": 0.05
+          },
+          {
+            "x": 88.59,
+            "z": 42.65,
+            "wait": 0.05
+          },
+          {
+            "x": 89.3,
+            "z": 40.0,
+            "wait": 0.05
+          },
+          {
+            "x": 88.59,
+            "z": 37.35,
+            "wait": 0.05
+          },
+          {
+            "x": 86.65,
+            "z": 35.41,
+            "wait": 0.05
+          },
+          {
+            "x": 84.0,
+            "z": 34.7,
+            "wait": 0.05
+          },
+          {
+            "x": 81.35,
+            "z": 35.41,
+            "wait": 0.05
+          },
+          {
+            "x": 79.41,
+            "z": 37.35,
+            "wait": 0.05
+          },
+          {
+            "x": 78.7,
+            "z": 40.0,
+            "wait": 0.05
+          },
+          {
+            "x": 79.41,
+            "z": 42.65,
+            "wait": 0.05
+          },
+          {
+            "x": 81.35,
+            "z": 44.59,
+            "wait": 0.05
+          }
+        ]
+      },
+      "look": {
+        "female": false,
+        "skin": "#8a5a3a",
+        "hair": "#2a1a10",
+        "eyes": "#6a4a2a",
+        "tunic": "#e07a3a",
+        "trousers": "#4c3d31",
+        "boots": "#3a2a1e",
+        "belt": "#4a3020",
+        "trim": "#c8b48a",
+        "cloak": null,
+        "age": 0,
+        "hairStyle": "long",
+        "beard": null,
+        "stubble": false,
+        "pouch": null
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_pip"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Tag! You're it! No, wait, you're too big to play. Are you a knight?",
+            "choices": [
+              {
+                "text": "No, just a traveller.",
+                "next": "t0"
+              },
+              {
+                "text": "Have you seen the balloons?",
+                "next": "t1"
+              },
+              {
+                "text": "Bye, Pip."
+              }
+            ]
+          },
+          "again": {
+            "text": "Are you a knight yet?",
+            "choices": [
+              {
+                "text": "No, just a traveller.",
+                "next": "t0"
+              },
+              {
+                "text": "Have you seen the balloons?",
+                "next": "t1"
+              },
+              {
+                "text": "Bye, Pip."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Oh. Do travellers have swords? I want a sword. Nell says I'm too small for a sword.",
+            "choices": [
+              {
+                "text": "Have you seen the balloons?",
+                "next": "t1"
+              },
+              {
+                "text": "Bye, Pip."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Yes! A red one went right over the fountain! Rob says he'll fly one when he's big.",
+            "choices": [
+              {
+                "text": "No, just a traveller.",
+                "next": "t0"
+              },
+              {
+                "text": "Bye, Pip."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "nell",
+      "name": "Nell",
+      "role": "Child",
+      "position": {
+        "x": 89.3,
+        "z": 40.0
+      },
+      "heading": 0,
+      "child": true,
+      "patrol": {
+        "mode": "loop",
+        "speed": 2.4,
+        "start": 3,
+        "points": [
+          {
+            "x": 84.0,
+            "z": 45.3,
+            "wait": 0.05
+          },
+          {
+            "x": 86.65,
+            "z": 44.59,
+            "wait": 0.05
+          },
+          {
+            "x": 88.59,
+            "z": 42.65,
+            "wait": 0.05
+          },
+          {
+            "x": 89.3,
+            "z": 40.0,
+            "wait": 0.05
+          },
+          {
+            "x": 88.59,
+            "z": 37.35,
+            "wait": 0.05
+          },
+          {
+            "x": 86.65,
+            "z": 35.41,
+            "wait": 0.05
+          },
+          {
+            "x": 84.0,
+            "z": 34.7,
+            "wait": 0.05
+          },
+          {
+            "x": 81.35,
+            "z": 35.41,
+            "wait": 0.05
+          },
+          {
+            "x": 79.41,
+            "z": 37.35,
+            "wait": 0.05
+          },
+          {
+            "x": 78.7,
+            "z": 40.0,
+            "wait": 0.05
+          },
+          {
+            "x": 79.41,
+            "z": 42.65,
+            "wait": 0.05
+          },
+          {
+            "x": 81.35,
+            "z": 44.59,
+            "wait": 0.05
+          }
+        ]
+      },
+      "look": {
+        "female": true,
+        "skin": "#d9a882",
+        "hair": "#1a1410",
+        "eyes": "#3a4a5a",
+        "tunic": "#b05ac0",
+        "trousers": "#6a5a44",
+        "boots": "#2e2118",
+        "belt": "#4a3020",
+        "trim": "#c8b48a",
+        "cloak": null,
+        "age": 0,
+        "skirt": "robe",
+        "hairStyle": "long",
+        "lips": "#b4504e",
+        "stubble": false,
+        "pouch": null
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_nell"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Shh! I'm hiding! …oh. You're not Rob.",
+            "choices": [
+              {
+                "text": "Who are you hiding from?",
+                "next": "t0"
+              },
+              {
+                "text": "Where do you live?",
+                "next": "t1"
+              },
+              {
+                "text": "Bye, Nell."
+              }
+            ]
+          },
+          "again": {
+            "text": "Still not Rob.",
+            "choices": [
+              {
+                "text": "Who are you hiding from?",
+                "next": "t0"
+              },
+              {
+                "text": "Where do you live?",
+                "next": "t1"
+              },
+              {
+                "text": "Bye, Nell."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Rob! He's it. He's slow, though. He stops to pet every dog.",
+            "choices": [
+              {
+                "text": "Where do you live?",
+                "next": "t1"
+              },
+              {
+                "text": "Bye, Nell."
+              }
+            ]
+          },
+          "t1": {
+            "text": "In the yellow house by the bakery. Hilde gives us the burnt bits!",
+            "choices": [
+              {
+                "text": "Who are you hiding from?",
+                "next": "t0"
+              },
+              {
+                "text": "Bye, Nell."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "rob",
+      "name": "Rob",
+      "role": "Child",
+      "position": {
+        "x": 84.0,
+        "z": 34.7
+      },
+      "heading": 0,
+      "child": true,
+      "patrol": {
+        "mode": "loop",
+        "speed": 2.4,
+        "start": 6,
+        "points": [
+          {
+            "x": 84.0,
+            "z": 45.3,
+            "wait": 0.05
+          },
+          {
+            "x": 86.65,
+            "z": 44.59,
+            "wait": 0.05
+          },
+          {
+            "x": 88.59,
+            "z": 42.65,
+            "wait": 0.05
+          },
+          {
+            "x": 89.3,
+            "z": 40.0,
+            "wait": 0.05
+          },
+          {
+            "x": 88.59,
+            "z": 37.35,
+            "wait": 0.05
+          },
+          {
+            "x": 86.65,
+            "z": 35.41,
+            "wait": 0.05
+          },
+          {
+            "x": 84.0,
+            "z": 34.7,
+            "wait": 0.05
+          },
+          {
+            "x": 81.35,
+            "z": 35.41,
+            "wait": 0.05
+          },
+          {
+            "x": 79.41,
+            "z": 37.35,
+            "wait": 0.05
+          },
+          {
+            "x": 78.7,
+            "z": 40.0,
+            "wait": 0.05
+          },
+          {
+            "x": 79.41,
+            "z": 42.65,
+            "wait": 0.05
+          },
+          {
+            "x": 81.35,
+            "z": 44.59,
+            "wait": 0.05
+          }
+        ]
+      },
+      "look": {
+        "female": false,
+        "skin": "#a8774f",
+        "hair": "#c8a060",
+        "eyes": "#3a4a5a",
+        "tunic": "#d04a3a",
+        "trousers": "#2e2a26",
+        "boots": "#4a3322",
+        "belt": "#3a2a1a",
+        "trim": "#c8b48a",
+        "cloak": null,
+        "age": 0,
+        "hairStyle": "short",
+        "beard": null,
+        "stubble": false,
+        "pouch": null
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_rob"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "I'm it! I have to catch them, but they're too fast.",
+            "choices": [
+              {
+                "text": "Want some help?",
+                "next": "t0"
+              },
+              {
+                "text": "Do you like the dogs here?",
+                "next": "t1"
+              },
+              {
+                "text": "Bye, Rob."
+              }
+            ]
+          },
+          "again": {
+            "text": "I nearly caught Wren!",
+            "choices": [
+              {
+                "text": "Want some help?",
+                "next": "t0"
+              },
+              {
+                "text": "Do you like the dogs here?",
+                "next": "t1"
+              },
+              {
+                "text": "Bye, Rob."
+              }
+            ]
+          },
+          "t0": {
+            "text": "No! That's cheating. …maybe a little.",
+            "choices": [
+              {
+                "text": "Do you like the dogs here?",
+                "next": "t1"
+              },
+              {
+                "text": "Bye, Rob."
+              }
+            ]
+          },
+          "t1": {
+            "text": "I love dogs! The brown one by the market is called Biscuit. He's the best dog in Valdren.",
+            "choices": [
+              {
+                "text": "Want some help?",
+                "next": "t0"
+              },
+              {
+                "text": "Bye, Rob."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "wren",
+      "name": "Wren",
+      "role": "Child",
+      "position": {
+        "x": 78.7,
+        "z": 40.0
+      },
+      "heading": 0,
+      "child": true,
+      "patrol": {
+        "mode": "loop",
+        "speed": 2.4,
+        "start": 9,
+        "points": [
+          {
+            "x": 84.0,
+            "z": 45.3,
+            "wait": 0.05
+          },
+          {
+            "x": 86.65,
+            "z": 44.59,
+            "wait": 0.05
+          },
+          {
+            "x": 88.59,
+            "z": 42.65,
+            "wait": 0.05
+          },
+          {
+            "x": 89.3,
+            "z": 40.0,
+            "wait": 0.05
+          },
+          {
+            "x": 88.59,
+            "z": 37.35,
+            "wait": 0.05
+          },
+          {
+            "x": 86.65,
+            "z": 35.41,
+            "wait": 0.05
+          },
+          {
+            "x": 84.0,
+            "z": 34.7,
+            "wait": 0.05
+          },
+          {
+            "x": 81.35,
+            "z": 35.41,
+            "wait": 0.05
+          },
+          {
+            "x": 79.41,
+            "z": 37.35,
+            "wait": 0.05
+          },
+          {
+            "x": 78.7,
+            "z": 40.0,
+            "wait": 0.05
+          },
+          {
+            "x": 79.41,
+            "z": 42.65,
+            "wait": 0.05
+          },
+          {
+            "x": 81.35,
+            "z": 44.59,
+            "wait": 0.05
+          }
+        ]
+      },
+      "look": {
+        "female": true,
+        "skin": "#6e4630",
+        "hair": "#b85a2a",
+        "eyes": "#3a4a5a",
+        "tunic": "#3ab0b0",
+        "trousers": "#6a5a44",
+        "boots": "#2e2118",
+        "belt": "#2e2116",
+        "trim": "#8a6a3a",
+        "cloak": null,
+        "age": 0,
+        "skirt": "robe",
+        "hairStyle": "long",
+        "lips": "#c06060",
+        "stubble": false,
+        "pouch": null
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_wren"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Do you want to see a trick? I can run round the fountain twenty times without stopping!",
+            "choices": [
+              {
+                "text": "Show me!",
+                "next": "t0"
+              },
+              {
+                "text": "Isn't that tiring?",
+                "next": "t1"
+              },
+              {
+                "text": "Bye, Wren."
+              }
+            ]
+          },
+          "again": {
+            "text": "That was nineteen. Or twenty-one.",
+            "choices": [
+              {
+                "text": "Show me!",
+                "next": "t0"
+              },
+              {
+                "text": "Isn't that tiring?",
+                "next": "t1"
+              },
+              {
+                "text": "Bye, Wren."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Watch! …one… two… I'll tell you when I get to twenty.",
+            "choices": [
+              {
+                "text": "Isn't that tiring?",
+                "next": "t1"
+              },
+              {
+                "text": "Bye, Wren."
+              }
+            ]
+          },
+          "t1": {
+            "text": "No! Grown-ups get tired. Children don't.",
+            "choices": [
+              {
+                "text": "Show me!",
+                "next": "t0"
+              },
+              {
+                "text": "Bye, Wren."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "lotte",
+      "name": "Lotte",
+      "role": "Child",
+      "position": {
+        "x": -64.0,
+        "z": 38.6
+      },
+      "heading": 3.1416,
+      "child": true,
+      "look": {
+        "female": true,
+        "skin": "#e8c0a0",
+        "hair": "#a0703a",
+        "eyes": "#3a4a5a",
+        "tunic": "#d04a3a",
+        "trousers": "#2e2a26",
+        "boots": "#2e2118",
+        "belt": "#4a3020",
+        "trim": "#d8d0c0",
+        "cloak": null,
+        "age": 0,
+        "skirt": "robe",
+        "hairStyle": "long",
+        "lips": "#c06060",
+        "stubble": false,
+        "pouch": null
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_lotte"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "That one's Chestnut. She's mine. Well, she's not mine. But she likes me best.",
+            "choices": [
+              {
+                "text": "Can you ride?",
+                "next": "t0"
+              },
+              {
+                "text": "What's your favourite animal?",
+                "next": "t1"
+              },
+              {
+                "text": "Bye, Lotte."
+              }
+            ]
+          },
+          "again": {
+            "text": "Chestnut's looking at you!",
+            "choices": [
+              {
+                "text": "Can you ride?",
+                "next": "t0"
+              },
+              {
+                "text": "What's your favourite animal?",
+                "next": "t1"
+              },
+              {
+                "text": "Bye, Lotte."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Tam lets me sit on her sometimes. Don't tell my mother.",
+            "choices": [
+              {
+                "text": "What's your favourite animal?",
+                "next": "t1"
+              },
+              {
+                "text": "Bye, Lotte."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Horses. And cats. And the chickens, but only the little ones.",
+            "choices": [
+              {
+                "text": "Can you ride?",
+                "next": "t0"
+              },
+              {
+                "text": "Bye, Lotte."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "bram",
+      "name": "Bram",
+      "role": "Child",
+      "position": {
+        "x": 1.0,
+        "z": 30.0
+      },
+      "heading": 0,
+      "child": true,
+      "patrol": {
+        "mode": "pingpong",
+        "speed": 2.6,
+        "start": 0,
+        "points": [
+          {
+            "x": 1.0,
+            "z": 30.0,
+            "wait": 3
+          },
+          {
+            "x": -2.0,
+            "z": 40.0,
+            "wait": 0.05
+          },
+          {
+            "x": -2.5,
+            "z": 47.0,
+            "wait": 0.05
+          },
+          {
+            "x": 1.5,
+            "z": 56.0,
+            "wait": 0.05
+          },
+          {
+            "x": 3.5,
+            "z": 64.0,
+            "wait": 2
+          }
+        ]
+      },
+      "look": {
+        "female": false,
+        "skin": "#f0d0b4",
+        "hair": "#b85a2a",
+        "eyes": "#4a3a2a",
+        "tunic": "#e0a030",
+        "trousers": "#4c3d31",
+        "boots": "#4a3322",
+        "belt": "#3a2a1a",
+        "trim": "#c8b48a",
+        "cloak": null,
+        "age": 0,
+        "hairStyle": "long",
+        "beard": null,
+        "stubble": false,
+        "pouch": null
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_bram"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Race you to the well! Ready, steady… I already started!",
+            "choices": [
+              {
+                "text": "That's cheating!",
+                "next": "t0"
+              },
+              {
+                "text": "Where are you running to?",
+                "next": "t1"
+              },
+              {
+                "text": "Bye, Bram."
+              }
+            ]
+          },
+          "again": {
+            "text": "I won! I always win.",
+            "choices": [
+              {
+                "text": "That's cheating!",
+                "next": "t0"
+              },
+              {
+                "text": "Where are you running to?",
+                "next": "t1"
+              },
+              {
+                "text": "Bye, Bram."
+              }
+            ]
+          },
+          "t0": {
+            "text": "It's not cheating if you win.",
+            "choices": [
+              {
+                "text": "Where are you running to?",
+                "next": "t1"
+              },
+              {
+                "text": "Bye, Bram."
+              }
+            ]
+          },
+          "t1": {
+            "text": "The bakery! Hilde gives us the burnt ends if we're quick.",
+            "choices": [
+              {
+                "text": "That's cheating!",
+                "next": "t0"
+              },
+              {
+                "text": "Bye, Bram."
+              }
+            ]
           }
         }
       }

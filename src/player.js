@@ -1228,7 +1228,54 @@ const ACTIONS = {
     right: true,
     pose: () => ({ upperArmR: [-0.22, 0, 0.14], forearmR: [-1.0, 0, 0], handR: [0, 0, 0] }),
   },
+  // Seated on a bench or chair, forearms on the table in front.
+  sit: {
+    seated: true,
+    pose: () => ({ ...SEAT, ...SEAT_ARMS }),
+  },
+  // Seated with a tankard in the left hand, taking a long drink now and then.
+  drink: {
+    seated: true,
+    right: true,
+    pose: (t) => {
+      const p = (t * 0.13) % 1;
+      const k = p < 0.12 ? smooth(0, 0.12, p) : p < 0.3 ? 1 : p < 0.42 ? 1 - smooth(0.3, 0.42, p) : 0;
+      return {
+        ...SEAT,
+        upperArmR: [-0.5, 0, -0.12], forearmR: [-1.25, -0.25, 0], handR: [0.1, 0, 0],
+        upperArmL: [-0.55 - 0.75 * k, 0, 0.14 + 0.2 * k], forearmL: [-1.2 - 1.0 * k, 0.3 + 0.45 * k, 0], handL: [0.1 + 0.4 * k, 0, 0],
+        neck: [-0.08 * k, 0, 0], head: [-0.3 * k, 0, 0],
+      };
+    },
+  },
+  // Kneading dough on a counter.
+  knead: {
+    pose: (t) => {
+      const a = Math.sin(t * 3.4);
+      return {
+        spine: [0.16, 0, 0], chest: [0.06, 0, 0], neck: [0.05, 0, 0], head: [0.32, 0, 0],
+        upperArmL: [-0.6 - 0.12 * a, 0, 0.2], forearmL: [-0.85 + 0.22 * a, 0.35, 0], handL: [0.55, 0, 0],
+        upperArmR: [-0.6 + 0.12 * a, 0, -0.2], forearmR: [-0.85 - 0.22 * a, -0.35, 0], handR: [0.55, 0, 0],
+      };
+    },
+  },
 };
+
+// The lower half of a seated figure: thighs level, shins down to the floor.
+const SEAT = {
+  hips: [0, 0, 0], spine: [0.08, 0, 0],
+  thighL: [-1.5, 0, 0.05], shinL: [1.47, 0, 0], footL: [0.03, 0, 0],
+  thighR: [-1.5, 0, -0.05], shinR: [1.47, 0, 0], footR: [0.03, 0, 0],
+};
+const SEAT_ARMS = {
+  upperArmL: [-0.5, 0, 0.12], forearmL: [-1.25, 0.25, 0], handL: [0.1, 0, 0],
+  upperArmR: [-0.5, 0, -0.12], forearmR: [-1.25, -0.25, 0], handR: [0.1, 0, 0],
+};
+const SEAT_DROP = 0.44; // how far the hips sink onto a seat
+
+export function isSeated(action) {
+  return !!(action && ACTIONS[action] && ACTIONS[action].seated);
+}
 
 // Moves a bone's rotation towards [x, y, z] by weight w.
 function blendBone(bone, r, w) {
@@ -1242,7 +1289,8 @@ function blendBone(bone, r, w) {
  * Procedural animation on the skeleton: walk, run and idle (pelvis sway and
  * twist, counter-rotating shoulders, bending knees and elbows, heel-to-toe
  * feet, a swaying cloak), with optional layers on top:
- *   action   a pose from ACTIONS ('behind', 'hammer', 'wipe', 'staff', ...)
+ *   action   a pose from ACTIONS ('behind', 'hammer', 'wipe', 'staff', 'sit',
+ *            'drink', 'knead')
  *   talking  hand gestures and nods while speaking
  *   lookAt   { yaw, pitch } in radians relative to the body, or null
  *   stoop    a permanent forward bend (0..1)
@@ -1298,7 +1346,7 @@ export class FigureAnimator {
         this._act = 0;
       }
     } else {
-      const want = def && (def.carry || (m < 0.15 && !this.talking)) ? 1 : 0;
+      const want = def && (def.carry || def.seated || (m < 0.15 && !this.talking)) ? 1 : 0;
       this._act += (want - this._act) * kAct;
     }
     this._talk += ((this.talking ? 1 : 0) - this._talk) * (1 - Math.exp(-6 * dt));
@@ -1339,11 +1387,12 @@ export class FigureAnimator {
       hand.rotation.set(-0.1 - r * 0.2, 0, 0);
     }
 
-    // Action pose.
+    // Action pose; a seated pose also lowers the hips onto the seat.
     const actDef = this._actName ? ACTIONS[this._actName] : null;
     if (actDef && this._act > 0.001) {
       const pose = actDef.pose(t);
       for (const name in pose) blendBone(b[name], pose[name], this._act);
+      if (actDef.seated) b.hips.position.y -= SEAT_DROP * this._act;
     }
 
     // Talking: a hand that gestures (whichever is free) and small nods.

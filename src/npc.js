@@ -1,19 +1,20 @@
 import * as THREE from 'three';
-import { createFigure, FigureAnimator, dampAngle, frontProfile, HEAD_CENTRE } from './player.js';
+import { createFigure, FigureAnimator, dampAngle, frontProfile, isSeated, HEAD_CENTRE } from './player.js';
 import { clamp, mulberry32 } from './world.js';
 
 /*
  * npc.js: the people of Valdren. Each one is described in data/npcs.json: a
  * look for createFigure() plus an outfit of procedural accessories, an idle
- * pose or a short patrol, and a dialogue tree that dialogue.js runs.
+ * pose or a short patrol, and a dialogue tree that dialogue.js runs. A child
+ * ("child": true) is a smaller figure with a larger head.
  * NPCManager moves them, keeps the player from walking through them, picks who
  * can be talked to, and reports name labels for the HUD.
  */
 
 export const TALK_RANGE = 3.0;
 const LABEL_RANGE = 16;
-const SHOW_RANGE = 170;
-const ANIMATE_RANGE = 90;
+const CHILD_SCALE = 0.62;
+const CHILD_HEAD = 1.27;
 const SHADOW_RANGE = 24;         // farther away, a figure's shadow is too small to be worth its draw calls
 const NPC_RADIUS = 0.32;
 const TAU = Math.PI * 2;
@@ -254,7 +255,8 @@ class NPC {
     this.role = def.role;
     this.dialogue = def.dialogue;
     this.world = world;
-    this.scale = def.scale ?? 1;
+    this.child = !!def.child;
+    this.scale = def.scale ?? (this.child ? CHILD_SCALE : 1);
 
     const look = parseLook(def.look);
     this.figure = createFigure({
@@ -269,6 +271,7 @@ class NPC {
     });
     this.figure.root.name = `npc:${this.id}`;
     this.figure.root.scale.setScalar(this.scale);
+    if (this.child) this.figure.bones.head.scale.setScalar(CHILD_HEAD);
 
     this.animator = new FigureAnimator(this.figure);
     this.animator.stoop = def.stoop || 0;
@@ -281,48 +284,87 @@ class NPC {
     this.route = pts.map((p) => ({ x: p.x, z: p.z, wait: p.wait ?? 6, face: p.face ?? null, action: p.action ?? this.baseAction }));
     this.loop = !!(def.patrol && def.patrol.mode === 'loop');
     this.speed = (def.patrol && def.patrol.speed) || 1.2;
-    this.index = 0;
+    this.index = clamp(Math.floor(def.patrol?.start ?? 0), 0, this.route.length - 1);
     this.step = 1;
     this.state = 'wait';
-    this.timer = this.route[0].wait * (0.4 + this.rng() * 0.6);
+    this.timer = this.route[this.index].wait * (0.4 + this.rng() * 0.6);
 
-    const start = def.position || this.route[0];
+    const start = def.position || this.route[this.index];
     this.position = new THREE.Vector3(start.x, 0, start.z);
     this.position.y = world.getGroundHeight(this.position.x, this.position.z);
-    this.heading = def.heading ?? this.route[0].face ?? 0;
+    this.heading = def.heading ?? this.route[this.index].face ?? 0;
     this._visualY = this.position.y;
     this.talking = false;
     this.moveSpeed = 0;
 
-    this.animator.action = this.route[0].action;
+    this.animator.action = this.route[this.index].action;
     this.animator.settle();
     this._sync();
   }
 
-  headPosition(out) {
-    return out.set(this.position.x, this._visualY + 1.6 * this.scale, this.position.z);
+  // Height of the head above the feet (lower while seated).
+  get headHeight() {
+    return (isSeated(this.animator.action) ? 1.16 : 1.6) * this.scale;
   }
 
-  update(dt, player, typing) {
+  headPosition(out) {
+    return out.set(this.position.x, this._visualY + this.headHeight, this.position.z);
+  }
+
+  update(dt, player, typing, range) {
     const pos = this.position;
     const pp = player.position;
     const dx = pp.x - pos.x;
     const dz = pp.z - pos.z;
     const dist = Math.hypot(dx, dz);
     const root = this.figure.root;
-    root.visible = dist < SHOW_RANGE;
-    if (!root.visible) return;
+    root.visible = dist < range || this.talking;
+    if (!root.visible) {
+      // Out of sight, people keep to their routine without being animated.
+      this._walk(dt, dist, dx, dz);
+      this._visualY = pos.y;
+      this._sync();
+      return;
+    }
     const shadow = dist < SHADOW_RANGE;
     if (this.figure.mesh.castShadow !== shadow) {
       this.figure.mesh.castShadow = shadow;
       if (this.figure.hair) this.figure.hair.castShadow = shadow;
     }
 
-    let moved = 0;
     let action = this.animator.action;
     if (this.talking) {
-      this.heading = dampAngle(this.heading, Math.atan2(dx, dz), 6, dt);
-    } else if (this.state === 'wait') {
+      // Someone seated stays put and turns only their head.
+      if (!isSeated(action)) this.heading = dampAngle(this.heading, Math.atan2(dx, dz), 6, dt);
+      this.moveSpeed = 0;
+    } else {
+      action = this._walk(dt, dist, dx, dz);
+    }
+
+    // Glance at the player when they come close; hold their gaze in a conversation.
+    const a = this.animator;
+    a.action = action;
+    a.talking = this.talking && typing;
+    const rel = wrapAngle(Math.atan2(dx, dz) - this.heading);
+    if (this.talking || (dist < 5 && Math.abs(rel) < 1.9)) {
+      const dy = pp.y + 1.6 - (this._visualY + this.headHeight);
+      a.lookAt = { yaw: rel, pitch: Math.atan2(dy, Math.max(dist, 0.5)) };
+    } else {
+      a.lookAt = null;
+    }
+
+    a.update(dt, this.moveSpeed / this.scale);
+    this._visualY += (pos.y - this._visualY) * (1 - Math.exp(-12 * dt));
+    this._sync();
+  }
+
+  // Follows the route: waits at each point (facing its way, in its pose), then walks on.
+  // Returns the pose to show.
+  _walk(dt, dist, dx, dz) {
+    const pos = this.position;
+    let moved = 0;
+    let action;
+    if (this.state === 'wait') {
       const here = this.route[this.index];
       if (here.face !== null) this.heading = dampAngle(this.heading, here.face, 3, dt);
       action = here.action;
@@ -356,22 +398,7 @@ class NPC {
       }
     }
     this.moveSpeed = dt > 0 ? moved / dt : 0;
-
-    // Glance at the player when they come close; hold their gaze in a conversation.
-    const a = this.animator;
-    a.action = action;
-    a.talking = this.talking && typing;
-    const rel = wrapAngle(Math.atan2(dx, dz) - this.heading);
-    if (this.talking || (dist < 5 && Math.abs(rel) < 1.9)) {
-      const dy = pp.y + 1.6 - (this._visualY + 1.6 * this.scale);
-      a.lookAt = { yaw: rel, pitch: Math.atan2(dy, Math.max(dist, 0.5)) };
-    } else {
-      a.lookAt = null;
-    }
-
-    if (dist < ANIMATE_RANGE) a.update(dt, this.moveSpeed / this.scale);
-    this._visualY += (pos.y - this._visualY) * (1 - Math.exp(-12 * dt));
-    this._sync();
+    return action;
   }
 
   _advance() {
@@ -396,6 +423,7 @@ class NPC {
 export class NPCManager {
   constructor(scene, world, defs = []) {
     this.world = world;
+    this.range = 120; // people farther away than this are hidden (set per graphics preset)
     this.list = defs.map((def, i) => new NPC(def, world, i));
     for (const npc of this.list) scene.add(npc.figure.root);
     this.byId = new Map(this.list.map((n) => [n.id, n]));
@@ -404,7 +432,7 @@ export class NPCManager {
   }
 
   update(dt, player, typing = false) {
-    for (const npc of this.list) npc.update(dt, player, typing);
+    for (const npc of this.list) npc.update(dt, player, typing, this.range);
   }
 
   // Keeps the player from walking through anyone.
@@ -439,7 +467,7 @@ export class NPCManager {
       const dx = npc.position.x - pos.x;
       const dz = npc.position.z - pos.z;
       const d = Math.hypot(dx, dz);
-      if (d > TALK_RANGE * npc.scale || Math.abs(npc.position.y - pos.y) > 1.6) continue;
+      if (d > TALK_RANGE * Math.max(npc.scale, 0.85) || Math.abs(npc.position.y - pos.y) > 1.6) continue;
       const facing = d > 0.01 ? (dx * fx + dz * fz) / d : 1;
       const score = d + (1 - facing) * 0.6;
       if (score < bestScore) {
@@ -458,7 +486,7 @@ export class NPCManager {
       if (!npc.figure.root.visible || npc.talking) continue;
       const d = camera.position.distanceTo(npc.position);
       if (d > LABEL_RANGE) continue;
-      const p = this._proj.set(npc.position.x, npc._visualY + 2.0 * npc.scale, npc.position.z).project(camera);
+      const p = this._proj.set(npc.position.x, npc._visualY + npc.headHeight + 0.4 * npc.scale, npc.position.z).project(camera);
       if (p.z > 1 || p.z < -1 || Math.abs(p.x) > 1.1 || Math.abs(p.y) > 1.1) continue;
       out.push({
         id: npc.id,
