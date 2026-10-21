@@ -14,8 +14,10 @@ generated in code at load time; the project ships no art assets.
 > kingdom to 1.3 km across, with a lake and a harbour town full of ships, a
 > lighthouse, a riverside quarter, the village of Millbrook, the princess and her
 > garden, a dragon over the mountains, many more birds and street cats, and a
-> prettier sky, water and light. The kingdom has no religious buildings or
-> symbols, so it sits comfortably with every faith.
+> prettier sky, water and light. Since then: a hand lantern, your own cottage
+> with a bed to sleep in, music composed as you play, and the Milky Way across
+> the night sky. The kingdom has no religious buildings or symbols, so it sits
+> comfortably with every faith.
 
 ## The kingdom
 
@@ -127,6 +129,28 @@ ends the conversation.
   press `E` (**Ride**) to go up on its rope for a look over the whole kingdom.
   It comes back down by itself after about a minute.
 
+## Your cottage, sleep and music
+
+- **Your cottage** stands just inside the south gate, a short walk from where the
+  journey begins, with a lamp post by its door. It is marked with a little green
+  house on the map and the minimap.
+- **Sleeping:** stand by the bed in your cottage and press `E` (**Sleep in your
+  bed**). After dusk you sleep until seven the next morning; by day you rest until
+  seven in the evening. The screen fades out and back, your lantern goes out, and
+  the game is saved.
+- **Music** plays from the moment you press Begin: a gentle dance on recorder and
+  lute by day, a slow harp air over a soft drone at night, and a lively jig with
+  a frame drum inside the Broken Oar and the Millstone. Nothing is recorded: the
+  instruments are synthesised and the tunes are made up as they play (from a
+  mode, a chord progression and a motif that returns), so they never quite
+  repeat. After two or three phrases a tune ends and the music rests for a while.
+  It goes quieter while the game is paused and falls silent while you sleep. Set
+  the volume (or turn it off) with the **Music** slider on the title screen or in
+  the pause menu; the choice is remembered.
+- **The night sky:** after dark the Milky Way arches across the southern sky, a
+  band of faint light with a warmer core, ragged edges and dark dust lanes, the
+  stars thicker within it. Clouds drift across it, and it fades at dawn.
+
 ## The mystery
 
 Valdren is hiding something about the Red Winter, thirty-one years ago, when the
@@ -206,6 +230,7 @@ maps), on desktop and on phones, with WebGL 2.
 | Read, examine | `E` by something that glints | **Interact** button                     |
 | Pet an animal | `E` next to it               | **Interact** button                       |
 | Lantern on / off | `F`                         | Lantern button (above **Journal**)        |
+| Sleep       | `E` by the bed in your cottage | **Interact** button                       |
 | Ride the balloon | `E` by its basket on the meadow | **Interact** button                 |
 | Journal     | `J`                            | **Journal** button                        |
 | Map         | `M`, or click the minimap      | Tap the minimap                           |
@@ -253,7 +278,25 @@ left mouse button and drag to look around.
 - **Sky:** a shader dome with the sun and moon, stars at night and drifting
   clouds (layered value noise projected onto a flat layer overhead, lit from the
   sun's side, coloured by the hour: white at noon, gold and pink at sunset, faint
-  and moonlit at night).
+  and moonlit at night). The Milky Way is a Gaussian band about a fixed great
+  circle, its width and brightness broken up by noise along the band, brighter
+  and warmer towards its core, with a dust lane of darker noise down its middle;
+  the star threshold drops inside it so the stars crowd there.
+- **Music** (`src/music.js`): Web Audio only. A lookahead scheduler queues one
+  bar at a time a third of a second ahead. Instruments are built per note from
+  oscillators, filters and envelopes: a plucked string (saw and triangle through
+  a closing low-pass), a recorder (sine with a breathy band of noise and delayed
+  vibrato), a frame drum (a falling sine thump and a noise tap), a tambourine, and
+  a drone (tonic and fifth through a slowly swelling low-pass). Everything goes
+  through a reverb made from decaying noise and a gentle compressor. Each theme
+  is a mode, a tempo, an eight-bar chord progression, arpeggio and drum patterns
+  and a set of melodic rhythms; melodies land on chord tones on the downbeat,
+  move by step between them, repeat the piece's motif in bars 1-2 and 5-6, and
+  end each phrase on the tonic. The game chooses the theme from the time of day
+  and whether you are inside an inn.
+- **Sleep:** your cottage is the walk-in house nearest the start; furnishing a
+  room records where its bed is, and the bed becomes something to interact with
+  inside that room. Sleeping sets the clock, puts you beside the bed and saves.
 - **Water:** the river and the lake carry the water depth in each vertex. The
   shallows turn clear and green, a line of foam marks the banks, and two layers
   of ripples drift different ways so their tiling never shows; reflections come
@@ -429,6 +472,7 @@ src/boats.js      ships and boats on the lake and the river
 src/dragon.js     the dragon: its mesh, shader animation and flight
 src/post.js       bloom, tone mapping and vignette passes (High preset)
 src/lantern.js    the traveller's lantern: the prop, its beam and glow
+src/music.js      the music: synthesised instruments and a tune generator
 src/dialogue.js   branching conversations: typewriter, replies, flags
 src/lore.js       discoveries and their glints, the reader, the journal, the save
 data/npcs.json    the inhabitants: looks, outfits, routes, dialogue
@@ -483,6 +527,7 @@ python -m http.server 8000
 ## Credits and licences
 
 - All geometry, textures, colours, the sky and the tower icon are generated in
-  code. The project ships no third-party models, textures, fonts or sounds, so
+  code, and the music is synthesised and composed in code as it plays. The
+  project ships no third-party models, textures, fonts, sounds or recordings, so
   there are no CC0 or other asset licences to list.
 - [Three.js](https://threejs.org/) © three.js authors, MIT licence.

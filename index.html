@@ -34,6 +34,8 @@
     <pre id="debug" class="hidden"></pre>
   </div>
 
+  <div id="fade" aria-hidden="true"><p class="fade-text"></p></div>
+
   <div id="touch-ui">
     <div id="joy-base"><div id="joy-knob"></div></div>
     <button type="button" class="tbtn" id="btn-journal" data-action="journal" aria-label="Journal">Journal</button>
@@ -113,7 +115,7 @@
         <canvas id="map-canvas"></canvas>
         <div id="map-marks"></div>
       </div>
-      <p class="map-legend"><span class="key you"></span> You <span class="key person"></span> People you have met <span class="key find"></span> Discoveries
+      <p class="map-legend"><span class="key you"></span> You <span class="key person"></span> People you have met <span class="key find"></span> Discoveries <span class="key home"></span> Your cottage
         <button type="button" id="map-zoom" class="link map-zoom">Show the whole kingdom</button></p>
     </div>
   </section>
@@ -138,6 +140,11 @@
       </div>
       <p class="quality-about"></p>
       <p class="quality-note hidden">Texture and tree detail will change the next time Valdren loads.</p>
+      <label class="music-row">
+        <span>Music</span>
+        <input type="range" class="music-volume" min="0" max="100" step="5" aria-label="Music volume">
+        <span class="music-value"></span>
+      </label>
     </div>
   </template>
 

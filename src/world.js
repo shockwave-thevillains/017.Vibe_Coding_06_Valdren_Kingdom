@@ -1474,8 +1474,26 @@ void main() {
   col += vec3(0.85, 0.9, 1.0) * (smoothstep(0.99955, 0.9997, m) * 1.4 * clear + pow(max(m, 0.0), 60.0) * 0.08) * uMoonVis;
 
   if (uStars > 0.0) {
+    // The Milky Way: a band of faint light along a great circle across the night sky,
+    // warmer and brighter towards its core, its edges ragged and split by dark dust lanes.
+    const vec3 gPole = vec3(0.4993, 0.3795, -0.7789);
+    const vec3 gCore = vec3(0.4148, 0.6846, 0.5994);
+    const vec3 gSide = vec3(0.7607, -0.6224, 0.1844);
+    float lat = dot(d, gPole);
+    float lon = atan(dot(d, gSide), dot(d, gCore));
+    vec2 gp = vec2(lon * 3.2, lat * 10.0);
+    float width = 0.13 + 0.06 * fbm(vec2(lon * 2.1, 4.7));
+    float band = exp(-lat * lat / (width * width));
+    float core = pow(max(dot(d, gCore), 0.0), 4.0);
+    float lane = exp(-pow((lat - 0.025 * sin(lon * 2.7)) / (width * 0.32), 2.0)) * smoothstep(0.42, 0.72, fbm(gp * 1.9 + 9.0));
+    float milky = band * (0.3 + 0.7 * fbm(gp * 1.4 + 3.1)) * (1.0 + 2.4 * core) * (1.0 - 0.8 * lane);
+    vec3 milkyCol = mix(vec3(0.6, 0.67, 0.92), vec3(1.0, 0.85, 0.66), core * 0.85);
+    float sky = uStars * smoothstep(0.02, 0.3, d.y) * clear;
+    col += milkyCol * milky * 0.1 * sky;
+
+    // Stars, crowding thicker inside the band.
     vec3 cell = floor(d * 420.0);
-    float star = step(0.9975, hash13(cell)) * (0.55 + 0.45 * hash13(cell + 7.0));
+    float star = step(0.9975 - 0.006 * band * (1.0 - lane), hash13(cell)) * (0.55 + 0.45 * hash13(cell + 7.0));
     col += vec3(star * uStars * smoothstep(0.02, 0.25, d.y) * clear);
   }
 
@@ -2166,7 +2184,10 @@ function openRoom(ctx, F, o, base, h, bottom) {
     F.collideBox(0, 0, hw, hd, base + h - 0.1, top);
 
     if (o.room) o.room(room);
-    ctx.world.interiors.push({ ...rect(F.x, F.z, hw - T, hd - T, F.rot), ceiling: base + h - 0.3, top, floor: y, lights: room.lights, name: room.name });
+    ctx.world.interiors.push({
+      ...rect(F.x, F.z, hw - T, hd - T, F.rot), ceiling: base + h - 0.3, top, floor: y, lights: room.lights, name: room.name,
+      bed: room.bed || null, door: F.world(door, hd + 1.4), porch: F.world(door + (door > 0 ? -1.9 : 1.9), hd + 0.9),
+    });
   };
   return room;
 }
@@ -2368,6 +2389,8 @@ function furnishHome(room) {
   hearth(room, hw - 0.42, -hd / 2 + 0.3, -Math.PI / 2);
   rug(room, hw - 1.6, -hd / 2 + 0.3, 1.2, 1.7, 0, BLANKETS[Math.floor(rng() * BLANKETS.length)]);
   bed(room, -hw + 0.62, -hd + 1.08, 0, BLANKETS[Math.floor(rng() * BLANKETS.length)]);
+  // Where to lie down, and where (and facing which way) to stand up again.
+  room.bed = { at: room.F.world(-hw + 0.62, -hd + 1.08), stand: room.F.world(-hw + 1.6, -hd + 1.3), face: room.F.world(-hw + 2.6, -hd + 1.3) };
   chest(room, -hw + 0.62, -hd + 2.62, Math.PI / 2);
   shelves(room, -0.2, -hd + 0.2, 0, 1.4, 1.8, (R, ly, w) => pots(R, ly, w, rng));
   const tx = side * Math.min(1.1, hw - 1.6) * 0.5;
@@ -3660,6 +3683,29 @@ function placeTownHouses(ctx) {
   return placeHouses(ctx, ROADS.filter((r) => r.town), (x, z) => pointInPolygon(x, z, TOWN_WALL) && distToPolygonEdge(x, z, TOWN_WALL) >= 5.5);
 }
 
+/*
+ * The traveller's own cottage: the walk-in house nearest where the journey begins.
+ * A lamp post by its door makes it easy to find after dark; its bed is where the
+ * traveller sleeps.
+ */
+function chooseHome(ctx) {
+  const s = SITES.spawn;
+  let best = null;
+  let bestD = Infinity;
+  for (const r of ctx.world.interiors) {
+    if (!r.bed) continue;
+    const d = Math.hypot(r.x - s.x, r.z - s.z);
+    if (d < bestD) {
+      bestD = d;
+      best = r;
+    }
+  }
+  if (!best) return null;
+  best.home = true;
+  ctx.lamps.push([best.porch[0], best.porch[1], best.rot + Math.PI]);
+  return { name: 'Your Cottage', x: best.x, z: best.z, door: best.door, bed: best.bed, interior: best };
+}
+
 // Houses outside the walls: the riverside quarter, the road east, the harbour town and Millbrook.
 function placeOuterHouses(ctx) {
   const dry = (x, z) => ctx.ground(x, z) > WATER_LEVEL + 0.9 && lakeWeight(x, z) < 0.01 && (x > 410 || Math.abs(z - riverZ(x)) > 19);
@@ -4940,6 +4986,7 @@ export class World {
     });
     this.stats.houses = placeTownHouses(ctx);
     this.stats.outerHouses = placeOuterHouses(ctx);
+    this.home = chooseHome(ctx);
     streetLamps(ctx, (r) => r.town || r.district === 'harbour' || r.district === 'riverside', 19);
     streetBunting(ctx);
     fillYards(ctx);

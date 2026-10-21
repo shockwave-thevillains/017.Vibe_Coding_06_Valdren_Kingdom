@@ -86,6 +86,15 @@ export class UI {
         if (btn && this.onQuality) this.onQuality(btn.dataset.quality);
       });
     }
+    this.onMusic = null;
+    this.musicEls = [...document.querySelectorAll('.music-volume')];
+    for (const el of this.musicEls) {
+      el.addEventListener('input', () => {
+        const v = Number(el.value) / 100;
+        this.setMusic(v);
+        if (this.onMusic) this.onMusic(v);
+      });
+    }
     this.pauseStatusEl = $('pause-status');
 
     this.beginBtn.addEventListener('click', () => {
@@ -276,7 +285,7 @@ export class UI {
 
   /*
    * The minimap turns with the camera, so "up" is the way you are looking.
-   * view: { x, z, heading, yaw, people: [{ x, z, met }], finds: [{ x, z }] }
+   * view: { x, z, heading, yaw, people: [{ x, z, met }], finds: [{ x, z }], home: { x, z } }
    */
   drawMinimap(view) {
     const el = this.miniEl;
@@ -301,6 +310,28 @@ export class UI {
     const half = this.mapHalf;
     g.drawImage(this.mapImage, -half, -half, half * 2, half * 2);
     const px = 1 / scale;
+    if (view.home) {
+      // The traveller's cottage: a little house, kept upright.
+      const k = 5 * px * dpr;
+      g.save();
+      g.translate(view.home.x, view.home.z);
+      g.rotate(-view.yaw);
+      g.beginPath();
+      g.moveTo(0, -k * 1.1);
+      g.lineTo(k, -k * 0.1);
+      g.lineTo(k * 0.7, -k * 0.1);
+      g.lineTo(k * 0.7, k);
+      g.lineTo(-k * 0.7, k);
+      g.lineTo(-k * 0.7, -k * 0.1);
+      g.lineTo(-k, -k * 0.1);
+      g.closePath();
+      g.fillStyle = '#2f6a3a';
+      g.fill();
+      g.lineWidth = 1.2 * px * dpr;
+      g.strokeStyle = '#f2e6c4';
+      g.stroke();
+      g.restore();
+    }
     for (const f of view.finds) {
       g.save();
       g.translate(f.x, f.z);
@@ -358,7 +389,7 @@ export class UI {
     return !this.mapEl.classList.contains('hidden');
   }
 
-  // The whole kingdom, north up. view: { x, z, heading, places, people: [{ x, z, name }], finds: [{ x, z, title }] }
+  // The whole kingdom, north up. view: { x, z, heading, places, people: [{ x, z, name }], finds: [{ x, z, title }], home: { x, z, name } }
   showMap(view) {
     this._mapData = view;
     this.mapEl.classList.remove('hidden');
@@ -402,6 +433,7 @@ export class UI {
     const roomy = cv.clientWidth >= 620 && this.mapView === 0;
     const inView = (x, z) => Math.abs(x - V.x) < V.half * 0.98 && Math.abs(z - V.z) < V.half * 0.98;
     for (const p of view.places) if ((roomy || p.size > 0) && inView(p.x, p.z)) mark(`place${p.size === 2 ? ' big' : ''}`, p.x, p.z, p.name);
+    if (view.home && inView(view.home.x, view.home.z)) mark('home', view.home.x, view.home.z, null, view.home.name).title = view.home.name;
     for (const f of view.finds) if (inView(f.x, f.z)) mark('dot find', f.x, f.z).title = f.title;
     for (const p of view.people) if (inView(p.x, p.z)) mark('dot person', p.x, p.z, null, roomy ? p.name : null).title = p.name;
     const you = mark('you', clamp(view.x, V.x - V.half, V.x + V.half), clamp(view.z, V.z - V.half, V.z + V.half));
@@ -412,6 +444,23 @@ export class UI {
 
   hideMap() {
     this.mapEl.classList.add('hidden');
+  }
+
+  // Shows the music volume (0..1) on every slider.
+  setMusic(v) {
+    const pct = Math.round(v * 100);
+    for (const el of this.musicEls) {
+      el.value = String(pct);
+      el.parentElement.querySelector('.music-value').textContent = pct ? `${pct}%` : 'Off';
+    }
+  }
+
+  // Fades the screen to black (on) or back; resolves when the fade has finished.
+  fade(on, text = '') {
+    const el = document.getElementById('fade');
+    if (on) el.querySelector('.fade-text').textContent = text;
+    el.classList.toggle('on', on);
+    return new Promise((resolve) => setTimeout(resolve, 1500));
   }
 
   toast(text, ms = 2400) {

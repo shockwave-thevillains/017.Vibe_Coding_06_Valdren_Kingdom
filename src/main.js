@@ -8,6 +8,7 @@ import { Boats } from './boats.js';
 import { Dragon } from './dragon.js';
 import { Post } from './post.js';
 import { Lantern } from './lantern.js';
+import { Music } from './music.js';
 import { Dialogue } from './dialogue.js';
 import { Lore, Reader, Journal, Progress } from './lore.js';
 import { Input } from './input.js';
@@ -170,6 +171,8 @@ async function boot() {
   await nextFrame();
   const player = new Player(scene, world);
   const lantern = new Lantern(scene, quality);
+  const music = new Music();
+  music.volume = typeof settings.music === 'number' ? Math.min(1, Math.max(0, settings.music)) : 0.6;
   const follow = new FollowCamera(camera, world);
   follow.yaw = 0.5;
   follow.pitch = 0.2;
@@ -294,8 +297,10 @@ async function boot() {
     follow.distance = 6.5;
     setMode('playing');
     input.requestPointerLock();
+    // Browsers only allow sound after a click or tap, and Begin is one.
+    music.start();
     if (dataError) ui.toast(dataError, 6000);
-    else ui.toast(saved ? `Welcome back to Valdren. Journal: ${lore.found.length} of ${lore.total} discoveries.` : `Welcome to Valdren. ${input.touchMode ? 'Tap Journal for your journal and the minimap for the map' : 'Press J for your journal, M for the map'}.`, 4000);
+    else ui.toast(saved ? `Welcome back to Valdren. Journal: ${lore.found.length} of ${lore.total} discoveries.` : `Welcome to Valdren. Your cottage is marked on the map (${input.touchMode ? 'tap the minimap' : 'M'}); your journal is under ${input.touchMode ? 'Journal' : 'J'}.`, 5000);
   }
 
   // --------------------------------------------------------- conversation
@@ -365,6 +370,7 @@ async function boot() {
       places: PLACES,
       people: metPeople.map((n) => ({ x: n.position.x, z: n.position.z, name: n.name })),
       finds: lore.found.map((id) => lore.byId.get(id)).map((e) => ({ x: e.pos.x, z: e.pos.z, title: e.title })),
+      home: world.home,
     });
     enter('map');
   }
@@ -394,6 +400,7 @@ async function boot() {
   function pause() {
     if (mode !== 'playing') return;
     setMode('paused');
+    music.duck(true);
     input.reset();
     input.exitPointerLock();
     const status = saveNow()
@@ -405,6 +412,7 @@ async function boot() {
   function resume(fromClick) {
     if (mode !== 'paused') return;
     ui.hidePause();
+    music.duck(false);
     setMode('playing');
     // Pointer lock needs a click; after Esc the player clicks the canvas to re-capture.
     if (fromClick) input.requestPointerLock();
@@ -439,6 +447,12 @@ async function boot() {
 
   ui.onBegin = begin;
   ui.onQuality = setQuality;
+  ui.onMusic = (v) => {
+    music.setVolume(v);
+    settings.music = v;
+    saveSettings(settings);
+  };
+  ui.setMusic(music.volume);
   ui.setQuality(level, false);
   ui.onResume = () => resume(true);
   ui.onNewJourney = () => {
@@ -478,6 +492,7 @@ async function boot() {
     else if (reachable && reachable.entry) read(reachable.entry);
     else if (reachable && reachable.animal) ui.toast(animals.pet(reachable.animal), 3500);
     else if (reachable && reachable.balloon) boardBalloon();
+    else if (reachable && reachable.bed) sleep();
     else if (balloons.riding) ui.toast('Hold on to the basket. The meadow is a long way down.');
     else ui.toast('There is nothing here to interact with.');
   });
@@ -506,11 +521,56 @@ async function boot() {
     ui.setLantern(on);
   }
 
+  // Inside an inn the music turns to a jig; otherwise it follows day and night.
+  let musicTimer = 0;
+  function chooseMusic(dt) {
+    musicTimer -= dt;
+    if (musicTimer > 0) return;
+    musicTimer = 0.5;
+    const p = player.position;
+    const room = world.interiorAt(p.x, p.y + 0.5, p.z);
+    const inn = room && (room.name === 'The Broken Oar' || room.name === 'The Millstone');
+    music.setScene(inn ? 'inn' : world.night > 0.55 ? 'night' : 'day');
+  }
+
+  // ------------------------------------------------------------- sleep
+
+  // Sleeping in your own bed: after dark you wake at seven the next morning; by day
+  // you rest until seven in the evening. The screen fades out and in around it.
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  async function sleep() {
+    if (mode !== 'playing' || !world.home) return;
+    const h = world.timeOfDay;
+    const night = h >= 17.5 || h < 5;
+    setMode('sleeping');
+    if (lantern.on) setLantern(false);
+    music.hush(true);
+    await ui.fade(true, night ? 'You sleep…' : 'You rest a while…');
+    world.setTime(night ? 7 : 19);
+    const { stand, face } = world.home.bed;
+    player.teleport(stand[0], stand[1], Math.atan2(face[0] - stand[0], face[1] - stand[1]));
+    follow.yaw = player.heading + Math.PI;
+    follow.update(0, player.position, true);
+    saveNow();
+    needsRender = true;
+    await wait(900);
+    await ui.fade(false);
+    music.hush(false);
+    setMode('playing');
+    ui.toast(night ? 'You sleep soundly. Morning comes to Valdren.' : 'You doze until the evening.', 4000);
+  }
+
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) return;
+    if (!document.hidden) {
+      music.wake();
+      return;
+    }
     pause();
+    music.suspend();
     if (mode !== 'title') saveNow();
   });
+  // A phone may suspend the sound (a call, the lock screen); the next touch brings it back.
+  window.addEventListener('pointerdown', () => music.wake(), { passive: true });
   window.addEventListener('pagehide', () => {
     if (mode !== 'title') saveNow();
   });
@@ -557,6 +617,7 @@ async function boot() {
   const slow = { time: 0, warned: false };
   // Once a session, the first nightfall (after a few seconds of play) suggests the lantern.
   const nightHint = { played: 0, shown: false };
+  let homeGreeted = false;
   const head = new THREE.Vector3();
   const shotFocus = new THREE.Vector3();
   const sideDocked = window.matchMedia('(max-height: 520px) and (orientation: landscape)');
@@ -610,6 +671,11 @@ async function boot() {
       const d = Math.hypot(b.x - p.x, b.z - p.z);
       if (d < BOARD_RANGE) options.push({ d, r: { balloon: true } });
     }
+    if (world.home) {
+      const [bx, bz] = world.home.bed.at;
+      const d = Math.hypot(bx - p.x, bz - p.z);
+      if (d < 1.9 && world.interiorAt(p.x, p.y + 0.5, p.z) === world.home.interior) options.push({ d: d - 0.3, r: { bed: true } });
+    }
     if (!options.length) return null;
     options.sort((a, b) => a.d - b.d);
     return options[0].r;
@@ -628,6 +694,7 @@ async function boot() {
       yaw: follow.yaw,
       people: npcs.list.filter((n) => n.figure.root.visible).map((n) => ({ x: n.position.x, z: n.position.z, met: flags.has(`met_${n.id}`) })),
       finds: lore.found.map((id) => lore.byId.get(id).pos),
+      home: world.home,
     });
   }
 
@@ -698,13 +765,19 @@ async function boot() {
       // Hide the player when an obstacle squeezes the camera right up to them.
       player.figure.root.visible = follow.actualDistance > 1.0;
       lantern.update(dt, player, camera, world.night);
+      chooseMusic(dt);
+      if (!homeGreeted && world.home && world.interiorAt(player.position.x, player.position.y + 0.5, player.position.z) === world.home.interior) {
+        homeGreeted = true;
+        ui.toast('Your cottage. Sleep in the bed to pass the night, or to rest until evening.', 4500);
+      }
       nightHint.played += dt;
       if (!nightHint.shown && nightHint.played > 6 && world.night > 0.6 && !lantern.on) {
         nightHint.shown = true;
-        ui.toast(`Night has fallen. ${input.touchMode ? 'Tap the lantern button' : 'Press F'} to light your lantern.`, 5000);
+        ui.toast(`Night has fallen. ${input.touchMode ? 'Tap the lantern button' : 'Press F'} to light your lantern, or sleep in your cottage until morning.`, 5500);
       }
       reachable = balloons.riding ? null : findReachable();
       if (reachable && reachable.balloon) ui.setPrompt('the balloon', input.touchMode, 'Ride');
+      else if (reachable && reachable.bed) ui.setPrompt('your bed', input.touchMode, 'Sleep in');
       else if (reachable && reachable.entry) ui.setPrompt(reachable.entry.title, input.touchMode, lore.kindOf(reachable.entry).verb);
       else if (reachable && reachable.animal) ui.setPrompt(animals.label(reachable.animal), input.touchMode, 'Pet');
       else ui.setPrompt(reachable ? reachable.npc.name : null, input.touchMode);
@@ -762,7 +835,7 @@ async function boot() {
   ui.setReady(saved ? `Saved journey found: ${lore.found.length} of ${lore.total} discoveries.` : null, progress.available);
 
   // Handy from the browser console while developing.
-  window.valdren = { THREE, renderer, post, scene, camera, world, player, lantern, setLantern, follow, input, ui, npcs, animals, balloons, boats, dragon, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
+  window.valdren = { THREE, renderer, post, scene, camera, world, player, lantern, setLantern, music, sleep, follow, input, ui, npcs, animals, balloons, boats, dragon, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
 }
 
 boot().catch((err) => {
