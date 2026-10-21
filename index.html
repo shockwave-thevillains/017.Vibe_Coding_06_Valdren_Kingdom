@@ -23,6 +23,11 @@
 
   <div id="hud">
     <div id="labels"></div>
+    <div id="compass" aria-hidden="true">
+      <div id="compass-strip"></div>
+      <div id="clock"></div>
+    </div>
+    <canvas id="minimap" role="button" aria-label="Open the map" title="Map (M)"></canvas>
     <div id="prompt" class="hidden"></div>
     <div id="hint" class="hidden"></div>
     <div id="toast" role="status" aria-live="polite"></div>
@@ -55,7 +60,53 @@
       <p class="tagline">Walk its roads. Hear its people. Learn what it has forgotten.</p>
       <p id="load-status" class="status">Loading…</p>
       <button type="button" id="btn-begin" class="primary" disabled>Begin</button>
+      <p id="save-status" class="status small"></p>
+      <button type="button" id="btn-new" class="link hidden">Start a new journey</button>
       <div class="controls-slot"></div>
+    </div>
+  </section>
+
+  <section id="reader" class="overlay hidden" role="dialog" aria-labelledby="reader-title">
+    <div class="panel doc">
+      <p id="reader-new" class="doc-new hidden"></p>
+      <p id="reader-kind" class="kicker"></p>
+      <h2 id="reader-title"></h2>
+      <p id="reader-place" class="doc-place"></p>
+      <div id="reader-text" class="doc-text"></div>
+      <p id="reader-note" class="doc-note"></p>
+      <button type="button" id="reader-close" class="primary">Close</button>
+    </div>
+  </section>
+
+  <section id="journal" class="overlay hidden" role="dialog" aria-labelledby="journal-title">
+    <div class="panel book">
+      <header class="book-head">
+        <h2 id="journal-title">Journal</h2>
+        <button type="button" id="journal-close" class="close" aria-label="Close the journal">×</button>
+      </header>
+      <nav class="tabs" role="tablist">
+        <button type="button" role="tab" data-tab="finds">Discoveries <span id="journal-count">0/10</span></button>
+        <button type="button" role="tab" data-tab="heard">Rumours</button>
+        <button type="button" role="tab" data-tab="truth" class="hidden">The Truth</button>
+      </nav>
+      <div class="book-body">
+        <ul id="journal-list"></ul>
+        <article id="journal-page"></article>
+      </div>
+    </div>
+  </section>
+
+  <section id="map" class="overlay hidden" role="dialog" aria-labelledby="map-title">
+    <div class="panel map-panel">
+      <header class="book-head">
+        <h2 id="map-title">Valdren</h2>
+        <button type="button" id="map-close" class="close" aria-label="Close the map">×</button>
+      </header>
+      <div class="map-frame">
+        <canvas id="map-canvas"></canvas>
+        <div id="map-marks"></div>
+      </div>
+      <p class="map-legend"><span class="key you"></span> You <span class="key person"></span> People you have met <span class="key find"></span> Discoveries</p>
     </div>
   </section>
 
@@ -88,6 +139,7 @@
         <dt>Right side</dt><dd>Drag to look around</dd>
         <dt>Interact</dt><dd>Talk, read, examine</dd>
         <dt>Journal</dt><dd>Your discoveries</dd>
+        <dt>Minimap</dt><dd>Tap it for the full map</dd>
         <dt><span class="bars inline"></span></dt><dd>Pause</dd>
       </dl>
     </div>

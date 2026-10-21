@@ -5,10 +5,11 @@ as a 100 % static site (HTML, ES modules and JSON), with no build step, backend 
 API keys, so it can be hosted on GitHub Pages as is. Every model and texture is
 generated in code at load time; the project ships no art assets.
 
-> **Status: Phase 3 of 5, the people.** The engine core (phase 1), the whole
-> kingdom (phase 2) and its eight inhabitants with branching dialogue (phase 3)
-> are in place. Lore, journal, minimap, saving and the day-night cycle (phase 4)
-> and the quality menu (phase 5) are still to come.
+> **Status: Phase 4 of 5, the mystery.** The engine core (phase 1), the whole
+> kingdom (phase 2), its eight inhabitants with branching dialogue (phase 3),
+> and its secrets, journal, compass and maps, saved progress and a running
+> day-night cycle (phase 4) are in place. The quality menu and final polish
+> (phase 5) are still to come.
 
 ## The kingdom
 
@@ -51,6 +52,30 @@ shoulder, the line types itself out (click, tap or press `Space` to show it at
 once), and you pick a reply with the mouse, a tap or the keys `1`–`3`. `Esc`
 ends the conversation.
 
+## The mystery
+
+Valdren is hiding something about the Red Winter, thirty-one years ago, when the
+King's elder brother died in a fire. Ten things around the kingdom tell the real
+story: two monuments, two banners, four written pages, a grave and a sealed
+door. Each one still to be found catches the light with a faint golden glint.
+Stand by it and press `E` (or tap **Interact**) to read or examine it; it goes
+into your journal.
+
+- **Journal** (`J`, or the **Journal** button): your discoveries in the order you
+  found them, everything people have told you under *Rumours*, and, once all ten
+  are found, *The Truth*. What you have read also changes what some people will
+  say to you, and the story has an ending to reach in conversation.
+- **Compass, clock and minimap:** the compass and the time of day sit at the top;
+  the round minimap turns with the camera and marks people (gold once you have
+  met them) and your discoveries. Click or tap it, or press `M`, for the full
+  map of the kingdom.
+- **Day and night:** the sun crosses the sky in about fourteen minutes and the
+  night passes in about five. Windows and street lanterns light up after dusk.
+- **Saving:** progress (discoveries, conversations, where you stand, the time of
+  day) is saved in this browser as you play, and the title screen offers to
+  continue or to start a new journey. If the browser blocks storage the game
+  still runs; it just cannot remember you.
+
 ## Run it locally
 
 ES modules do not load from `file://`, so serve the folder over HTTP:
@@ -72,8 +97,10 @@ Three.js loads from jsDelivr.
 | Look around | Mouse (click to capture it)    | Drag on the right side of the screen      |
 | Zoom        | Mouse wheel                    | n/a                                       |
 | Interact    | `E`                            | **Interact** button                       |
+| Read, examine | `E` by something that glints | **Interact** button                     |
 | Journal     | `J`                            | **Journal** button                        |
-| Map         | `M`                            | n/a (minimap arrives in phase 4)          |
+| Map         | `M`, or click the minimap      | Tap the minimap                           |
+| Close a page | `Esc`, `E` / `J` / `M` again  | The × button                              |
 | Pause       | `Esc`                          | Pause button (top right)                  |
 | Talk: reply | Click a reply, or `1`–`3`      | Tap a reply                               |
 | Talk: skip  | Click the text, `Space`, `E`   | Tap the text                              |
@@ -87,9 +114,11 @@ left mouse button and drag to look around.
 - `?debug` shows a performance readout (FPS, draw calls, triangles, position).
   `F3` or the backtick key `` ` `` toggles it in game.
 - `?time=HH` starts at a given hour (0–24), for example `?time=18` for sunset or
-  `?time=22` for night.
-- `window.valdren` exposes the renderer, scene, world and player in the browser
-  console.
+  `?time=22` for night (instead of the saved time).
+- `window.valdren` exposes the renderer, scene, world, player, people, lore and
+  the save in the browser console.
+- To forget your progress, use *Start a new journey* on the title screen, or
+  remove the `valdren.save.v1` key from the site's local storage.
 
 ## Technical notes
 
@@ -149,6 +178,29 @@ left mouse button and drag to look around.
   `"set": ["heard_chains"]`), which is how hearing something from one person
   changes what you can ask another. `met_<id>` is set after a first meeting,
   and `"start"` can pick a different greeting for a return visit.
+- **Lore** lives in `data/lore.json`: ten entries, each tied to a named spot the
+  world builds (`anchor`), with a kind (scroll, monument, banner, grave, door),
+  its text, and the traveller's own note; plus the rumour lines that dialogue
+  flags unlock, the closing *Truth* and an epilogue. Finding an entry sets the
+  flag `lore_<id>`, and all ten set `lore_complete`, which conversations can test.
+  The props (the founding stone, a lectern, a ledger page, a song sheet, a
+  letter, the burnt standard, heather on a grave) are part of the batched world
+  geometry; the glints are a single point cloud.
+- **Day and night:** the clock runs continuously. The sky, fog, sun, moon and
+  ambient light follow it every frame, while the image-based lighting is only
+  rebuilt when the sky has visibly changed (often at dawn and dusk, never at
+  noon or midnight). A small pool of point lights (four on desktop, two on touch
+  devices) moves to the lanterns nearest the player after dark, so the light
+  pools on walls and cobbles cost the same anywhere in the kingdom.
+- **Maps** are painted once at load from the world itself: the terrain's own
+  colours with hill shading, the river, forests drawn as tree marks, the fields,
+  and every wall and building taken from the collision shapes, on a parchment
+  tint. The minimap draws a rotated window of that picture; the full map adds
+  place names, the people you have met and your discoveries.
+- **Saving** uses `localStorage` (key `valdren.save.v1`), and every access is
+  wrapped in `try`/`catch`. It is written after each discovery and conversation,
+  every 20 seconds of play, on pause and when the page is hidden. A saved
+  position is only restored if it is still standable ground.
 - **Collision:** circles and rotated boxes with a vertical extent, in a uniform
   spatial grid. Walkable surfaces (the bridge deck, the hall floor and dais) sit
   above the terrain; steps up to 45 cm can be climbed; deep water and slopes above
@@ -163,17 +215,22 @@ left mouse button and drag to look around.
 ```
 index.html        page shell, import map, overlays and touch controls
 style.css         UI styles (parchment panels, HUD, touch controls)
-src/main.js       renderer, game loop, title / playing / paused states
-src/world.js      terrain, textures, sky and lighting, every building and prop,
-                  vegetation, grass, colliders and walkable surfaces
+src/main.js       renderer, game loop, states (title, playing, paused, talking,
+                  reading, journal, map), interaction, saving
+src/world.js      terrain, textures, sky, day-night and lighting, every building
+                  and prop, vegetation, grass, colliders, walkable surfaces,
+                  lore spots, lantern lights, the painted map
 src/player.js     skinned human figure (shared with NPCs), its animation and
                   poses, player controller, follow camera
 src/npc.js        the people: figures and accessories from data, patrols,
                   who can be talked to, name labels
 src/dialogue.js   branching conversations: typewriter, replies, flags
+src/lore.js       discoveries and their glints, the reader, the journal, the save
 data/npcs.json    the eight inhabitants: looks, outfits, routes, dialogue
+data/lore.json    the ten discoverables, rumours, the truth and the epilogue
 src/input.js      keyboard, mouse / pointer lock, touch joystick and look, buttons
-src/ui.js         start screen, pause menu, toasts, hints, debug readout
+src/ui.js         start screen, pause menu, toasts, hints, prompt, name labels,
+                  compass and clock, minimap, full map, debug readout
 .nojekyll         serve files exactly as they are on GitHub Pages
 ```
 

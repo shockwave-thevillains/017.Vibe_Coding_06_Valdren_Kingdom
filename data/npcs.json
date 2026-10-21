@@ -62,6 +62,19 @@
         "start": [
           {
             "if": [
+              "edmund_confessed",
+              "!told_king"
+            ],
+            "node": "news"
+          },
+          {
+            "if": [
+              "told_king"
+            ],
+            "node": "after"
+          },
+          {
+            "if": [
               "met_king"
             ],
             "node": "again"
@@ -71,6 +84,66 @@
           }
         ],
         "nodes": {
+          "news": {
+            "text": "You come back with a look I do not like. Speak.",
+            "choices": [
+              {
+                "text": "Your brother is alive, Majesty. He lives at the Greywatch.",
+                "next": "alive"
+              },
+              {
+                "text": "It is nothing, Majesty."
+              }
+            ]
+          },
+          "alive": {
+            "text": "You lie.” His gloved hand closes into a fist. “I saw that tower burn. I went into the fire after him and found nothing.",
+            "choices": [
+              {
+                "text": "He crawled out through the cellar. Wynn Hollis found him on the west road.",
+                "next": "cellar"
+              },
+              {
+                "text": "Forgive me. I'll go."
+              }
+            ]
+          },
+          "cellar": {
+            "text": "Nothing… because there was nothing to find.” He sits down heavily on the dais step. “Thirty-one years I have kept that door shut, because opening it meant saying what we did. Did he say anything of me?",
+            "choices": [
+              {
+                "text": "He said he never blamed the boy.",
+                "next": "forgive"
+              },
+              {
+                "text": "He said the door can be opened now.",
+                "next": "forgive"
+              }
+            ]
+          },
+          "forgive": {
+            "text": "Then it will be opened. At first light, before the whole town, and the granary filled again as Aldra meant it. And then I will ride to the Greywatch myself.” He pulls off the glove and looks at the old scar. “By bridge and by bread, traveller. Thank you.",
+            "set": [
+              "told_king"
+            ],
+            "leave": "Bow, and leave the brothers their peace."
+          },
+          "after": {
+            "text": "The smith is cutting the chains at dawn. I have not slept. I find I do not mind.",
+            "choices": [
+              {
+                "text": "Will you go to the Greywatch?",
+                "next": "ride"
+              },
+              {
+                "text": "Good day, Majesty."
+              }
+            ]
+          },
+          "ride": {
+            "text": "Tomorrow. Alone, without a crown. I owe him a winter's worth of bread and thirty-one years of apology, and I mean to start with the bread.",
+            "leave": "Bow and withdraw."
+          },
           "greet": {
             "text": "A traveller in my hall, unannounced. Few are so bold these days. Speak, and be brief.",
             "choices": [
@@ -1311,13 +1384,28 @@
                 "text": "Tell me about Prince Edmund.",
                 "next": "edmund",
                 "if": [
-                  "heard_carts"
+                  "heard_carts",
+                  "!lore_letter"
+                ]
+              },
+              {
+                "text": "I read your mother's letter.",
+                "next": "letter",
+                "if": [
+                  "lore_letter"
                 ]
               },
               {
                 "text": "Just passing, Wynn."
               }
             ]
+          },
+          "letter": {
+            "text": "She told me to burn it. I never could.” She leans on the hoe. “Then you know I was nineteen and foolish and brave, once. Keep it to yourself, or don't. I'm too old to be frightened of the castle now.",
+            "set": [
+              "heard_bread"
+            ],
+            "leave": "Leave her to the furrows."
           },
           "notcastle": {
             "text": "Then sit a moment; my knees want an excuse. Name's Wynn. My family has farmed this bank since before the bridge.",
@@ -1462,6 +1550,19 @@
         "start": [
           {
             "if": [
+              "lore_complete",
+              "!edmund_confessed"
+            ],
+            "node": "truth"
+          },
+          {
+            "if": [
+              "edmund_confessed"
+            ],
+            "node": "after"
+          },
+          {
+            "if": [
               "met_hermit"
             ],
             "node": "again"
@@ -1471,6 +1572,67 @@
           }
         ],
         "nodes": {
+          "truth": {
+            "text": "You have the look of someone who has been reading old stones. Well? Out with it.",
+            "choices": [
+              {
+                "text": "I know who you are. Edmund of the Carts.",
+                "next": "confess"
+              },
+              {
+                "text": "Not yet. Good day."
+              }
+            ]
+          },
+          "confess": {
+            "text": "Edmund.” He is quiet for a long time. “Nobody has said that name to my face in thirty-one years. Aye. I opened my father's granary because Aldra's oath said I must, and because children were dying. They came to arrest me, my brother with them, and the fire came too. I crawled out through the cellar. Wynn found me on the road.",
+            "choices": [
+              {
+                "text": "Why did you never go back?",
+                "next": "why"
+              },
+              {
+                "text": "Your brother has blamed himself ever since.",
+                "next": "brother"
+              }
+            ]
+          },
+          "why": {
+            "text": "Go back to what? A father who would have hanged me, and a kingdom ready to split in two over which son to follow. One dead prince was cheaper than a war. And the valley ate that winter. That was enough for me.",
+            "choices": [
+              {
+                "text": "Your brother has blamed himself ever since.",
+                "next": "brother"
+              },
+              {
+                "text": "I understand.",
+                "next": "brother"
+              }
+            ]
+          },
+          "brother": {
+            "text": "Has he.” He looks down at his scarred hands. “Then tell him. Tell him the door can be opened now; there's no one left behind it to starve. And tell him I never blamed the boy.",
+            "set": [
+              "edmund_confessed"
+            ],
+            "leave": "Promise to tell the King."
+          },
+          "after": {
+            "text": "Did you tell him? No, don't answer. I'll know soon enough if he comes.",
+            "choices": [
+              {
+                "text": "He will come.",
+                "next": "come"
+              },
+              {
+                "text": "Good night, Edmund."
+              }
+            ]
+          },
+          "come": {
+            "text": "Then I had better find a second cup.” For the first time in a long while, he laughs. “Go on, now.",
+            "leave": "Leave him by the fire."
+          },
           "greet": {
             "text": "Hm. A visitor. Mind the fire, and mind the stones; the tower drops one now and then, to remind me it's still angry.",
             "choices": [

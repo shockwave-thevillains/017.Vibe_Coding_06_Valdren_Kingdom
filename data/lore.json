@@ -1,0 +1,241 @@
+{
+  "kinds": {
+    "scroll": {
+      "label": "Scroll",
+      "verb": "Read"
+    },
+    "monument": {
+      "label": "Monument",
+      "verb": "Read the inscription on"
+    },
+    "banner": {
+      "label": "Banner",
+      "verb": "Examine"
+    },
+    "grave": {
+      "label": "Grave",
+      "verb": "Read the epitaph on"
+    },
+    "door": {
+      "label": "Door",
+      "verb": "Examine"
+    }
+  },
+  "entries": [
+    {
+      "id": "arms",
+      "anchor": "arms",
+      "kind": "banner",
+      "radius": 2.8,
+      "title": "The Arms of Valdren",
+      "place": "Banners before the Throne Hall",
+      "text": [
+        "Blue silk, faded at the edges by many summers: a white tower standing on silver waves, a golden crown above it.",
+        "Beneath the waves, stitched in gold thread so fine it must be old, three words: PONTE ET PANE."
+      ],
+      "note": "‘By bridge and by bread.’ The kingdom's motto is a promise about bread. An odd thing for a crown that keeps its granary locked."
+    },
+    {
+      "id": "bridgestone",
+      "anchor": "bridgeStone",
+      "kind": "monument",
+      "radius": 2.6,
+      "title": "The Founding Stone",
+      "place": "South end of the Old Bridge",
+      "text": [
+        "A block of grey granite beside the road, its corners rubbed smooth by three centuries of merchants' hands. The carving is worn but legible:",
+        "‘I, ALDRA, FERRYMAN'S DAUGHTER, RAISED THIS BRIDGE IN THE FIRST YEAR OF VALDREN. WHILE IT STANDS THE CROWN SHALL KEEP THE CROSSING OPEN AND THE GRANARY FULL, AND IN A HUNGRY YEAR NO DOOR OF THE CROWN SHALL BE BARRED TO THE HUNGRY. BY BRIDGE AND BY BREAD.’"
+      ],
+      "note": "The founding oath. In a hungry year the royal granary was meant to open to everyone. So what happened in the Red Winter?"
+    },
+    {
+      "id": "statue",
+      "anchor": "statue",
+      "kind": "monument",
+      "radius": 2.6,
+      "title": "Harald the Steadfast",
+      "place": "Plinth of the statue in the market square",
+      "text": [
+        "The bronze plaque reads: ‘HARALD II, THE STEADFAST, WHO HELD VALDREN THROUGH THE RED WINTER. 271.’",
+        "Beneath it a second line has been chiselled out of the stone, but not cleanly. In the scars you can still make out letters scratched by a rougher hand: ‘…AND HELD ITS BREAD.’"
+      ],
+      "note": "Someone once carved the truth under the king's name, and someone else tried to erase it. King Harald kept the granary shut while the valley starved."
+    },
+    {
+      "id": "chronicle",
+      "anchor": "chronicle",
+      "kind": "scroll",
+      "radius": 2.4,
+      "title": "The Royal Chronicle, Year 271",
+      "place": "A lectern in the Throne Hall",
+      "text": [
+        "The great book lies open at a page marked with a faded ribbon:",
+        "‘In the deep of the Red Winter, brigands out of the western woods fell upon the Greywatch by night and put it to the torch. His Highness Prince Edmund perished in the flames, defending it. The King, in his grief, commanded that the Prince be laid in the chapel yard, and that the stores of the Crown be sealed against thieves.’",
+        "The hand is careful. The ink of the word ‘brigands’ is darker than the rest, written over something scraped away."
+      ],
+      "note": "The official story: brigands burned the tower and the prince died in it. But the word ‘brigands’ was written over something else."
+    },
+    {
+      "id": "ledger",
+      "anchor": "ledger",
+      "kind": "scroll",
+      "radius": 2.6,
+      "title": "The Smith's Ledger",
+      "place": "Nailed to the forge post",
+      "text": [
+        "Among the notices on the post is a yellowed ledger page, kept behind a pane of horn as if someone wanted it saved:",
+        "‘Night of the 3rd of Frostmonth, 271. By order of the Crown: two chains of thirty links and one lock, for the vault door beneath the donjon. Soldiers stood by me till dawn. The key delivered into the King's own hand, and melted in this forge the next day on his order. Paid in grain from that same vault. I could not eat it. — Aldric, smith.’"
+      ],
+      "note": "The donjon door was chained the night after the fire, and its only key destroyed. Behind it lies the royal granary."
+    },
+    {
+      "id": "grave",
+      "anchor": "grave",
+      "kind": "grave",
+      "radius": 2.6,
+      "title": "The Prince's Grave",
+      "place": "Beneath the yew in the chapel graveyard",
+      "text": [
+        "A plain tomb in the oldest corner of the graveyard: ‘EDMUND, PRINCE OF VALDREN, FIRSTBORN OF HARALD. FELL AT THE GREYWATCH, 271.’",
+        "A bunch of wild heather lies on the lid, still fresh, tied with a strip of bark. Heather does not grow in the town. The nearest is on the ridge above the western woods."
+      ],
+      "note": "Someone still brings the prince heather from the hills by the Greywatch. A light coffin, fresh flowers: who mourns him so faithfully?"
+    },
+    {
+      "id": "ballad",
+      "anchor": "ballad",
+      "kind": "scroll",
+      "radius": 2.4,
+      "title": "The Lay of the Prince of Carts",
+      "place": "A table outside the Broken Oar",
+      "text": [
+        "A song sheet, folded small and tucked under a tankard, the ink smudged by many thumbs:",
+        "♪ The king kept the bread in his tower of stone, / the prince drove the carts down the frost-bitten road; / they burned the grey watch with the prince in its keep, / but the valley remembers, and the valley won't sleep.",
+        "They searched in the ashes and found not a bone, / so the grave in the chapel lies over a stone; / and up on the ridge where the grey heather grows / an old man keeps bees, and the old valley knows. ♪"
+      ],
+      "note": "The verse nobody sings: no bones in the ashes, and an old man keeping bees on the heather ridge. The hermit pays for his bread with honey…"
+    },
+    {
+      "id": "letter",
+      "anchor": "letter",
+      "kind": "scroll",
+      "radius": 2.6,
+      "title": "A Farm Wife's Letter",
+      "place": "On a crate by the farmhouse door",
+      "text": [
+        "A letter weighted down with a stone, its folds worn soft from being read and folded again:",
+        "‘Midwinter, 271. Dearest sister, we are alive. The prince's carts came in the night with four sacks for us, and the children ate. Three nights later the sky was red over the Greywatch. On the tenth night Wynn found a man on the west road, burned so badly I did not know him until he spoke. We have hidden him in the loft. He will not let us send to the castle. He says the castle came for him once already. Burn this. — Mother.’",
+        "It was never burned."
+      ],
+      "note": "A burned man found on the west road after the fire, who would not go back to the castle. Wynn's family hid him."
+    },
+    {
+      "id": "standard",
+      "anchor": "standard",
+      "kind": "banner",
+      "radius": 2.8,
+      "title": "The Greywatch Standard",
+      "place": "Inside the ruined Greywatch tower",
+      "text": [
+        "Someone has set a pole upright inside the ruin again, and from it hangs what is left of a banner: charred at every edge, but the device is still clear. A grey tower with a sheaf of wheat across it. The prince's own arms.",
+        "Scratched into the stone beside it are thirty-one notches, one for each winter since the fire. The newest is fresh."
+      ],
+      "note": "Someone keeps the prince's banner here and counts the winters since the fire, every year, up to this one."
+    },
+    {
+      "id": "door",
+      "anchor": "door",
+      "kind": "door",
+      "radius": 2.6,
+      "title": "The Sealed Door",
+      "place": "Foot of the donjon, in the castle",
+      "text": [
+        "An iron-bound door at the foot of the great tower, crossed by chains as thick as a wrist. The lock has no keyhole; it has been filled with lead.",
+        "Above the arch, carved when the castle was young: ‘THESE STORES ARE THE KINGDOM'S, HELD IN TRUST. THE CROWN THAT BARS THIS DOOR TO THE HUNGRY BREAKS THE OATH OF ALDRA.’",
+        "Beneath it, small and much later, someone has scratched: ‘He opened it. They burned him for it.’"
+      ],
+      "note": "Edmund opened the granary to feed the valley, as Aldra's oath demanded. The door was chained the morning after his tower burned."
+    }
+  ],
+  "rumours": [
+    {
+      "flag": "heard_red_winter",
+      "text": "The Red Winter, thirty-one years ago: blight, then frost, then famine. Half the valley's children died."
+    },
+    {
+      "flag": "heard_bread_oath",
+      "text": "Queen Aldra's oath: the crown keeps the granary full, and opens it to the hungry in a hard year."
+    },
+    {
+      "flag": "heard_edmund",
+      "text": "Prince Edmund, the King's elder brother, is said to have died when his tower, the Greywatch, burned."
+    },
+    {
+      "flag": "heard_tower_fire",
+      "text": "The Greywatch burned in the Red Winter. In the town they blame brigands."
+    },
+    {
+      "flag": "heard_carts",
+      "text": "Wynn Hollis saw Prince Edmund himself bring grain carts to the starving farms."
+    },
+    {
+      "flag": "heard_ballad",
+      "text": "Maera sang me a song the guard once broke a fiddler's fingers for: the prince of carts."
+    },
+    {
+      "flag": "heard_chains",
+      "text": "Brannoc's father chained the donjon door the night after the fire: ‘I locked bread away from hungry people.’"
+    },
+    {
+      "flag": "heard_sealed_door",
+      "text": "The King has never opened the door his father chained. ‘Some doors are graves too.’"
+    },
+    {
+      "flag": "heard_empty_grave",
+      "text": "Father Anselm says the prince's coffin was very light, and that someone leaves heather on the grave every winter."
+    },
+    {
+      "flag": "heard_arrest",
+      "text": "Captain Varn found a royal order to arrest Prince Edmund, alive, carried by her father and young Prince Osric."
+    },
+    {
+      "flag": "heard_bread",
+      "text": "Wynn bakes an extra loaf every Friday, and won't say who eats it."
+    },
+    {
+      "flag": "heard_osric_burn",
+      "text": "The hermit says the young Osric ran into the fire after his brother, and came out with his hand burning."
+    },
+    {
+      "flag": "hermit_challenge",
+      "text": "The hermit told me to find what the kingdom hid, ‘the stones, the scrolls, the door’, and then come back."
+    },
+    {
+      "flag": "edmund_confessed",
+      "text": "The hermit admitted it: he is Edmund of the Carts. He asked me to tell his brother he never blamed him."
+    },
+    {
+      "flag": "told_king",
+      "text": "I told King Osric that his brother lives. He has sworn to open the sealed door."
+    }
+  ],
+  "truth": {
+    "title": "The Truth of the Red Winter",
+    "text": [
+      "Piece by piece, it fits together.",
+      "In the Red Winter of 271, King Harald kept the royal granary locked while the valley starved, breaking the oath on which Valdren was founded. His elder son, Prince Edmund, opened it himself and drove the grain out to the farms by night.",
+      "Harald sent the guard to arrest him, with young Prince Osric riding beside Captain Varn. In the struggle at the Greywatch the tower caught fire. The Crown blamed brigands, buried an empty coffin, chained the granary door and melted its key.",
+      "But Edmund did not die. Burned and half frozen, he was found on the west road by a farm girl named Wynn and hidden in her family's loft. In time he went back to the ruin of his own tower, where he has kept bees and counted the winters ever since. The valley remembered him in a song it was forbidden to sing.",
+      "The Old Hermit of the Greywatch is Edmund of the Carts."
+    ],
+    "hint": "Perhaps the old hermit will speak plainly now."
+  },
+  "epilogue": {
+    "flag": "told_king",
+    "title": "By Bridge and By Bread",
+    "text": [
+      "King Osric has sworn to open the sealed door at first light, before the whole town, and to fill the granary again as Aldra meant it.",
+      "Then he means to ride to the Greywatch alone. Whatever the two brothers say to each other there, the valley will hear of it soon enough. Maera is already working on a new verse."
+    ]
+  }
+}

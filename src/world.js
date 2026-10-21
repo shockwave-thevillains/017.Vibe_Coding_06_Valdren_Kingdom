@@ -24,6 +24,7 @@ const MAX_GRADE = 1.0;                // rise over run above which a step is ref
 const STEP_UP = 0.45;                 // stairs and kerbs up to this height can be climbed
 const TERRAIN_SEGMENTS = 256;         // ~3.1 m grid
 const SUN_TILT = 0.5;                 // tilts the sun's arc towards the south
+const DAY_MINUTES = 24;               // one full day at daytime speed; nights pass twice as fast
 const DEG = Math.PI / 180;
 const TAU = Math.PI * 2;
 
@@ -181,6 +182,22 @@ const FIELDS = [
 
 const RIVER_MID = riverZ(0);
 export const BRIDGE = { x: 0, zN: RIVER_MID - 17, zS: RIVER_MID + 17, halfWidth: 3.1, rise: 1.6, hN: 0, hS: 0 };
+
+// Named places for the map.
+export const PLACES = [
+  { name: 'Castle Valdren', x: 0, z: -168, size: 2 },
+  { name: 'Throne Hall', x: 0, z: -200, size: 0 },
+  { name: 'Valdren', x: 34, z: 36, size: 2 },
+  { name: 'Market', x: 0, z: 18, size: 0 },
+  { name: 'The Broken Oar', x: 12, z: -13, size: 0 },
+  { name: 'Chapel', x: -22, z: -26, size: 0 },
+  { name: 'Forge', x: -17, z: 35, size: 0 },
+  { name: 'Old Bridge', x: 14, z: RIVER_MID, size: 1 },
+  { name: 'Farmstead', x: -24, z: 208, size: 1 },
+  { name: 'Windmill', x: 72, z: 186, size: 0 },
+  { name: 'The Greywatch', x: -240, z: -52, size: 1 },
+  { name: 'Western Woods', x: -200, z: 60, size: 1 },
+];
 
 const ROAD_DEFS = [
   // Town streets.
@@ -756,6 +773,9 @@ function makeBannerTexture() {
   }
 
   g.fillStyle = '#d6ac4c';
+  g.font = 'bold 21px Georgia, "Times New Roman", serif';
+  g.textAlign = 'center';
+  g.fillText('PONTE ET PANE', 128, 427);
   g.beginPath();
   g.moveTo(96, 132);
   g.lineTo(96, 96);
@@ -767,6 +787,97 @@ function makeBannerTexture() {
   g.closePath();
   g.fill();
 
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = ANISOTROPY;
+  return tex;
+}
+
+// Aged paper covered in lines of handwriting, for scrolls, ledgers and letters.
+function makeParchmentTexture() {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 320;
+  const g = c.getContext('2d');
+  const rand = mulberry32(404);
+  const grad = g.createRadialGradient(128, 150, 40, 128, 160, 220);
+  grad.addColorStop(0, '#efe2c0');
+  grad.addColorStop(1, '#c9b07c');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 256, 320);
+  for (let i = 0; i < 400; i++) {
+    g.fillStyle = `rgba(120,85,40,${rand() * 0.08})`;
+    g.fillRect(rand() * 256, rand() * 320, 2 + rand() * 6, 1 + rand() * 4);
+  }
+  g.strokeStyle = 'rgba(60,38,20,0.75)';
+  g.lineWidth = 1.4;
+  for (let y = 34; y < 296; y += 15) {
+    let x = 22 + (y === 34 ? 30 : 0);
+    const end = 230 - rand() * (y > 270 ? 120 : 20);
+    g.beginPath();
+    while (x < end) {
+      const w = 6 + rand() * 22;
+      g.moveTo(x, y);
+      for (let k = 0; k <= w; k += 3) g.lineTo(x + k, y + Math.sin((x + k) * 0.9) * 1.6 - rand() * 2.5);
+      x += w + 5;
+    }
+    g.stroke();
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = ANISOTROPY;
+  return tex;
+}
+
+// What is left of the Greywatch standard: a grey tower and a wheat sheaf, burnt ragged.
+function makeStandardTexture() {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 384;
+  const g = c.getContext('2d');
+  const rand = mulberry32(271);
+  g.fillStyle = '#4a5560';
+  g.fillRect(0, 0, 256, 384);
+  for (let i = 0; i < 300; i++) {
+    g.fillStyle = `rgba(0,0,0,${rand() * 0.12})`;
+    g.fillRect(rand() * 256, rand() * 384, 3 + rand() * 10, 2 + rand() * 6);
+  }
+  g.fillStyle = '#b8bcc2';
+  g.fillRect(96, 120, 64, 150);
+  for (let k = 0; k < 4; k++) g.fillRect(96 + k * 18, 102, 12, 20);
+  g.fillStyle = '#4a5560';
+  g.fillRect(120, 230, 16, 40);
+  g.strokeStyle = '#c9a24a';
+  g.lineWidth = 6;
+  g.lineCap = 'round';
+  for (let k = -3; k <= 3; k++) {
+    g.beginPath();
+    g.moveTo(128 + k * 6, 300);
+    g.quadraticCurveTo(128 + k * 10, 230, 128 + k * 22, 170);
+    g.stroke();
+  }
+  g.lineWidth = 10;
+  g.beginPath();
+  g.moveTo(98, 240);
+  g.lineTo(158, 240);
+  g.stroke();
+  // Scorch towards the edges, then burn the edges away (alpha 0 is cut by the alpha test).
+  const img = g.getImageData(0, 0, 256, 384);
+  const d = img.data;
+  for (let y = 0; y < 384; y++) {
+    for (let x = 0; x < 256; x++) {
+      const edge = Math.min(x, 255 - x, 383 - y) / 60 + (y < 20 ? 1 : 0);
+      const n = fbm(x * 0.035, y * 0.035, 3) * 1.4 - 0.2;
+      const burn = clamp(1.25 - edge - n * 0.6, 0, 1);
+      const k = (y * 256 + x) * 4;
+      const char = burn * burn;
+      d[k] *= 1 - char * 0.85;
+      d[k + 1] *= 1 - char * 0.88;
+      d[k + 2] *= 1 - char * 0.9;
+      d[k + 3] = burn > 0.82 ? 0 : 255;
+    }
+  }
+  g.putImageData(img, 0, 0);
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = ANISOTROPY;
@@ -1523,6 +1634,14 @@ class BuildContext {
   }
 }
 
+// Records a place the lore can point at: stand near (x, z); the glint sparkles at gx, gy, gz.
+function anchor(ctx, name, x, z, glint) {
+  ctx.world.anchors[name] = { x, y: ctx.world.getGroundHeight(x, z), z, glint };
+}
+
+// A sheet of written parchment: w x h, its writing facing +Z before rotation.
+const PAGE_GEO = new THREE.PlaneGeometry(1, 1);
+
 // ================================================================ houses
 
 /*
@@ -1912,6 +2031,8 @@ function buildLamp(ctx, x, z, rot) {
   F.box('lamp', 0, g + 2.97, 0.62, 0.24, 0.38, 0.24);
   F.box('metal', 0, g + 2.75, 0.62, 0.28, 0.05, 0.28);
   for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) F.box('metal', sx * 0.13, g + 2.97, 0.62 + sz * 0.13, 0.03, 0.42, 0.03);
+  const [hx, hz] = F.world(0, 0.62);
+  ctx.world.lampHeads.push(new THREE.Vector3(hx, g + 2.97, hz));
   ctx.colliders.addCircle(x, z, 0.25, g - 1, g + 3.6);
   ctx.occupy(rect(x, z, 0.4, 0.4));
 }
@@ -1985,6 +2106,9 @@ function buildMarket(ctx) {
     F.box('stone', 0, y + 1.3, -0.35, 1.0, 2.2, 0.12, t, 0.08, 0, 0);
     ctx.colliders.addCircle(x, z, 1.75, g - 1, g + 6);
     ctx.occupy(rect(x, z, 1.8, 1.8));
+    // A bronze plaque on the plinth's south face.
+    F.box('gold', 0, g + 1.15, 1.115, 1.3, 0.55, 0.03);
+    anchor(ctx, 'statue', x, z + 2.4, [x, g + 1.25, z + 1.2]);
   }
 
   for (const [x, z] of [[-19, -3], [19, -3], [-19, 27], [19, 27]]) ctx.lamps.push([x, z, Math.atan2(-x, 12 - z)]);
@@ -2020,6 +2144,13 @@ function buildTavern(ctx) {
     F.collideBox(bx, 6.2, 0.9, 1.0, base - 2, base + 0.5);
   }
   for (const [bx, bz] of [[-6, 5.6], [-5.2, 5.9], [6.8, -5.2]]) F.inst('barrel', bx, F.ground(bx, bz), bz, 0, ctx.rng() * TAU, 0, 1, 1, 1);
+  // A song sheet left on the far table, under a tankard.
+  const top = base - 0.205;
+  F.geo('parchment', PAGE_GEO, 4.3, top, 6.1, -Math.PI / 2, 0.35, 0, 0.24, 0.32, 1, WHITE, true);
+  F.geo('timber', new THREE.CylinderGeometry(0.045, 0.05, 0.13, 10), 4.55, top + 0.065, 5.92, 0, 0, 0, 1, 1, 1, TINT.door);
+  const [ax, az] = F.world(4.4, 7.7);
+  const [gx, gz] = F.world(4.3, 6.1);
+  anchor(ctx, 'ballad', ax, az, [gx, top + 0.25, gz]);
 }
 
 const SIGN_GEO = new THREE.PlaneGeometry(1.3, 0.65);
@@ -2057,6 +2188,14 @@ function buildSmithy(ctx) {
   F.box('timber', -4.0, base + 1.0, 4.4, 0.12, 1.8, 0.12, TINT.beam);
   F.box('timber', -4.0, base + 1.6, 5.4, 0.1, 0.1, 2.0, TINT.beam);
   for (let k = 0; k < 4; k++) F.box('metal', -3.95, base + 1.05, 4.7 + k * 0.42, 0.04, 1.3, 0.07);
+  // Notices nailed to the street-side post; the framed one is an old ledger page.
+  F.box('timber', 4.2, base + 1.55, fz + 0.13, 0.3, 0.4, 0.02, TINT.door);
+  F.geo('parchment', PAGE_GEO, 4.2, base + 1.55, fz + 0.145, 0, 0, 0, 0.25, 0.34, 1, WHITE, true);
+  F.geo('parchment', PAGE_GEO, 4.18, base + 1.12, fz + 0.13, 0, 0, 0.12, 0.18, 0.22, 1, WHITE, true);
+  F.geo('parchment', PAGE_GEO, 4.24, base + 1.95, fz + 0.13, 0, 0, -0.08, 0.16, 0.14, 1, WHITE, true);
+  const [lx, lz] = F.world(4.2, fz + 1.1);
+  const [px, pz] = F.world(4.2, fz + 0.3);
+  anchor(ctx, 'ledger', lx, lz, [px, base + 1.6, pz]);
   ctx.occupy(rect(...F.world(0, 6), 5, 2.4, rot));
 }
 
@@ -2145,6 +2284,16 @@ function buildGraveyard(ctx) {
   F.box('stone', -4.5, g + 0.35, -6.3, 1.4, 0.7, 2.4, TINT.darkStone);
   F.box('stone', -4.5, g + 0.78, -6.3, 1.6, 0.16, 2.6, TINT.mossy);
   F.collideBox(-4.5, -6.3, 0.8, 1.3, g - 1, g + 1);
+  // A fresh bunch of wild heather on the lid, tied with bark.
+  const heather = C(0x8e5a9e);
+  for (let k = 0; k < 9; k++) {
+    const hx = -4.5 + (ctx.rng() - 0.5) * 0.3;
+    const hz = -5.55 + k * 0.045;
+    F.geo('plainCloth', new THREE.IcosahedronGeometry(0.045 + ctx.rng() * 0.02, 0), hx, g + 0.89, hz - 0.1, 0, 0, 0, 1, 0.7, 1.6, ctx.vary(heather, 0.15));
+  }
+  for (let k = 0; k < 5; k++) F.box('plainCloth', -4.5 + (k - 2) * 0.03, g + 0.875, -5.18, 0.012, 0.012, 0.42, C(0x4a5a2e), 0, (k - 2) * 0.12, 0);
+  F.box('timber', -4.5, g + 0.885, -5.25, 0.14, 0.03, 0.04, TINT.beam);
+  anchor(ctx, 'grave', x - 4.5, z - 4.2, [x - 4.5, g + 1.1, z - 5.6]);
   ctx.occupy(rect(x, z, hw + 0.5, hd + 0.5));
   ctx.trees.push({ x: x - 5.8, z: z - 8, kind: 'pine', s: 0.75 });
 }
@@ -2282,6 +2431,10 @@ function buildCastle(ctx) {
     F.box('metal', 0, c.y + 1.4, dz + 0.16, 1.9, 0.08, 0.06, WHITE, 0, 0, 0.62);
     F.box('metal', 0, c.y + 1.4, dz + 0.16, 1.9, 0.08, 0.06, WHITE, 0, 0, -0.62);
     F.box('gold', 0, c.y + 1.35, dz + 0.22, 0.3, 0.36, 0.12);
+    // The lintel inscription and a lead-filled lock.
+    F.box('stone', 0, c.y + 3.0, dz + 0.36, 2.2, 0.32, 0.06, TINT.stone);
+    F.box('metal', 0, c.y + 1.35, dz + 0.29, 0.12, 0.12, 0.02, C(0x8a8e94));
+    anchor(ctx, 'door', x, z + dz + 1.6, [x, c.y + 1.5, z + dz + 0.5]);
     F.collideBox(0, 0, 4.5, 4.5, c.y - 2, top + 3);
     ctx.occupy(rect(x, z, 5, 5));
   }
@@ -2347,6 +2500,7 @@ function buildCastle(ctx) {
     F.collideCircle(0, 0, 0.2, c.y - 1, c.y + 7);
     ctx.flags.push({ x: s * 3.6, y: c.y + 6.2, z: -184.2, rot: 0, scale: 1 });
   }
+  anchor(ctx, 'arms', -3.6, -182.8, [-3.6, c.y + 2.4, -184.0]);
   for (const [x, z] of [[-5.5, -185], [5.5, -185], [-12, -166], [12, -166], [20, -184], [-20, -192]]) ctx.lamps.push([x, z, Math.atan2(-x, -190 - z)]);
   ctx.occupy(rect(c.x, c.z, 32, 32));
 }
@@ -2458,6 +2612,22 @@ function buildThroneHall(ctx, F0) {
     F.geo('plaster', new THREE.CylinderGeometry(0.04, 0.04, 0.25, 6), Math.sin(a) * 1.4, F0 + 7.37, 1 + Math.cos(a) * 1.4);
     F.geo('fire', new THREE.ConeGeometry(0.04, 0.12, 5), Math.sin(a) * 1.4, F0 + 7.56, 1 + Math.cos(a) * 1.4);
   }
+  // A lectern by the west aisle with the royal chronicle open on it.
+  {
+    const lx = -5.8;
+    const lz = 6;
+    const tilt = 0.35;
+    F.box('timber', lx, F0 + 0.03, lz, 0.5, 0.06, 0.42, C(0x5a3a26));
+    F.box('timber', lx, F0 + 0.55, lz, 0.12, 1.0, 0.12, C(0x5a3a26));
+    F.geo('timber', new THREE.BoxGeometry(0.45, 0.04, 0.62).rotateZ(-tilt), lx, F0 + 1.08, lz, 0, 0, 0, 1, 1, 1, C(0x5a3a26));
+    for (const side of [-1, 1]) {
+      const page = new THREE.PlaneGeometry(0.27, 0.36).rotateZ(Math.PI / 2).rotateX(-Math.PI / 2).rotateZ(-tilt);
+      F.geo('parchment', page, lx + 0.008, F0 + 1.106 + 0.004 * side, lz + side * 0.145, 0, 0, 0, 1, 1, 1, WHITE, true);
+    }
+    F.collideCircle(lx, lz, 0.35, F0 - 1, F0 + 1.5);
+    anchor(ctx, 'chronicle', x + lx + 1.0, z + lz, [x + lx, F0 + 1.35, z + lz]);
+  }
+
   // Great doors standing open inward.
   for (const s of [-1, 1]) F.box('planks', s * 1.75, F0 + 2.15, d / 2 - T - 0.95, 0.12, 4.3, 1.75, C(0x6a4a32));
 
@@ -2532,6 +2702,21 @@ function buildBridge(ctx) {
   ctx.world.surfaces.push({ ...rect(0, midZ, B.halfWidth - 0.55, L / 2), height: (lx, lz) => deckHeight(midZ + lz) });
   ctx.lamps.push([-B.halfWidth - 0.9, B.zN - 1.5, Math.PI / 2], [B.halfWidth + 0.9, B.zS + 1.5, -Math.PI / 2]);
   ctx.occupy(rect(0, midZ, B.halfWidth + 0.5, L / 2 + 1));
+
+  // Queen Aldra's founding stone, its inscription facing the road.
+  {
+    const sx = -B.halfWidth - 1.9;
+    const sz = B.zS + 2.6;
+    const g = ctx.ground(sx, sz);
+    const S = new Frame(ctx, sx, sz, Math.PI / 2);
+    S.box('stone', 0, g + 0.25, 0, 1.2, 0.5, 0.75, TINT.darkStone);
+    S.box('stone', 0, g + 0.95, 0, 0.95, 1.0, 0.5, TINT.stone);
+    S.geo('stone', new THREE.CylinderGeometry(0.475, 0.475, 0.5, 16, 1, false, 0, Math.PI).rotateZ(Math.PI / 2).rotateY(Math.PI / 2), 0, g + 1.45, 0, 0, 0, 0, 1, 1, 1, TINT.stone);
+    S.box('stone', 0, g + 1.0, 0.255, 0.7, 0.62, 0.02, TINT.darkStone);
+    ctx.colliders.addCircle(sx, sz, 0.75, g - 1, g + 2);
+    ctx.occupy(rect(sx, sz, 0.8, 0.8));
+    anchor(ctx, 'bridgeStone', sx + 1.3, sz, [sx + 0.3, g + 1.3, sz]);
+  }
 }
 
 const ROAD_PATH_BRIDGE = [
@@ -2691,6 +2876,15 @@ function buildFarm(ctx, q) {
   }
   buildCart(ctx, -14, 205, 1.2);
   ctx.occupy(rect(-14, 205, 1.8, 2));
+  {
+    const F = new Frame(ctx, -19.4, 196.6, 0.3);
+    const g = F.ground(0, 0);
+    F.inst('crate', 0, g, 0, 0, 0, 0, 1, 1, 1);
+    F.geo('parchment', PAGE_GEO, 0.02, g + 0.706, 0.03, -Math.PI / 2, 0.4, 0, 0.22, 0.3, 1, WHITE, true);
+    F.geo('stone', new THREE.IcosahedronGeometry(0.06, 0), 0.08, g + 0.73, -0.02, 0, 0, 0, 1.3, 0.7, 1, TINT.darkStone);
+    ctx.colliders.addCircle(-19.4, 196.6, 0.5, g - 1, g + 0.8);
+    anchor(ctx, 'letter', -18.4, 196.6, [-19.4, g + 0.95, 196.6]);
+  }
   buildWindmill(ctx);
 }
 
@@ -2751,6 +2945,19 @@ function buildRuins(ctx) {
     if (s > 0.7) ctx.colliders.addCircle(x, z, s * 0.7, -Infinity, Infinity);
   }
   ctx.occupy(rect(R.x, R.z, rOut + 2, rOut + 2));
+
+  // Inside, the prince's standard has been set up again on a pole.
+  {
+    const px = R.x - 1.6;
+    const pz = R.z - 1.2;
+    const pg = ctx.ground(px, pz);
+    const F = new Frame(ctx, px, pz, 0);
+    F.box('timber', 0, pg + 1.7, 0, 0.1, 3.4, 0.1, TINT.beam);
+    F.box('timber', 0.06, pg + 3.22, 0, 0.06, 0.06, 1.15, TINT.beam);
+    F.geo('standard', new THREE.PlaneGeometry(1.0, 1.5), 0.1, pg + 2.45, 0, 0, Math.PI / 2, 0, 1, 1, 1, WHITE, true);
+    ctx.colliders.addCircle(px, pz, 0.15, pg - 1, pg + 3.5);
+    anchor(ctx, 'standard', px + 1.6, pz, [px + 0.15, pg + 2.3, pz]);
+  }
 
   // The hermit's camp: a lean-to, a fire ring, a pot and log seats.
   const H = SITES.hermitCamp;
@@ -3222,6 +3429,12 @@ export class World {
     this.colliders = new Colliders(16);
     this.surfaces = [];
     this.interiors = [];
+    // Where the kingdom's secrets lie: { x, y, z } to stand near and a glint point to sparkle at.
+    this.anchors = {};
+    this.lampHeads = [];
+    this.lampLights = [];
+    this._lampTimer = 0;
+    this._envSig = null;
     this.batch = new Batch(UV_SCALES, 160);
     this.uTime = { value: 0 };
     this.timeOfDay = 9.5;
@@ -3325,6 +3538,12 @@ export class World {
       this.scene.add(this.torchLight);
     }
     this._grass(ctx, q);
+    // A few warm lights follow the player from lantern to lantern after dark.
+    for (let i = 0; i < (q.lampLights ?? 0); i++) {
+      const light = new THREE.PointLight(0xffb468, 0, 15, 2);
+      this.scene.add(light);
+      this.lampLights.push({ light, fade: 0 });
+    }
     this.setTime(this.timeOfDay);
   }
 
@@ -3350,6 +3569,8 @@ export class World {
     };
     this.tex.banner = makeBannerTexture();
     this.tex.sign = makeSignTexture();
+    this.tex.parchment = makeParchmentTexture();
+    this.tex.standard = makeStandardTexture();
   }
 
   _materials() {
@@ -3375,6 +3596,8 @@ export class World {
       fire: std({ color: 0x000000, emissive: 0xff7a28, emissiveIntensity: 3, roughness: 1, vertexColors: true }),
       banner: std({ map: T.banner, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.92, vertexColors: true }),
       sign: std({ map: T.sign, roughness: 0.8, vertexColors: true }),
+      parchment: std({ map: T.parchment, roughness: 0.85, vertexColors: true, side: THREE.DoubleSide }),
+      standard: std({ map: T.standard, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.95, vertexColors: true }),
       soil: std({ map: T.soil.map, normalMap: T.soil.normal, normalScale: n(1.4), vertexColors: true, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
       soilCrop: std({ map: T.soil.map, normalMap: T.soil.normal, color: 0xb8a070, vertexColors: true, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
       dirtRoad: std({ map: T.dirt.map, normalMap: T.dirt.normal, vertexColors: true, transparent: true, depthWrite: false, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }),
@@ -3835,7 +4058,14 @@ export class World {
 
   // -------------------------------------------------------- time of day
 
-  setTime(hours) {
+  // Moves the clock on: a day takes DAY_MINUTES, the night half as long again.
+  advanceTime(dt) {
+    const rate = (24 / (DAY_MINUTES * 60)) * (1 + this.night);
+    this.setTime(this.timeOfDay + dt * rate, false);
+  }
+
+  // refreshSky: rebuild the image-based lighting now; otherwise only when the hour has moved on.
+  setTime(hours, refreshSky = true) {
     const h = ((hours % 24) + 24) % 24;
     this.timeOfDay = h;
 
@@ -3880,7 +4110,14 @@ export class World {
       this.mat.glass.emissiveIntensity = this.night * 0.9;
       this.mat.stained.color.setScalar(lerp(1.0, 0.25, this.night));
     }
-    if (this.terrain) this._updateEnvironment();
+    // Rebuild the sky lighting only when the sky has visibly changed: often at dawn
+    // and dusk, rarely at noon or midnight.
+    const sig = [...u.uZenith.value.toArray(), ...u.uHorizon.value.toArray(), this.hemi.intensity * 0.2, this.sun.intensity * 0.05];
+    const change = this._envSig ? sig.reduce((sum, v, i) => sum + Math.abs(v - this._envSig[i]), 0) : Infinity;
+    if (this.terrain && (refreshSky || change > 0.08)) {
+      this._envSig = sig;
+      this._updateEnvironment();
+    }
   }
 
   _updateEnvironment() {
@@ -3902,7 +4139,148 @@ export class World {
     if (this.mat) this.mat.fire.emissiveIntensity = 2.6 + Math.sin(t * 13) * 0.35 + Math.sin(t * 7.3) * 0.25;
     if (this.torchLight) this.torchLight.intensity = 38 + Math.sin(t * 11) * 4 + Math.sin(t * 5.7) * 3;
     if (this.lods) this.updateLods(camera.position);
+    this._updateLampLights(dt, focus, t);
     this._placeSun(focus);
+  }
+
+  // Hands the pooled lights to the lanterns nearest the player; they fade in at dusk.
+  _updateLampLights(dt, focus, t) {
+    const pool = this.lampLights;
+    if (!pool.length) return;
+    this._lampTimer -= dt;
+    if (this._lampTimer <= 0 && this.night > 0.01) {
+      this._lampTimer = 0.5;
+      const near = this.lampHeads
+        .map((p) => ({ p, d: p.distanceToSquared(focus) }))
+        .sort((a, b) => a.d - b.d)
+        .slice(0, pool.length);
+      pool.forEach((slot, i) => {
+        const pick = near[i];
+        if (!pick) return;
+        if (!slot.light.position.equals(pick.p)) {
+          slot.light.position.copy(pick.p);
+          slot.fade = 0;
+        }
+      });
+    }
+    for (const slot of pool) {
+      const d = slot.light.position.distanceTo(focus);
+      slot.fade = Math.min(1, slot.fade + dt * 1.5);
+      const flicker = 1 + Math.sin(t * 9 + slot.light.position.x) * 0.05;
+      slot.light.intensity = this.night * 9 * slot.fade * flicker * (1 - smoothstep(32, 45, d));
+    }
+  }
+
+  // ----------------------------------------------------------------- map
+
+  /*
+   * Paints a parchment map of the whole terrain (size x size pixels, north up):
+   * hill-shaded land in the terrain's own colours, the river, forests as tree
+   * marks, fields, and every wall and building as the colliders know them.
+   */
+  paintMap(size = 1024) {
+    const R = 320;
+    const span = WORLD_HALF * 2;
+    const raster = document.createElement('canvas');
+    raster.width = raster.height = R;
+    const rg = raster.getContext('2d');
+    const img = rg.createImageData(R, R);
+    const d = img.data;
+    const col = [0, 0, 0];
+    const paper = [0.93, 0.86, 0.7];
+    const water = [0.42, 0.58, 0.68];
+    const T = this.terrain;
+    const srgb = (v) => Math.pow(clamp(v, 0, 1), 1 / 2.2);
+    for (let j = 0; j < R; j++) {
+      const z = -WORLD_HALF + ((j + 0.5) / R) * span;
+      for (let i = 0; i < R; i++) {
+        const x = -WORLD_HALF + ((i + 0.5) / R) * span;
+        T.colourAt(x, z, col);
+        const h = T.getHeight(x, z);
+        const hx = T.getHeight(x + 2.5, z) - T.getHeight(x - 2.5, z);
+        const hz = T.getHeight(x, z + 2.5) - T.getHeight(x, z - 2.5);
+        const shade = clamp(1 + (-hx - hz) * 0.06, 0.62, 1.25);
+        const wet = 1 - smoothstep(WATER_LEVEL - 0.6, WATER_LEVEL + 0.05, h);
+        const k = (j * R + i) * 4;
+        for (let ch = 0; ch < 3; ch++) {
+          let v = srgb(col[ch]) * 0.55 + paper[ch] * 0.45;
+          v = v * shade;
+          v += (water[ch] - v) * wet;
+          d[k + ch] = clamp(v, 0, 1) * 255;
+        }
+        d[k + 3] = 255;
+      }
+    }
+    rg.putImageData(img, 0, 0);
+
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    const g = c.getContext('2d');
+    g.imageSmoothingEnabled = true;
+    g.imageSmoothingQuality = 'high';
+    g.drawImage(raster, 0, 0, size, size);
+    const s = size / span;
+    const X = (x) => (x + WORLD_HALF) * s;
+    const box = (r, fill, stroke, min = 0) => {
+      g.save();
+      g.translate(X(r.x), X(r.z));
+      g.rotate(-r.rot);
+      g.fillStyle = fill;
+      g.fillRect(-Math.max(r.hw * s, min), -Math.max(r.hd * s, min), Math.max(r.hw * s, min) * 2, Math.max(r.hd * s, min) * 2);
+      if (stroke) {
+        g.strokeStyle = stroke;
+        g.lineWidth = 1;
+        g.strokeRect(-r.hw * s, -r.hd * s, r.hw * s * 2, r.hd * s * 2);
+      }
+      g.restore();
+    };
+
+    // Forests: little tree marks where the woods are thick.
+    const rand = mulberry32(17);
+    g.fillStyle = 'rgba(48,72,40,0.55)';
+    for (let z = -WORLD_HALF; z < WORLD_HALF; z += 5) {
+      for (let x = -WORLD_HALF; x < WORLD_HALF; x += 5) {
+        const jx = x + rand() * 4;
+        const jz = z + rand() * 4;
+        if (forestDensity(jx, jz) < 0.45 || T.getHeight(jx, jz) > 46) continue;
+        g.beginPath();
+        g.arc(X(jx), X(jz), 1.1 + rand() * 0.9, 0, TAU);
+        g.fill();
+      }
+    }
+    // Fields, with furrows.
+    const crops = { wheat: '#d8bc6a', barley: '#c4c47a', cabbage: '#7a9a52', plowed: '#8a6a48' };
+    for (const f of FIELDS) {
+      const r = rect(f.x, f.z, f.w / 2, f.d / 2, f.rot);
+      box(r, crops[f.crop], 'rgba(70,50,30,0.6)');
+      g.save();
+      g.translate(X(f.x), X(f.z));
+      g.rotate(-f.rot);
+      g.strokeStyle = 'rgba(70,50,30,0.25)';
+      for (let u = -f.w / 2 + 1.5; u < f.w / 2; u += 3) {
+        g.beginPath();
+        g.moveTo(u * s, (-f.d / 2) * s);
+        g.lineTo(u * s, (f.d / 2) * s);
+        g.stroke();
+      }
+      g.restore();
+    }
+    // Paved floors and the bridge deck.
+    for (const r of this.surfaces) box(r, '#b8ab94', 'rgba(60,45,30,0.5)');
+    // Buildings, walls and fences; big round things (towers, wells) too. Trees and posts are left out.
+    for (const it of this.colliders.items) {
+      if (it.type === CIRCLE) {
+        if (it.r < 0.7) continue;
+        g.fillStyle = it.r > 2.5 ? '#5a4632' : '#7d705e';
+        g.beginPath();
+        g.arc(X(it.x), X(it.z), it.r * s, 0, TAU);
+        g.fill();
+      } else {
+        const thin = Math.min(it.hw, it.hd) < 0.2;
+        box({ x: it.x, z: it.z, hw: it.hw, hd: it.hd, rot: Math.atan2(it.sin, it.cos) }, thin ? 'rgba(90,70,45,0.7)' : '#5a4632', null, 0.5);
+      }
+    }
+    return c;
   }
 
   // Full-detail tree chunks are drawn only when some of their trees are within the LOD radius.
