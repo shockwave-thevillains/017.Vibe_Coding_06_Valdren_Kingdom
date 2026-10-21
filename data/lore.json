@@ -191,10 +191,6 @@
       "text": "The King has never opened the door his father chained. ‘Some doors are graves too.’"
     },
     {
-      "flag": "heard_empty_grave",
-      "text": "Father Anselm says the prince's coffin was very light, and that someone leaves heather on the grave every winter."
-    },
-    {
       "flag": "heard_arrest",
       "text": "Captain Varn found a royal order to arrest Prince Edmund, alive, carried by her father and young Prince Osric."
     },

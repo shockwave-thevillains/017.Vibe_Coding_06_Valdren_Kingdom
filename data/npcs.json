@@ -659,7 +659,7 @@
             ]
           },
           "forging": {
-            "text": "Hinges for the chapel door. Father Anselm swears the old ones scream like the damned. Maybe they do.",
+            "text": "Hinges for the chapel door. The chapel's stood empty since the old priest died, but the old hinges still scream like the damned when the wind gets in.",
             "choices": [
               {
                 "text": "Have you always been the smith here?",
@@ -835,7 +835,7 @@
             ]
           },
           "gossip": {
-            "text": "Let's see. The smith's sweet on the miller's sister, the priest's hinges scream, and the king hasn't smiled since my mother was a girl.",
+            "text": "Let's see. The smith's sweet on the miller's sister, the chapel hinges scream, and the king hasn't smiled since my mother was a girl.",
             "choices": [
               {
                 "text": "Why doesn't the king smile?",
@@ -1074,212 +1074,6 @@
               "heard_red_winter"
             ],
             "leave": "Thank him and move on."
-          }
-        }
-      }
-    },
-    {
-      "id": "anselm",
-      "name": "Father Anselm",
-      "role": "Priest of the Chapel",
-      "position": {
-        "x": -21,
-        "z": -11.2
-      },
-      "heading": 0,
-      "stoop": 0.12,
-      "action": "behind",
-      "patrol": {
-        "mode": "pingpong",
-        "speed": 1.0,
-        "points": [
-          {
-            "x": -21,
-            "z": -11.2,
-            "wait": 10,
-            "face": 0
-          },
-          {
-            "x": -30.5,
-            "z": -12.5,
-            "wait": 0.3
-          },
-          {
-            "x": -30.5,
-            "z": -28,
-            "wait": 0.3
-          },
-          {
-            "x": -38.5,
-            "z": -27.6,
-            "wait": 14,
-            "face": -2.42,
-            "action": "pray"
-          }
-        ]
-      },
-      "look": {
-        "skin": "#d2a488",
-        "hair": "#b8b4ac",
-        "hairStyle": "tonsure",
-        "beard": null,
-        "stubble": true,
-        "eyes": "#5a6a7a",
-        "age": 0.75,
-        "tunic": "#3a3028",
-        "skirt": "robe",
-        "trim": "#3a3028",
-        "belt": "#c8b48a",
-        "pouch": null,
-        "boots": "#2a2018",
-        "cloak": null
-      },
-      "outfit": {
-        "cross": true,
-        "ropeBelt": true
-      },
-      "dialogue": {
-        "start": [
-          {
-            "if": [
-              "met_anselm"
-            ],
-            "node": "again"
-          },
-          {
-            "node": "greet"
-          }
-        ],
-        "nodes": {
-          "greet": {
-            "text": "Peace be with you, child. The chapel is open to all who seek quiet, and the graveyard to all who seek the past.",
-            "choices": [
-              {
-                "text": "I'm seeking the past.",
-                "next": "past"
-              },
-              {
-                "text": "Is the chapel old?",
-                "next": "chapel"
-              },
-              {
-                "text": "Peace be with you, Father."
-              }
-            ]
-          },
-          "again": {
-            "text": "Back again, child? The dead are patient. So am I.",
-            "choices": [
-              {
-                "text": "Tell me about the graves.",
-                "next": "past"
-              },
-              {
-                "text": "About Prince Edmund's grave…",
-                "next": "grave",
-                "if": [
-                  "heard_edmund"
-                ]
-              },
-              {
-                "text": "Another time, Father."
-              }
-            ]
-          },
-          "chapel": {
-            "text": "Nearly as old as the bridge. Queen Aldra lies beneath the altar, and her oath is painted above it, though the paint has faded. As oaths do.",
-            "choices": [
-              {
-                "text": "Her oath?",
-                "next": "oath"
-              },
-              {
-                "text": "I'm seeking the past.",
-                "next": "past"
-              },
-              {
-                "text": "Thank you, Father."
-              }
-            ]
-          },
-          "oath": {
-            "text": "That no child of Valdren shall go hungry while the crown's stores are full. I preached it every Sunday of the Red Winter, until the castle sent word I should preach on patience instead.",
-            "set": [
-              "heard_bread_oath",
-              "heard_red_winter"
-            ],
-            "choices": [
-              {
-                "text": "Tell me about the graves.",
-                "next": "past"
-              },
-              {
-                "text": "Thank you, Father."
-              }
-            ]
-          },
-          "past": {
-            "text": "Then you've come to the right place. Every name that mattered in Valdren is carved out there, and some that didn't, and one that…",
-            "choices": [
-              {
-                "text": "One that what?",
-                "next": "grave"
-              },
-              {
-                "text": "Whose graves are these?",
-                "next": "names"
-              },
-              {
-                "text": "I'll leave the dead in peace."
-              }
-            ]
-          },
-          "names": {
-            "text": "Bakers, soldiers, three royal cousins and a hound the old queen loved too much. And in the old corner, beneath the yew, Prince Edmund.",
-            "set": [
-              "heard_edmund"
-            ],
-            "choices": [
-              {
-                "text": "Tell me about the prince's grave.",
-                "next": "grave"
-              },
-              {
-                "text": "Thank you, Father."
-              }
-            ]
-          },
-          "grave": {
-            "text": "I was an acolyte when we buried him. I carried the coffin with five other boys.” He lowers his voice. “It was very light, child. Very light.",
-            "set": [
-              "heard_empty_grave",
-              "heard_edmund"
-            ],
-            "choices": [
-              {
-                "text": "Are you saying it was empty?",
-                "next": "empty"
-              },
-              {
-                "text": "I see. Thank you."
-              }
-            ]
-          },
-          "empty": {
-            "text": "I am saying I have prayed over that stone for thirty years and never once felt anyone listening. And someone leaves wild heather on it every winter, on the night the Greywatch burned. The dead do not pick flowers.",
-            "choices": [
-              {
-                "text": "Who leaves the heather?",
-                "next": "heather"
-              },
-              {
-                "text": "I'll leave you to your prayers."
-              }
-            ]
-          },
-          "heather": {
-            "text": "I have never waited up to see. Some questions are better asked of the living. Try the ruin at the forest's edge, if you have strong legs and a kind tongue.",
-            "leave": "Bow your head and go."
           }
         }
       }
@@ -1660,7 +1454,7 @@
                 "text": "Who leaves heather on the prince's grave?",
                 "next": "heather",
                 "if": [
-                  "heard_empty_grave"
+                  "lore_grave"
                 ]
               },
               {
@@ -1722,10 +1516,10 @@
                 ]
               },
               {
-                "text": "The prince's grave is empty.",
+                "text": "The prince's grave is empty. Even the song says so.",
                 "next": "grave",
                 "if": [
-                  "heard_empty_grave"
+                  "lore_ballad"
                 ]
               },
               {
@@ -1733,7 +1527,7 @@
                 "next": "then",
                 "if": [
                   "!heard_arrest",
-                  "!heard_empty_grave"
+                  "!lore_ballad"
                 ]
               },
               {
@@ -1742,7 +1536,7 @@
             ]
           },
           "then": {
-            "text": "I have always been here, or it feels so. Go and talk to the living: the priest, the smith, the farm wife, the Captain. When you know more, come and tell me what you've learned.",
+            "text": "I have always been here, or it feels so. Go and talk to the living: the smith, the farm wife, the Captain. When you know more, come and tell me what you've learned.",
             "leave": "Leave him by the fire."
           },
           "guard": {

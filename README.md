@@ -6,7 +6,7 @@ API keys, so it can be hosted on GitHub Pages as is. Every model and texture is
 generated in code at load time; the project ships no art assets.
 
 > **Status: Phase 4 of 5, the mystery.** The engine core (phase 1), the whole
-> kingdom (phase 2), its eight inhabitants with branching dialogue (phase 3),
+> kingdom (phase 2), its seven inhabitants with branching dialogue (phase 3),
 > and its secrets, journal, compass and maps, saved progress and a running
 > day-night cycle (phase 4) are in place. The quality menu and final polish
 > (phase 5) are still to come.
@@ -32,7 +32,7 @@ generated in code at load time; the project ships no art assets.
 
 ## The people
 
-Eight people live in Valdren. Each has a place, a routine and a story to tell,
+Seven people live in Valdren. Each has a place, a routine and a story to tell,
 and what one of them lets slip can open up another.
 
 | Who | Where | Doing |
@@ -42,7 +42,6 @@ and what one of them lets slip can open up another.
 | **Brannoc**, Blacksmith | The forge, north-west of the market | Hammering at the anvil |
 | **Maera**, keeper of *The Broken Oar* | Outside the tavern | Polishing a tankard |
 | **Tobias Fenn**, merchant of Saltmere | The east stalls of the market | Strolling between his stalls |
-| **Father Anselm** | Between the chapel door and the graveyard | Walking, and praying by an old grave |
 | **Wynn Hollis**, farmer | The farmstead across the river | Walking out to the ploughed field, hoe in hand |
 | **The Old Hermit** | His camp beside the ruined watchtower | Pottering between the fire and the ruin |
 
@@ -166,10 +165,10 @@ left mouse button and drag to look around.
   the player: a look (colours, build, robe or tunic, hair, beard, age lines, a
   burn scar, a gloved hand) and an outfit of procedural accessories (crown,
   ermine collar, nasal helm, breastplate, pauldrons, sword, aprons, hats, a
-  cowl, a cross, a hammer, a tankard, a staff, a hoe). Accessories are baked
+  cowl, a hammer, a tankard, a staff, a hoe). Accessories are baked
   into the figure's own skinned mesh, so each person costs four or five draw
   calls; their shadows are dropped beyond 24 m. Poses (hands behind the back,
-  praying, hammering, polishing, leaning on a staff) are layered over the walk
+  hammering, polishing, leaning on a staff) are layered over the walk
   cycle, people turn their heads to watch you pass, and they gesture while
   they speak.
 - **Dialogue** trees live in the same file. Each node is a line and two or three
@@ -226,7 +225,7 @@ src/npc.js        the people: figures and accessories from data, patrols,
                   who can be talked to, name labels
 src/dialogue.js   branching conversations: typewriter, replies, flags
 src/lore.js       discoveries and their glints, the reader, the journal, the save
-data/npcs.json    the eight inhabitants: looks, outfits, routes, dialogue
+data/npcs.json    the seven inhabitants: looks, outfits, routes, dialogue
 data/lore.json    the ten discoverables, rumours, the truth and the epilogue
 src/input.js      keyboard, mouse / pointer lock, touch joystick and look, buttons
 src/ui.js         start screen, pause menu, toasts, hints, prompt, name labels,
