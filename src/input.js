@@ -3,7 +3,8 @@
  * joystick and look area, and the on-screen buttons. Everything is reduced to
  * a movement vector, accumulated look/zoom deltas, and named action events.
  *
- * Events emitted: interact, journal, map, lantern, pause, debug, lockchange, lockerror, touchmode.
+ * Events emitted: interact, journal, map, lantern, jump, fly, attack, sword, pause, debug,
+ * lockchange, lockerror, touchmode.
  */
 
 const MOVE_KEYS = {
@@ -22,6 +23,10 @@ const ACTION_KEYS = {
   KeyJ: 'journal',
   KeyM: 'map',
   KeyF: 'lantern',
+  Space: 'jump',
+  KeyG: 'fly',
+  KeyQ: 'attack',
+  KeyR: 'sword',
   Escape: 'pause',
   Backquote: 'debug',
   F3: 'debug',
@@ -49,6 +54,7 @@ export class Input {
 
     this._listeners = new Map();
     this._keys = new Set();
+    this._held = new Set(); // on-screen buttons being held down
     this._look = { yaw: 0, pitch: 0 };
     this._zoom = 0;
     this._move = { x: 0, y: 0, magnitude: 0, run: false };
@@ -99,6 +105,9 @@ export class Input {
       }
       run = this._keys.has('ShiftLeft') || this._keys.has('ShiftRight');
     }
+    // Climbing and descending in flight: Space and C, or the held Jump and Down buttons.
+    m.up = this.active && (this._keys.has('Space') || this._held.has('jump'));
+    m.down = this.active && (this._keys.has('KeyC') || this._held.has('down'));
     let magnitude = Math.hypot(x, y);
     if (magnitude > 0) {
       x /= magnitude;
@@ -166,6 +175,7 @@ export class Input {
   // Drops every held key and touch, e.g. when the window loses focus.
   reset() {
     this._keys.clear();
+    this._held.clear();
     this._releaseJoy();
     this._lookTouch.id = null;
     this._drag.active = false;
@@ -179,9 +189,9 @@ export class Input {
   _bindKeyboard() {
     window.addEventListener('keydown', (e) => {
       const code = e.code;
-      if (MOVE_KEYS[code] || RUN_KEYS.has(code)) {
+      if (MOVE_KEYS[code] || RUN_KEYS.has(code) || code === 'Space' || code === 'KeyC') {
         this._keys.add(code);
-        if (code.startsWith('Arrow')) e.preventDefault();
+        if (code.startsWith('Arrow') || (code === 'Space' && this.active)) e.preventDefault();
       }
       const action = ACTION_KEYS[code];
       if (!action || e.repeat) return;
@@ -245,15 +255,21 @@ export class Input {
   _bindButtons() {
     document.querySelectorAll('[data-action]').forEach((btn) => {
       const release = () => btn.classList.remove('pressed');
+      const action = btn.dataset.action;
+      const up = () => {
+        release();
+        this._held.delete(action);
+      };
       btn.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         e.stopPropagation();
         btn.classList.add('pressed');
-        this.emit(btn.dataset.action, { source: 'button' });
+        this._held.add(action);
+        this.emit(action, { source: 'button' });
       });
-      btn.addEventListener('pointerup', release);
-      btn.addEventListener('pointercancel', release);
-      btn.addEventListener('pointerleave', release);
+      btn.addEventListener('pointerup', up);
+      btn.addEventListener('pointercancel', up);
+      btn.addEventListener('pointerleave', up);
       btn.addEventListener('click', (e) => e.preventDefault());
     });
   }
@@ -271,6 +287,11 @@ export class Input {
     if (e.pointerType === 'mouse') {
       if (this.touchMode) this.setTouchMode(false);
       if (!this.active) return;
+      // With the mouse captured, a left click is a blow.
+      if (this.pointerLocked && e.button === 0) {
+        this.emit('attack', { source: 'mouse' });
+        return;
+      }
       if (!this.pointerLocked) {
         this.requestPointerLock();
         this._drag.active = true;

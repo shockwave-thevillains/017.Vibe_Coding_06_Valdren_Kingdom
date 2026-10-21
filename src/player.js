@@ -10,6 +10,12 @@ import { SITES, PLAY_HALF, WATER_LEVEL, MAX_WADE_DEPTH, clamp } from './world.js
 export const WALK_SPEED = 4.2;
 export const RUN_SPEED = 8.2;
 const PLAYER_RADIUS = 0.4;
+const GRAVITY = 22;
+const JUMP_SPEED = 7.4;        // m/s up: a jump of about 1.25 m
+const FLY_SPEED = 11;
+const FLY_FAST = 24;           // holding run in flight
+const FLY_CLIMB = 7;
+const FLY_HEIGHT = 150;        // flight stays below this height above the land
 const TAU = Math.PI * 2;
 
 // Move an angle towards a target along the shortest arc, frame-rate independent.
@@ -1186,6 +1192,9 @@ function gearApi(B, bones) {
   };
 }
 
+// The right arm holding a drawn sword ready.
+const SWORD_ARM = { upperArmR: [-0.22, 0, -0.14], forearmR: [-0.75, 0.1, 0], handR: [0.35, 0, 0] };
+
 /*
  * Poses layered over the walk cycle, as target rotations [x, y, z] per bone.
  * A 'carry' pose (holding a staff) stays on while walking; the others fade in
@@ -1228,6 +1237,18 @@ const ACTIONS = {
     right: true,
     pose: (t) => ({ upperArmR: [-0.38 + Math.sin(t * 1.9) * 0.02, 0, -0.08], forearmR: [-1.12, 0.12, 0], handR: [0.25, 0, 0] }),
   },
+  // A drawn sword held ready in the right hand, the blade raised a little.
+  sword: {
+    carry: true,
+    right: true,
+    pose: () => ({ ...SWORD_ARM }),
+  },
+  // The lantern in the left hand, while the right holds a sword.
+  lanternL: {
+    carry: true,
+    right: true,
+    pose: (t) => ({ ...SWORD_ARM, upperArmL: [-0.38 + Math.sin(t * 1.9) * 0.02, 0, 0.08], forearmL: [-1.12, -0.12, 0], handL: [0.25, 0, 0] }),
+  },
   // A staff or tool held upright in the right hand.
   staff: {
     carry: true,
@@ -1254,6 +1275,36 @@ const ACTIONS = {
       };
     },
   },
+  // Knocked down: sitting slumped on the ground, legs out, head hanging.
+  downed: {
+    seated: true,
+    drop: 0.72,
+    pose: () => ({
+      hips: [0, 0, 0], spine: [0.35, 0, 0.05], chest: [0.15, 0, 0], neck: [0.3, 0, 0], head: [0.45, 0.2, 0],
+      thighL: [-1.45, 0, 0.12], shinL: [0.15, 0, 0], footL: [-0.2, 0, 0],
+      thighR: [-1.35, 0, -0.18], shinR: [0.35, 0, 0], footR: [-0.2, 0, 0],
+      upperArmL: [0.15, 0, 0.25], forearmL: [-0.3, 0, 0], upperArmR: [0.1, 0, -0.3], forearmR: [-0.4, 0, 0],
+    }),
+  },
+  // Beaten and yielding: on both knees, hands raised.
+  kneel: {
+    seated: true,
+    drop: 0.42,
+    pose: () => ({
+      hips: [0, 0, 0], spine: [0.1, 0, 0], neck: [0.15, 0, 0], head: [0.2, 0, 0],
+      thighL: [-0.15, 0, 0.06], shinL: [2.2, 0, 0], footL: [0.6, 0, 0],
+      thighR: [-0.15, 0, -0.06], shinR: [2.2, 0, 0], footR: [0.6, 0, 0],
+      upperArmL: [-1.2, 0, 0.5], forearmL: [-1.4, 0.3, 0], upperArmR: [-1.2, 0, -0.5], forearmR: [-1.4, -0.3, 0],
+    }),
+  },
+  // Hands bound behind the back, walking or standing.
+  bound: {
+    carry: true,
+    pose: () => ({
+      upperArmL: [0.42, 0, 0.12], forearmL: [-1.45, 1.45, 0], handL: [0, 0, 0],
+      upperArmR: [0.42, 0, -0.12], forearmR: [-1.45, -1.45, 0], handR: [0, 0, 0],
+    }),
+  },
   // Kneading dough on a counter.
   knead: {
     pose: (t) => {
@@ -1266,6 +1317,36 @@ const ACTIONS = {
     },
   },
 };
+
+// Blows with the right arm as keyframes over 0..1 of their duration: a punch jabs out
+// from a wind-up; a sword stroke rises overhead and cuts down across the body.
+const STRIKE_BONES = ['upperArmR', 'forearmR', 'handR', 'chest', 'spine'];
+const STRIKE_REST = { upperArmR: [0, 0, -0.06], forearmR: [-0.14, 0, 0], handR: [-0.1, 0, 0], chest: [0, 0, 0], spine: [0, 0, 0] };
+const STRIKES = {
+  punch: {
+    dur: 0.36,
+    keys: [
+      { p: 0, pose: {} },
+      { p: 0.3, pose: { upperArmR: [-0.35, 0, -0.3], forearmR: [-1.9, 0, 0], chest: [0, -0.28, 0] } },
+      { p: 0.5, pose: { upperArmR: [-1.5, 0.12, -0.05], forearmR: [-0.12, 0, 0], handR: [0.1, 0, 0], chest: [0, 0.35, 0], spine: [0.05, 0.12, 0] } },
+      { p: 1, pose: {} },
+    ],
+  },
+  slash: {
+    dur: 0.52,
+    keys: [
+      { p: 0, pose: {} },
+      { p: 0.35, pose: { upperArmR: [-2.6, 0, -0.35], forearmR: [-0.8, 0, 0], handR: [0.4, 0, 0], chest: [0, -0.35, 0] } },
+      { p: 0.6, pose: { upperArmR: [-0.75, 0.35, -0.55], forearmR: [-0.2, 0, 0], handR: [-0.35, 0, 0], chest: [0.08, 0.45, 0], spine: [0.12, 0.12, 0] } },
+      { p: 1, pose: {} },
+    ],
+  },
+};
+export const STRIKE_HIT = { punch: 0.45, slash: 0.55 };
+// Seconds from the start of a blow to the moment it lands.
+export function strikeImpact(kind) {
+  return STRIKES[kind].dur * STRIKE_HIT[kind];
+}
 
 // The lower half of a seated figure: thighs level, shins down to the floor.
 const SEAT = {
@@ -1317,6 +1398,26 @@ export class FigureAnimator {
     this._lookYaw = 0;
     this._lookPitch = 0;
     this._looking = 0;
+    // Airborne layers: air (a jump or a fall), flying, and glide (0 hovering .. 1 speeding along).
+    this.air = false;
+    this.flying = false;
+    this.glide = 0;
+    this._air = 0;
+    this._fly = 0;
+    this._glide = 0;
+    this._atk = null;
+    // A flinch after being struck: set to 1, it fades by itself.
+    this.hurt = 0;
+  }
+
+  // Starts a blow with the right arm: 'punch' or 'slash' (a sword stroke).
+  strike(kind) {
+    this._atk = { kind, t: 0, dur: STRIKES[kind].dur };
+  }
+
+  // 0..1 through the current blow, or -1.
+  get striking() {
+    return this._atk ? this._atk.t / this._atk.dur : -1;
   }
 
   // Jumps straight to the current action pose (no fade), e.g. when a figure is first placed.
@@ -1398,7 +1499,7 @@ export class FigureAnimator {
     if (actDef && this._act > 0.001) {
       const pose = actDef.pose(t);
       for (const name in pose) blendBone(b[name], pose[name], this._act);
-      if (actDef.seated) b.hips.position.y -= SEAT_DROP * this._act;
+      if (actDef.seated) b.hips.position.y -= (actDef.drop ?? SEAT_DROP) * this._act;
     }
 
     // Talking: a hand that gestures (whichever is free) and small nods.
@@ -1412,9 +1513,76 @@ export class FigureAnimator {
       b.head.rotation.x += Math.sin(t * 5.1) * 0.035 * this._talk;
     }
 
-    // The cloak trails behind as speed builds.
-    b.cloak1.rotation.x = 0.08 + m * (0.12 + running * 0.35) + Math.sin(this.phase * 2) * 0.04 * m + Math.sin(t * 1.3) * 0.01 + bend * 0.15;
-    b.cloak2.rotation.x = 0.04 + m * (0.1 + running * 0.25) + Math.sin(this.phase * 2 + 0.8) * 0.05 * m;
+    // In the air: knees drawn up in a jump; in flight, hovering upright or stretched out
+    // along the line of travel.
+    this._air += ((this.air ? 1 : 0) - this._air) * (1 - Math.exp(-12 * dt));
+    this._fly += ((this.flying ? 1 : 0) - this._fly) * (1 - Math.exp(-5 * dt));
+    this._glide += ((this.flying ? this.glide : 0) - this._glide) * (1 - Math.exp(-4 * dt));
+    const jumpW = this._air * (1 - this._fly);
+    if (jumpW > 0.001) {
+      for (const [thigh, shin, k] of [[b.thighL, b.shinL, 1], [b.thighR, b.shinR, 0.8]]) {
+        blendBone(thigh, [-0.75 * k, 0, 0], jumpW);
+        blendBone(shin, [1.15 * k, 0, 0], jumpW);
+      }
+      blendBone(b.upperArmL, [-0.45, 0, 0.35], jumpW * 0.8);
+      blendBone(b.upperArmR, [-0.45, 0, -0.35], jumpW * 0.8);
+    }
+    if (this._fly > 0.001) {
+      const g = this._glide;
+      const f = this._fly;
+      const kick = Math.sin(t * 2.2) * 0.12 * (1 - g);
+      blendBone(b.hips, [0.1 + 1.1 * g, 0, 0], f);
+      blendBone(b.neck, [-0.5 * g, 0, 0], f);
+      blendBone(b.head, [-0.45 * g, 0, 0], f);
+      blendBone(b.thighL, [0.15 * (1 - g) + kick, 0, 0], f);
+      blendBone(b.thighR, [-0.1 * (1 - g) - kick, 0, 0], f);
+      blendBone(b.shinL, [0.3 - 0.15 * g, 0, 0], f);
+      blendBone(b.shinR, [0.25 - 0.1 * g, 0, 0], f);
+      blendBone(b.upperArmL, [0.1 + 0.2 * g, 0, 0.5 - 0.38 * g], f);
+      blendBone(b.upperArmR, [0.1 + 0.2 * g, 0, -0.5 + 0.38 * g], f);
+      blendBone(b.forearmL, [-0.3 + 0.2 * g, 0, 0], f);
+      blendBone(b.forearmR, [-0.3 + 0.2 * g, 0, 0], f);
+    }
+
+    // Flinching from a blow: rocked back, arms up to guard.
+    if (this.hurt > 0.001) {
+      const h = Math.min(1, this.hurt * 1.6);
+      blendBone(b.chest, [-0.25, 0.15, 0], h);
+      blendBone(b.neck, [-0.2, 0, 0], h);
+      blendBone(b.head, [-0.3, -0.2, 0], h);
+      blendBone(b.upperArmL, [-0.7, 0, 0.35], h);
+      blendBone(b.forearmL, [-1.5, 0.4, 0], h);
+      blendBone(b.upperArmR, [-0.7, 0, -0.35], h);
+      blendBone(b.forearmR, [-1.5, -0.4, 0], h);
+      this.hurt = Math.max(0, this.hurt - dt * 2.2);
+    }
+
+    // A blow with the right arm, from wind-up to recovery, twisting the chest into it.
+    const atk = this._atk;
+    if (atk) {
+      atk.t += dt;
+      const p = atk.t / atk.dur;
+      if (p >= 1) {
+        this._atk = null;
+      } else {
+        const keys = STRIKES[atk.kind].keys;
+        let i = 0;
+        while (i < keys.length - 2 && keys[i + 1].p <= p) i++;
+        const a = keys[i];
+        const z = keys[i + 1];
+        const u = smooth(0, 1, (p - a.p) / (z.p - a.p));
+        const w = p < 0.85 ? 1 : (1 - p) / 0.15;
+        for (const name of STRIKE_BONES) {
+          const ra = a.pose[name] || STRIKE_REST[name];
+          const rz = z.pose[name] || STRIKE_REST[name];
+          blendBone(b[name], [ra[0] + (rz[0] - ra[0]) * u, ra[1] + (rz[1] - ra[1]) * u, ra[2] + (rz[2] - ra[2]) * u], w);
+        }
+      }
+    }
+
+    // The cloak trails behind as speed builds (and streams out in flight).
+    b.cloak1.rotation.x = 0.08 + m * (0.12 + running * 0.35) + Math.sin(this.phase * 2) * 0.04 * m + Math.sin(t * 1.3) * 0.01 + bend * 0.15 + this._fly * (0.15 + 1.0 * this._glide) + this._air * 0.3;
+    b.cloak2.rotation.x = 0.04 + m * (0.1 + running * 0.25) + Math.sin(this.phase * 2 + 0.8) * 0.05 * m + this._fly * (0.1 + 0.4 * this._glide) + Math.sin(t * 9) * 0.06 * this._glide;
   }
 }
 
@@ -1437,12 +1605,16 @@ export class Player {
     // (to shine the lantern there).
     this.aiming = false;
     this.speed = 0;
+    // In the air: after a jump or a fall (airborne), or in flight (flying).
+    this.airborne = false;
+    this.flying = false;
     this._visualY = this.position.y;
     this._sync();
   }
 
   /*
-   * move: { x, y, magnitude, run } from Input.getMove (x = strafe right, y = forward).
+   * move: { x, y, magnitude, run, up, down } from Input.getMove (x = strafe right,
+   * y = forward; up and down climb and descend in flight).
    * cameraYaw: FollowCamera.yaw, so "forward" is always away from the camera.
    */
   update(dt, move, cameraYaw) {
@@ -1455,32 +1627,121 @@ export class Player {
     const ix = c * move.x - s * move.y;
     const iz = -s * move.x - c * move.y;
 
-    let top = move.run ? RUN_SPEED : WALK_SPEED;
-    const depth = WATER_LEVEL - world.getGroundHeight(pos.x, pos.z);
-    if (depth > 0.05) top *= 1 - 0.55 * Math.min(1, depth / MAX_WADE_DEPTH);
-
-    const k = 1 - Math.exp(-(move.magnitude > 0.01 ? 10 : 14) * dt);
+    let top;
+    if (this.flying) {
+      top = move.run ? FLY_FAST : FLY_SPEED;
+    } else {
+      top = move.run ? RUN_SPEED : WALK_SPEED;
+      const depth = WATER_LEVEL - world.getGroundHeight(pos.x, pos.z);
+      if (depth > 0.05 && !this.airborne) top *= 1 - 0.55 * Math.min(1, depth / MAX_WADE_DEPTH);
+    }
+    // Quick to start and stop on foot; in the air there is momentum.
+    const pushing = move.magnitude > 0.01;
+    const rate = this.flying ? (pushing ? 3 : 2) : this.airborne ? (pushing ? 4 : 0.6) : pushing ? 10 : 14;
+    const k = 1 - Math.exp(-rate * dt);
     vel.x += (ix * top - vel.x) * k;
     vel.z += (iz * top - vel.z) * k;
 
     const px = pos.x;
     const pz = pos.z;
-    this._step(vel.x * dt, vel.z * dt);
+    if (this.flying) {
+      // No step rules in the air: over walls, water and cliffs alike.
+      pos.x += vel.x * dt;
+      pos.z += vel.z * dt;
+      const climb = (move.up ? 1 : 0) - (move.down ? 1 : 0);
+      vel.y += (climb * FLY_CLIMB - vel.y) * (1 - Math.exp(-4 * dt));
+      pos.y += vel.y * dt;
+    } else {
+      this._step(vel.x * dt, vel.z * dt);
+      if (this.airborne) {
+        vel.y -= GRAVITY * dt;
+        pos.y += vel.y * dt;
+      }
+    }
     world.colliders.resolve(pos, this.radius, pos.y + 0.15, pos.y + 1.8);
     pos.x = clamp(pos.x, -PLAY_HALF, PLAY_HALF);
     pos.z = clamp(pos.z, -PLAY_HALF, PLAY_HALF);
-    pos.y = world.getGroundHeight(pos.x, pos.z);
+
+    const ground = world.getGroundHeight(pos.x, pos.z);
+    if (this.flying || this.airborne) {
+      // Heads stay under ceilings, and flight under its own limit above the land.
+      const ceiling = Math.min(world.ceilingAt(pos.x, pos.z, pos.y + 1) - 1.85, ground + FLY_HEIGHT);
+      if (pos.y > ceiling) {
+        pos.y = ceiling;
+        if (vel.y > 0) vel.y = 0;
+      }
+    }
+    if (this.flying) {
+      // Hovering low over water stays above it.
+      const floor = Math.max(ground, WATER_LEVEL + 0.25);
+      if (pos.y < floor) {
+        pos.y = floor;
+        if (vel.y < 0) vel.y = 0;
+      }
+    } else if (this.airborne) {
+      if (pos.y <= ground) {
+        pos.y = ground;
+        vel.y = 0;
+        this.airborne = false;
+      }
+    } else if (ground < pos.y - 0.6 - Math.hypot(pos.x - px, pos.z - pz) * 1.2) {
+      // Stepped off a ledge (more than a steep slope would drop): fall.
+      this.airborne = true;
+      vel.y = 0;
+    } else {
+      pos.y = ground;
+    }
 
     this.speed = dt > 0 ? Math.hypot(pos.x - px, pos.z - pz) / dt : 0;
-    if (move.magnitude > 0.01 && Math.hypot(vel.x, vel.z) > 0.3) {
-      this.heading = dampAngle(this.heading, Math.atan2(vel.x, vel.z), 12, dt);
-    } else if (this.aiming && move.magnitude <= 0.01) {
+    if (pushing && Math.hypot(vel.x, vel.z) > 0.3) {
+      this.heading = dampAngle(this.heading, Math.atan2(vel.x, vel.z), this.flying ? 6 : 12, dt);
+    } else if (this.aiming && !pushing) {
       this.heading = dampAngle(this.heading, cameraYaw + Math.PI, 5, dt);
     }
 
-    this._visualY += (pos.y - this._visualY) * (1 - Math.exp(-30 * dt));
-    this.animator.update(dt, this.speed);
+    if (this.flying || this.airborne) this._visualY = pos.y;
+    else this._visualY += (pos.y - this._visualY) * (1 - Math.exp(-30 * dt));
+    const a = this.animator;
+    a.air = this.airborne && !this.flying;
+    a.flying = this.flying;
+    a.glide = this.flying ? Math.min(1, Math.hypot(vel.x, vel.z) / FLY_SPEED) : 0;
+    a.update(dt, this.flying || this.airborne ? 0 : this.speed);
     this._sync();
+  }
+
+  // On the ground: true when the jump starts.
+  jump() {
+    if (this.flying || this.airborne) return false;
+    this.velocity.y = JUMP_SPEED;
+    this.airborne = true;
+    return true;
+  }
+
+  /*
+   * Takes off (on) or stops flying and drops to the ground (off). Returns false when
+   * that is not possible: landing is refused over deep water.
+   */
+  setFlying(on) {
+    if (on === this.flying) return true;
+    if (on) {
+      this.flying = true;
+      this.airborne = true;
+      this.velocity.y = 4;
+      return true;
+    }
+    const ground = this.world.getGroundHeight(this.position.x, this.position.z);
+    if (WATER_LEVEL - ground > MAX_WADE_DEPTH) return false;
+    this.flying = false;
+    this.airborne = this.position.y > ground + 0.05;
+    this.velocity.y = Math.min(this.velocity.y, 0);
+    return true;
+  }
+
+  // Back on the ground at once (riding, teleporting, sleeping).
+  _ground() {
+    this.flying = false;
+    this.airborne = false;
+    this.velocity.y = 0;
   }
 
   // Stands still and turns towards (x, z), e.g. to face someone in a conversation.
@@ -1494,6 +1755,7 @@ export class Player {
 
   // Rides along with something (a balloon's basket): placed at pos each frame, standing still.
   ride(pos, dt) {
+    this._ground();
     this.position.copy(pos);
     this.velocity.set(0, 0, 0);
     this.speed = 0;
@@ -1504,6 +1766,7 @@ export class Player {
 
   // Places the player instantly (no smoothing), e.g. when restoring a saved position.
   teleport(x, z, heading = this.heading) {
+    this._ground();
     this.position.set(x, this.world.getGroundHeight(x, z), z);
     this.velocity.set(0, 0, 0);
     this.heading = heading;
@@ -1515,20 +1778,30 @@ export class Player {
   _step(sx, sz) {
     if (sx === 0 && sz === 0) return;
     const pos = this.position;
-    const w = this.world;
-    if (w.canStep(pos.x, pos.z, pos.x + sx, pos.z + sz)) {
+    if (this._canMove(pos.x, pos.z, pos.x + sx, pos.z + sz)) {
       pos.x += sx;
       pos.z += sz;
-    } else if (sx !== 0 && w.canStep(pos.x, pos.z, pos.x + sx, pos.z)) {
+    } else if (sx !== 0 && this._canMove(pos.x, pos.z, pos.x + sx, pos.z)) {
       pos.x += sx;
       this.velocity.z = 0;
-    } else if (sz !== 0 && w.canStep(pos.x, pos.z, pos.x, pos.z + sz)) {
+    } else if (sz !== 0 && this._canMove(pos.x, pos.z, pos.x, pos.z + sz)) {
       pos.z += sz;
       this.velocity.x = 0;
     } else {
       this.velocity.x = 0;
       this.velocity.z = 0;
     }
+  }
+
+  // On foot the world's step rules apply; in a jump, anything the feet clear will do
+  // (though not a dive into deep water).
+  _canMove(x0, z0, x1, z1) {
+    const w = this.world;
+    if (!this.airborne) return w.canStep(x0, z0, x1, z1);
+    const g1 = w.getGroundHeight(x1, z1);
+    const depth = WATER_LEVEL - g1;
+    if (depth > MAX_WADE_DEPTH && depth >= WATER_LEVEL - w.getGroundHeight(x0, z0)) return false;
+    return g1 <= this.position.y + 0.3;
   }
 
   _sync() {

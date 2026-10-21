@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { createFigure, FigureAnimator, dampAngle, frontProfile, isSeated, HEAD_CENTRE } from './player.js';
-import { clamp, mulberry32 } from './world.js';
+import { createFigure, FigureAnimator, dampAngle, frontProfile, isSeated, HEAD_CENTRE, strikeImpact } from './player.js';
+import { clamp, mulberry32, PLAY_HALF } from './world.js';
 
 /*
  * npc.js: the people of Valdren. Each one is described in data/npcs.json: a
@@ -18,6 +18,17 @@ const CHILD_HEAD = 1.27;
 const SHADOW_RANGE = 24;         // farther away, a figure's shadow is too small to be worth its draw calls
 const NPC_RADIUS = 0.32;
 const TAU = Math.PI * 2;
+const SAY_RANGE = 30;            // speech bubbles show from farther away than names
+const FLEE_SPEED = 6.0;          // a fleeing criminal (the traveller runs at 8.2)
+const DOWN_TIME = 25;            // seconds someone knocked down stays down
+const BLOW_DAMAGE = 8;           // a criminal's punch (unless their data says otherwise), against the traveller's 100
+
+// What people say when struck.
+const OUCH = ['Ow!', 'Hey! What was that for?', 'Ouch! Have you lost your wits?', 'Stop that!', 'Help! Guards!', 'Argh!'];
+const CHILD_OUCH = ['Hey! Pick on someone your own size!', 'Missed me!', 'I\'m telling my mum!'];
+const GUARD_OUCH = ['Strike a guard, would you?', 'Mind yourself, traveller!', 'That\'s enough of that!'];
+const CROOK_OUCH = ['You\'ll not take me!', 'Get off!', 'Is that all you\'ve got?', 'Ugh!'];
+const pickLine = (rng, list) => list[Math.floor(rng() * list.length)];
 
 const _v = new THREE.Vector3();
 const _q = new THREE.Quaternion();
@@ -314,6 +325,26 @@ class NPC {
     this.talking = false;
     this.moveSpeed = 0;
 
+    // Blows and their aftermath. mood: null (going about their day), 'down' (knocked
+    // down), and for a criminal who has been accused: 'flee', 'fight', 'yield' (beaten),
+    // 'bound' (following the traveller) and 'gone' (handed over).
+    // A criminal's case id; a criminal can be tougher and hit harder than most.
+    this.criminal = def.criminal || null;
+    this.maxHealth = def.health || 100;
+    this.health = this.maxHealth;
+    this.blowDamage = def.blow || BLOW_DAMAGE;
+    this.mood = null;
+    this.moodTimer = 0;
+    this.sinceHurt = 99;
+    this.saying = null;
+    this.sayTimer = 0;
+    this.guard = !!(def.outfit && def.outfit.helmet);
+    this.home = { x: this.position.x, z: this.position.z, index: this.index };
+    this._blowCooldown = 0;
+    this._blowIn = -1;
+    this._away = 0;
+    this._dodge = 1;
+
     this.animator.action = this.route[this.index].action;
     this.animator.settle();
     this._sync();
@@ -328,19 +359,241 @@ class NPC {
     return out.set(this.position.x, this._visualY + this.headHeight, this.position.z);
   }
 
-  update(dt, player, typing, range) {
+  // Shows a line in a bubble over their head for a few seconds.
+  say(text, seconds = 2.6) {
+    this.saying = text;
+    this.sayTimer = seconds;
+  }
+
+  // Can be talked to: not knocked down, fleeing, fighting or bound.
+  get calm() {
+    return this.mood === null;
+  }
+
+  /*
+   * Struck by the traveller standing at `from` for `damage`. Children dodge; anyone
+   * else staggers back and is hurt, and at no health is knocked down for a while.
+   * A criminal on the run fights back instead, and yields when badly beaten.
+   * Returns 'dodge', 'hurt', 'down' or 'yield' (or null when nothing happened).
+   */
+  hit(damage, from) {
+    if (this.mood === 'gone' || this.mood === 'bound' || this.mood === 'down' || this.mood === 'yield') return null;
+    this._knock(from, this.child ? 0.9 : 0.55);
+    if (this.child) {
+      this.say(pickLine(this.rng, CHILD_OUCH));
+      return 'dodge';
+    }
+    this.health = Math.max(0, this.health - damage);
+    this.sinceHurt = 0;
+    this.animator.hurt = 1;
+    if (this.mood === 'flee' || this.mood === 'fight') {
+      if (this.health <= this.maxHealth * 0.3) {
+        this.mood = 'yield';
+        this.say('I yield! I yield! Enough!', 4);
+        return 'yield';
+      }
+      this.mood = 'fight';
+      this.say(pickLine(this.rng, CROOK_OUCH));
+      return 'hurt';
+    }
+    if (this.health <= 0) {
+      this.mood = 'down';
+      this.moodTimer = DOWN_TIME;
+      this.say('Ugh…', 3);
+      return 'down';
+    }
+    this.say(pickLine(this.rng, this.guard ? GUARD_OUCH : OUCH));
+    return 'hurt';
+  }
+
+  // Accused and found out: the criminal makes a run for it.
+  bolt() {
+    this.mood = 'flee';
+    this._away = 0;
+    this.talking = false;
+    this.say('You\'ll never take me alive!', 3);
+  }
+
+  // Bound by the traveller: follows them from now on.
+  bind() {
+    this.mood = 'bound';
+    this.say('Alright, alright. I\'ll come quietly.', 3);
+  }
+
+  // Handed over to the guild and led away.
+  leave() {
+    this.mood = 'gone';
+    this.figure.root.visible = false;
+  }
+
+  // Shoved a little away from `from`, unless something solid is in the way.
+  _knock(from, distance) {
+    const pos = this.position;
+    const dx = pos.x - from.x;
+    const dz = pos.z - from.z;
+    const d = Math.hypot(dx, dz) || 1;
+    const nx = pos.x + (dx / d) * distance;
+    const nz = pos.z + (dz / d) * distance;
+    if (this.world.canStep(pos.x, pos.z, nx, nz)) {
+      pos.x = nx;
+      pos.z = nz;
+      this.world.colliders.resolve(pos, NPC_RADIUS * this.scale, pos.y + 0.15, pos.y + 1.7);
+      pos.y = this.world.getGroundHeight(pos.x, pos.z);
+    }
+  }
+
+  // Walks or runs towards (tx, tz) at up to `speed`, around walls where it can.
+  // Returns the distance covered.
+  _go(tx, tz, speed, dt) {
+    const pos = this.position;
+    const dx = tx - pos.x;
+    const dz = tz - pos.z;
+    const left = Math.hypot(dx, dz);
+    if (left < 0.05) return 0;
+    const step = Math.min(left, speed * dt);
+    let a = Math.atan2(dx, dz);
+    for (const turn of [0, 0.7 * this._dodge, -0.7 * this._dodge, 1.4 * this._dodge, -1.4 * this._dodge]) {
+      const nx = clamp(pos.x + Math.sin(a + turn) * step, -PLAY_HALF + 2, PLAY_HALF - 2);
+      const nz = clamp(pos.z + Math.cos(a + turn) * step, -PLAY_HALF + 2, PLAY_HALF - 2);
+      if (!this.world.canStep(pos.x, pos.z, nx, nz)) continue;
+      const ox = pos.x;
+      const oz = pos.z;
+      pos.x = nx;
+      pos.z = nz;
+      this.world.colliders.resolve(pos, NPC_RADIUS * this.scale, pos.y + 0.15, pos.y + 1.7);
+      const moved = Math.hypot(pos.x - ox, pos.z - oz);
+      if (moved < step * 0.3) {
+        pos.x = ox;
+        pos.z = oz;
+        continue;
+      }
+      a += turn;
+      if (turn !== 0) this._dodge = Math.sign(turn) || 1;
+      this.heading = dampAngle(this.heading, a, 9, dt);
+      pos.y = this.world.getGroundHeight(pos.x, pos.z);
+      return moved;
+    }
+    this._dodge = -this._dodge;
+    return 0;
+  }
+
+  /*
+   * Everything but the daily routine: lying knocked down, a criminal running, fighting,
+   * kneeling or being led along. Returns the pose to show. events(type, npc) reports
+   * 'blow' (a punch landing on the traveller), 'escaped' and 'recovered'.
+   */
+  _behave(dt, dist, dx, dz, player, events) {
+    const pos = this.position;
+    const pp = player.position;
+    let moved = 0;
+    let action = null;
+    switch (this.mood) {
+      case 'down':
+        action = 'downed';
+        this.moodTimer -= dt;
+        if (this.moodTimer <= 0) {
+          this.mood = null;
+          this.health = Math.max(this.health, 40);
+          this.state = 'walk';
+          this.say(this.guard ? 'I\'ll remember your face.' : 'Oof… I\'m going home to lie down.', 3);
+          events('recovered', this);
+        }
+        break;
+      case 'flee': {
+        // Away from the traveller; turns to fight when caught.
+        if (dist < 2.2) {
+          this.mood = 'fight';
+          break;
+        }
+        const d = dist || 1;
+        moved = this._go(pos.x - (dx / d) * 6, pos.z - (dz / d) * 6, FLEE_SPEED, dt);
+        this._escape(dt, dist, events);
+        break;
+      }
+      case 'fight': {
+        this.heading = dampAngle(this.heading, Math.atan2(dx, dz), 10, dt);
+        if (dist > 8) {
+          this.mood = 'flee';
+          break;
+        }
+        if (dist > 1.3) moved = this._go(pp.x, pp.z, 3.2, dt);
+        this._blowCooldown -= dt;
+        if (this._blowCooldown <= 0 && dist < 1.8 && !player.flying) {
+          this._blowCooldown = 1.3 + this.rng() * 0.5;
+          this.animator.strike('punch');
+          this._blowIn = strikeImpact('punch');
+        }
+        if (this._blowIn >= 0) {
+          this._blowIn -= dt;
+          if (this._blowIn < 0 && dist < 2.0 && Math.abs(pp.y - pos.y) < 1.2) events('blow', this, this.blowDamage);
+        }
+        break;
+      }
+      case 'yield':
+        action = 'kneel';
+        this.heading = dampAngle(this.heading, Math.atan2(dx, dz), 4, dt);
+        this._escape(dt, dist, events);
+        break;
+      case 'bound': {
+        action = 'bound';
+        // A step or two behind the traveller; waits if they fly off.
+        if (dist > 30 || player.flying) break;
+        const back = player.heading + Math.PI;
+        const tx = pp.x + Math.sin(back) * 1.6;
+        const tz = pp.z + Math.cos(back) * 1.6;
+        const gap = Math.hypot(tx - pos.x, tz - pos.z);
+        if (gap > 0.4) moved = this._go(tx, tz, clamp(gap * 1.6, 1.2, 7.5), dt);
+        else this.heading = dampAngle(this.heading, Math.atan2(dx, dz), 4, dt);
+        break;
+      }
+      default:
+        break;
+    }
+    this.moveSpeed = dt > 0 ? moved / dt : 0;
+    return action;
+  }
+
+  // Far from the traveller for long enough, a runaway (or a captive left unbound)
+  // slips back to their haunts.
+  _escape(dt, dist, events) {
+    this._away = dist > 70 ? this._away + dt : 0;
+    if (this._away < 15) return;
+    this.goHome();
+    events('escaped', this);
+  }
+
+  // Back where their day began, unhurt and calm.
+  goHome() {
+    this.mood = null;
+    this.health = this.maxHealth;
+    this.saying = null;
+    this.index = this.home.index;
+    this.position.set(this.home.x, 0, this.home.z);
+    this.position.y = this.world.getGroundHeight(this.home.x, this.home.z);
+    this._visualY = this.position.y;
+    this.state = 'wait';
+    this.timer = 2;
+  }
+
+  update(dt, player, typing, range, events) {
+    if (this.mood === 'gone') return;
     const pos = this.position;
     const pp = player.position;
     const dx = pp.x - pos.x;
     const dz = pp.z - pos.z;
     const dist = Math.hypot(dx, dz);
     const root = this.figure.root;
-    root.visible = dist < range || this.talking;
+    if (this.sayTimer > 0 && (this.sayTimer -= dt) <= 0) this.saying = null;
+    // Bruises heal: after a quiet while, health comes back.
+    this.sinceHurt += dt;
+    if (this.health < this.maxHealth && this.sinceHurt > 12 && this.mood === null) this.health = Math.min(this.maxHealth, this.health + dt * 3);
+    root.visible = dist < range || this.talking || (this.mood !== null && dist < range * 2);
     // A hidden figure's bones and gear need no matrices until it is shown again.
     root.matrixWorldAutoUpdate = root.visible;
     if (!root.visible) {
       // Out of sight, people keep to their routine without being animated.
-      this._walk(dt, dist, dx, dz);
+      if (this.mood) this._behave(dt, dist, dx, dz, player, events);
+      else this._walk(dt, dist, dx, dz);
       this._visualY = pos.y;
       this._sync();
       return;
@@ -352,7 +605,9 @@ class NPC {
     }
 
     let action = this.animator.action;
-    if (this.talking) {
+    if (this.mood) {
+      action = this._behave(dt, dist, dx, dz, player, events);
+    } else if (this.talking) {
       // Someone seated stays put and turns only their head.
       if (!isSeated(action)) this.heading = dampAngle(this.heading, Math.atan2(dx, dz), 6, dt);
       this.moveSpeed = 0;
@@ -365,7 +620,9 @@ class NPC {
     a.action = action;
     a.talking = this.talking && typing;
     const rel = wrapAngle(Math.atan2(dx, dz) - this.heading);
-    if (this.talking || (dist < 5 && Math.abs(rel) < 1.9)) {
+    if (this.mood === 'down') {
+      a.lookAt = null;
+    } else if (this.talking || this.mood || (dist < 5 && Math.abs(rel) < 1.9)) {
       const dy = pp.y + 1.6 - (this._visualY + this.headHeight);
       a.lookAt = { yaw: rel, pitch: Math.atan2(dy, Math.max(dist, 0.5)) };
     } else {
@@ -408,7 +665,9 @@ class NPC {
         const facing = Math.abs(wrapAngle(want - this.heading)) < 0.9;
         const blocked = dist < 1.3 && (dx * tx + dz * tz) / (dist * left + 1e-6) > 0.3;
         if (facing && !blocked) {
-          const step = Math.min(left, this.speed * dt);
+          // The badly hurt limp along.
+          const limp = this.health < this.maxHealth * 0.5 ? 0.55 : 1;
+          const step = Math.min(left, this.speed * limp * dt);
           pos.x += (tx / left) * step;
           pos.z += (tz / left) * step;
           pos.y = this.world.getGroundHeight(pos.x, pos.z);
@@ -448,10 +707,36 @@ export class NPCManager {
     this.byId = new Map(this.list.map((n) => [n.id, n]));
     this._labels = [];
     this._proj = new THREE.Vector3();
+    // Told about blows landing on the traveller, runaways escaping and people getting up:
+    // onEvent(type, npc, value).
+    this.onEvent = null;
+    this._events = (type, npc, value) => this.onEvent && this.onEvent(type, npc, value);
   }
 
   update(dt, player, typing = false) {
-    for (const npc of this.list) npc.update(dt, player, typing, this.range);
+    for (const npc of this.list) npc.update(dt, player, typing, this.range, this._events);
+  }
+
+  /*
+   * Who a blow from the traveller would land on: people within reach in front of them
+   * (all of them for a sword's sweep, the nearest for a punch).
+   */
+  struck(player, reach, sweep) {
+    const pos = player.position;
+    const fx = Math.sin(player.heading);
+    const fz = Math.cos(player.heading);
+    const hits = [];
+    for (const npc of this.list) {
+      if (npc.mood === 'gone' || !npc.figure.root.visible || npc.talking) continue;
+      const dx = npc.position.x - pos.x;
+      const dz = npc.position.z - pos.z;
+      const d = Math.hypot(dx, dz);
+      if (d > reach + NPC_RADIUS * npc.scale || Math.abs(npc.position.y - pos.y) > 1.4) continue;
+      if (d > 0.3 && (dx * fx + dz * fz) / d < 0.45) continue;
+      hits.push({ npc, d });
+    }
+    hits.sort((a, b) => a.d - b.d);
+    return (sweep ? hits : hits.slice(0, 1)).map((h) => h.npc);
   }
 
   // Keeps the player from walking through anyone.
@@ -459,6 +744,7 @@ export class NPCManager {
     const pos = player.position;
     let pushed = false;
     for (const npc of this.list) {
+      if (npc.mood === 'gone') continue;
       const dx = pos.x - npc.position.x;
       const dz = pos.z - npc.position.z;
       const min = NPC_RADIUS * npc.scale + player.radius * 0.85;
@@ -471,7 +757,7 @@ export class NPCManager {
     }
     if (pushed) {
       this.world.colliders.resolve(pos, player.radius, pos.y + 0.15, pos.y + 1.8);
-      pos.y = this.world.getGroundHeight(pos.x, pos.z);
+      if (!player.airborne) pos.y = this.world.getGroundHeight(pos.x, pos.z);
     }
   }
 
@@ -483,6 +769,7 @@ export class NPCManager {
     let best = null;
     let bestScore = Infinity;
     for (const npc of this.list) {
+      if (!npc.calm) continue;
       const dx = npc.position.x - pos.x;
       const dz = npc.position.z - pos.z;
       const d = Math.hypot(dx, dz);
@@ -504,15 +791,19 @@ export class NPCManager {
     for (const npc of this.list) {
       if (!npc.figure.root.visible || npc.talking) continue;
       const d = camera.position.distanceTo(npc.position);
-      if (d > LABEL_RANGE) continue;
+      const range = npc.saying ? SAY_RANGE : LABEL_RANGE;
+      if (d > range) continue;
       const p = this._proj.set(npc.position.x, npc._visualY + npc.headHeight + 0.4 * npc.scale, npc.position.z).project(camera);
       if (p.z > 1 || p.z < -1 || Math.abs(p.x) > 1.1 || Math.abs(p.y) > 1.1) continue;
       out.push({
         id: npc.id,
         text: npc.name,
+        say: npc.saying,
+        // A health bar once someone is hurt.
+        health: npc.health < npc.maxHealth && npc.mood !== 'gone' ? npc.health / npc.maxHealth : null,
         x: (p.x * 0.5 + 0.5) * width,
         y: (-p.y * 0.5 + 0.5) * height,
-        opacity: 1 - smoothstep(LABEL_RANGE - 5, LABEL_RANGE, d),
+        opacity: 1 - smoothstep(range - 5, range, d),
         focus: npc === focus,
       });
     }

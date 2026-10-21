@@ -77,6 +77,7 @@ function lanternGeometry() {
 export class Lantern {
   constructor(scene, quality) {
     this.on = false;
+    this.hand = 'handR'; // the left hand while a sword is drawn
     this.level = 0; // 0 out .. 1 fully lit
     this._dir = new THREE.Vector3(0, -0.1, 1).normalize();
     this._hand = new THREE.Vector3();
@@ -144,7 +145,7 @@ export class Lantern {
   }
 
   /*
-   * player: the Player (its right hand and heading place the lantern);
+   * player: the Player (its hand and heading place the lantern);
    * camera: tilts the beam up or down with the view; night: 0 by day, 1 after dark.
    */
   update(dt, player, camera, night) {
@@ -155,7 +156,7 @@ export class Lantern {
     this.light.shadow.autoUpdate = shown;
 
     // The lantern hangs upright from the grip, turned the way the traveller faces.
-    const hand = player.figure.bones.handR;
+    const hand = player.figure.bones[this.hand];
     hand.updateWorldMatrix(true, false);
     this._hand.copy(this._grip).applyMatrix4(hand.matrixWorld);
     this.prop.position.copy(this._hand);

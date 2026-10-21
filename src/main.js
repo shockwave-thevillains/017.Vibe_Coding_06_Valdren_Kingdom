@@ -8,6 +8,8 @@ import { Boats } from './boats.js';
 import { Dragon } from './dragon.js';
 import { Post } from './post.js';
 import { Lantern } from './lantern.js';
+import { Sword } from './gear.js';
+import { Combat, MAX_HEALTH } from './combat.js';
 import { Music } from './music.js';
 import { Dialogue } from './dialogue.js';
 import { Lore, Reader, Journal, Progress } from './lore.js';
@@ -19,7 +21,7 @@ import { UI } from './ui.js';
  * runs the game loop and the state machine:
  *   title -> playing <-> paused
  *   playing <-> talking (a conversation), reading (a discovery),
- *               journal, map
+ *               journal, map, sleeping (and knocked out)
  * Progress is saved to the browser as you play and restored on the next visit.
  *
  * URL options: ?debug shows the performance readout (also F3 or `),
@@ -34,6 +36,8 @@ const AUTOSAVE_SECONDS = 20;
 const OVERLAYS = new Set(['reading', 'journal', 'map']);
 const SETTINGS_KEY = 'valdren.settings.v1';
 const SLOW_FPS = 24;
+const GUARD_SIGHT = 26; // metres within which a guard sees a brawl
+const BIND_RANGE = 2.2;
 
 /*
  * Graphics presets. Low turns shadows and lantern lights off and renders at one
@@ -171,6 +175,8 @@ async function boot() {
   await nextFrame();
   const player = new Player(scene, world);
   const lantern = new Lantern(scene, quality);
+  const sword = new Sword(scene);
+  const combat = new Combat(player, npcs, sword);
   const music = new Music();
   music.volume = typeof settings.music === 'number' ? Math.min(1, Math.max(0, settings.music)) : 0.6;
   const follow = new FollowCamera(camera, world);
@@ -197,7 +203,7 @@ async function boot() {
     for (const [id, set] of dialogue.visited) visited[id] = [...set];
     return {
       time: world.timeOfDay,
-      player: { x: player.position.x, z: player.position.z, heading: player.heading },
+      player: { x: player.position.x, z: player.position.z, heading: player.heading, health: Math.round(combat.health) },
       flags: [...flags],
       lore: [...lore.found],
       visited,
@@ -228,6 +234,7 @@ async function boot() {
     for (const [id, nodes] of Object.entries(data.visited || {})) if (Array.isArray(nodes)) dialogue.visited.set(id, new Set(nodes));
     const p = data.player || {};
     if (standable(p.x, p.z)) player.teleport(p.x, p.z, Number.isFinite(p.heading) ? p.heading : player.heading);
+    combat.health = Number.isFinite(p.health) ? Math.min(MAX_HEALTH, Math.max(20, p.health)) : MAX_HEALTH;
     if (Number.isFinite(data.time)) world.setTime(data.time);
   }
 
@@ -493,6 +500,7 @@ async function boot() {
     else if (reachable && reachable.animal) ui.toast(animals.pet(reachable.animal), 3500);
     else if (reachable && reachable.balloon) boardBalloon();
     else if (reachable && reachable.bed) sleep();
+    else if (reachable && reachable.captive) bindCaptive(reachable.captive);
     else if (balloons.riding) ui.toast('Hold on to the basket. The meadow is a long way down.');
     else ui.toast('There is nothing here to interact with.');
   });
@@ -511,14 +519,115 @@ async function boot() {
     setLantern(!lantern.on);
     ui.toast(lantern.on ? 'You light your lantern.' : 'You put out your lantern.', 1800);
   });
+  input.on('jump', () => {
+    if (mode !== 'playing' || balloons.riding || player.flying) return;
+    player.jump();
+  });
+  input.on('fly', () => {
+    if (mode !== 'playing' || balloons.riding) return;
+    setFlying(!player.flying);
+  });
+  input.on('sword', () => {
+    if (mode !== 'playing' || balloons.riding) return;
+    sword.drawn = !sword.drawn;
+    holdGear();
+    ui.toast(sword.drawn ? `You draw your ${sword.steel ? 'steel ' : ''}sword.` : 'You sheathe your sword.', 1600);
+  });
+  input.on('attack', () => {
+    if (mode !== 'playing' || balloons.riding) return;
+    combat.attack(follow.yaw + Math.PI);
+  });
 
   // The hand lantern: held out in front while lit, and the traveller turns to shine it
   // wherever the camera looks when standing still.
   function setLantern(on) {
     lantern.toggle(on);
     player.aiming = on;
-    player.animator.action = on ? 'lantern' : null;
+    holdGear();
     ui.setLantern(on);
+  }
+
+  // What the hands hold: a drawn sword in the right, so the lantern moves to the left.
+  function holdGear() {
+    lantern.hand = sword.drawn ? 'handL' : 'handR';
+    if (lantern.on) player.animator.action = sword.drawn ? 'lanternL' : 'lantern';
+    else player.animator.action = sword.drawn ? 'sword' : null;
+    ui.setSword(sword.drawn);
+  }
+
+  // Taking to the air, or coming down (not into deep water).
+  let flownBefore = false;
+  function setFlying(on) {
+    if (!player.setFlying(on)) {
+      ui.toast('Only deep water below. Fly on to land before you come down.', 2600);
+      return;
+    }
+    ui.setFlying(on);
+    if (on && !flownBefore) {
+      flownBefore = true;
+      ui.toast(input.touchMode
+        ? 'You rise into the air! Hold Up or Down to climb or sink, push the stick to the edge to speed along, and tap Land to come down.'
+        : 'You rise into the air! Hold Space to climb and C to sink, Shift to speed along, and G to land.', 6000);
+    }
+  }
+
+  // ------------------------------------------------------------ fights
+
+  // A blow from a criminal landed on the traveller.
+  npcs.onEvent = (type, npc, value) => {
+    if (type === 'blow' && mode === 'playing') {
+      ui.flashHurt();
+      if (combat.hurt(value)) knockedOut(npc);
+    }
+  };
+
+  // A guard who sees an unprovoked blow fines the traveller (quests.js keeps the purse).
+  let lastFine = -Infinity;
+  combat.onLanded = (npc, result, wasCalm) => {
+    if (!wasCalm) return;
+    if (result === 'down') ui.toast(`${npc.name} is knocked to the ground.`, 2200);
+    const now = performance.now();
+    if (now - lastFine < 6000) return;
+    const p = player.position;
+    const guard = npcs.list.find((n) => n.guard && n !== npc && n.calm && n.figure.root.visible && Math.hypot(n.position.x - p.x, n.position.z - p.z) < GUARD_SIGHT);
+    if (!guard) return;
+    lastFine = now;
+    guard.say(npc.child ? 'Leave the children be!' : 'Hold there! No brawling in Valdren!', 3);
+    fine(guard, npc);
+  };
+  function fine(guard) {
+    ui.toast(`${guard.name} saw that. Keep the peace, traveller!`, 3000);
+  }
+
+  // A beaten criminal has their hands bound and follows the traveller from then on.
+  function bindCaptive(npc) {
+    npc.bind();
+    ui.toast(`You bind ${npc.name}'s hands. They will follow you now.`, 3500);
+  }
+
+  // Beaten senseless: the traveller comes to in their cottage, and whoever did it gets away.
+  async function knockedOut() {
+    if (mode !== 'playing') return;
+    setMode('sleeping');
+    if (player.flying) setFlying(false);
+    music.hush(true);
+    await ui.fade(true, 'Everything goes dark…');
+    for (const n of npcs.list) if (n.mood === 'fight' || n.mood === 'flee') n.goHome();
+    world.setTime((world.timeOfDay + 3) % 24);
+    combat.health = MAX_HEALTH * 0.5;
+    if (world.home) {
+      const { stand, face } = world.home.bed;
+      player.teleport(stand[0], stand[1], Math.atan2(face[0] - stand[0], face[1] - stand[1]));
+    }
+    follow.yaw = player.heading + Math.PI;
+    follow.update(0, player.position, true);
+    saveNow();
+    needsRender = true;
+    await wait(900);
+    await ui.fade(false);
+    music.hush(false);
+    setMode('playing');
+    ui.toast('You wake in your cottage, sore all over. Whoever beat you is long gone.', 4500);
   }
 
   // Inside an inn the music turns to a jig; otherwise it follows day and night.
@@ -658,6 +767,7 @@ async function boot() {
 
   // The nearest thing to act on: a person, a discovery or an animal to pet, whichever is closest.
   function findReachable() {
+    if (player.flying || player.airborne) return null;
     const npc = npcs.nearest(player);
     const spot = lore.nearest(player);
     const pet = animals.nearest(player);
@@ -670,6 +780,12 @@ async function boot() {
       const b = balloons.basketFloor;
       const d = Math.hypot(b.x - p.x, b.z - p.z);
       if (d < BOARD_RANGE) options.push({ d, r: { balloon: true } });
+    }
+    // A beaten criminal on their knees, waiting to be bound.
+    for (const n of npcs.list) {
+      if (n.mood !== 'yield') continue;
+      const d = Math.hypot(n.position.x - p.x, n.position.z - p.z);
+      if (d < BIND_RANGE) options.push({ d: d - 0.5, r: { captive: n } });
     }
     if (world.home) {
       const [bx, bz] = world.home.bed.at;
@@ -684,6 +800,7 @@ async function boot() {
   function updateHud(dt) {
     // Bearing the camera looks towards: yaw 0 looks north (-z), east is +x.
     ui.updateCompass(THREE.MathUtils.radToDeg(-follow.yaw), world.timeOfDay);
+    ui.setHealth(combat.health / MAX_HEALTH);
     minimapTimer -= dt;
     if (minimapTimer > 0) return;
     minimapTimer = 1 / 30;
@@ -724,7 +841,7 @@ async function boot() {
       `${fps.toFixed(0)} fps  ${ms.toFixed(1)} ms`,
       `calls ${info.calls}  tris ${(info.triangles / 1000).toFixed(1)}k`,
       `pos ${p.x.toFixed(1)} ${p.y.toFixed(1)} ${p.z.toFixed(1)}`,
-      `speed ${player.speed.toFixed(1)} m/s${depth > 0 ? `  wading ${depth.toFixed(2)} m` : ''}`,
+      `speed ${player.speed.toFixed(1)} m/s${depth > 0 ? `  wading ${depth.toFixed(2)} m` : ''}${player.flying ? '  flying' : player.airborne ? '  airborne' : ''}  health ${combat.health.toFixed(0)}`,
       `time ${world.timeOfDay.toFixed(2)} h  night ${world.night.toFixed(2)}  dpr ${renderer.getPixelRatio()}  ${current.level}`,
       `people ${npcs.list.length}  lore ${lore.found.length}/${lore.total}  flags ${flags.size}`,
       `${mode}${input.touchMode ? ' · touch' : ''}${input.pointerLocked ? ' · locked' : ''}${progress.available ? '' : ' · no storage'}`,
@@ -756,6 +873,7 @@ async function boot() {
       } else {
         player.update(dt, input.getMove(), follow.yaw);
       }
+      combat.update(dt);
       npcs.update(dt, player);
       if (!balloons.riding) npcs.separate(player);
       animals.update(dt, player, npcs);
@@ -765,6 +883,7 @@ async function boot() {
       // Hide the player when an obstacle squeezes the camera right up to them.
       player.figure.root.visible = follow.actualDistance > 1.0;
       lantern.update(dt, player, camera, world.night);
+      sword.update(player);
       chooseMusic(dt);
       if (!homeGreeted && world.home && world.interiorAt(player.position.x, player.position.y + 0.5, player.position.z) === world.home.interior) {
         homeGreeted = true;
@@ -780,6 +899,7 @@ async function boot() {
       else if (reachable && reachable.bed) ui.setPrompt('your bed', input.touchMode, 'Sleep in');
       else if (reachable && reachable.entry) ui.setPrompt(reachable.entry.title, input.touchMode, lore.kindOf(reachable.entry).verb);
       else if (reachable && reachable.animal) ui.setPrompt(animals.label(reachable.animal), input.touchMode, 'Pet');
+      else if (reachable && reachable.captive) ui.setPrompt(reachable.captive.name, input.touchMode, 'Bind');
       else ui.setPrompt(reachable ? reachable.npc.name : null, input.touchMode);
       world.update(dt, player.position, camera);
       ui.updateLabels(npcs.labels(camera, window.innerWidth, window.innerHeight, reachable && reachable.npc));
@@ -799,6 +919,7 @@ async function boot() {
       }
       player.figure.root.visible = true;
       lantern.update(dt, player, camera, world.night);
+      sword.update(player);
       npcs.update(dt, player, dialogue.typing);
       animals.update(dt, player, npcs);
       balloons.update(dt);
@@ -818,6 +939,7 @@ async function boot() {
       lore.update(dt);
       follow.update(dt, player.position);
       lantern.update(dt, player, camera, world.night);
+      sword.update(player);
       world.update(dt, player.position, camera);
       draw();
     } else if (needsRender) {
@@ -835,7 +957,7 @@ async function boot() {
   ui.setReady(saved ? `Saved journey found: ${lore.found.length} of ${lore.total} discoveries.` : null, progress.available);
 
   // Handy from the browser console while developing.
-  window.valdren = { THREE, renderer, post, scene, camera, world, player, lantern, setLantern, music, sleep, follow, input, ui, npcs, animals, balloons, boats, dragon, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
+  window.valdren = { THREE, renderer, post, scene, camera, world, player, lantern, setLantern, sword, combat, setFlying, music, sleep, follow, input, ui, npcs, animals, balloons, boats, dragon, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
 }
 
 boot().catch((err) => {

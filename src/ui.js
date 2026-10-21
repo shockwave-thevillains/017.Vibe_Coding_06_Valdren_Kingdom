@@ -37,6 +37,15 @@ export class UI {
     this.labelsEl = $('labels');
     this.interactBtn = $('btn-interact');
     this.lanternBtn = $('btn-lantern');
+    this.swordBtn = $('btn-sword');
+    this.flyBtn = $('btn-fly');
+    this.jumpBtn = $('btn-jump');
+    this.healthEl = $('health');
+    this.healthBar = this.healthEl.querySelector('i');
+    this.purseEl = $('purse-count');
+    this.hurtEl = $('hurt');
+    this._health = -1;
+    this._purse = -1;
     this.newBtn = $('btn-new');
     this.saveStatusEl = $('save-status');
     this.compassTrack = null;
@@ -177,6 +186,50 @@ export class UI {
     this.lanternBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
   }
 
+  // The touch Sword button shows whether the sword is drawn.
+  setSword(drawn) {
+    this.swordBtn.classList.toggle('on', drawn);
+    this.swordBtn.setAttribute('aria-pressed', drawn ? 'true' : 'false');
+  }
+
+  // In flight the touch Jump button climbs, a Down button appears and Fly becomes Land.
+  setFlying(on) {
+    this.body.classList.toggle('flying', on);
+    this.jumpBtn.textContent = on ? 'Up' : 'Jump';
+    this.flyBtn.textContent = on ? 'Land' : 'Fly';
+    this.flyBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+
+  // fraction: 0..1 of full health.
+  setHealth(fraction) {
+    const pct = Math.round(fraction * 100);
+    if (pct === this._health) return;
+    this._health = pct;
+    this.healthBar.style.width = `${pct}%`;
+    this.healthEl.classList.toggle('low', pct <= 30);
+    this.healthEl.setAttribute('aria-valuenow', String(pct));
+  }
+
+  setPurse(coins) {
+    if (coins === this._purse) return;
+    const more = this._purse >= 0 && coins > this._purse;
+    this._purse = coins;
+    this.purseEl.textContent = String(coins);
+    if (more) {
+      this.purseEl.parentElement.classList.remove('gain');
+      void this.purseEl.offsetWidth;
+      this.purseEl.parentElement.classList.add('gain');
+    }
+  }
+
+  // A red pulse round the screen edge when the traveller is struck.
+  flashHurt() {
+    const el = this.hurtEl;
+    el.classList.remove('on');
+    void el.offsetWidth;
+    el.classList.add('on');
+  }
+
   setPlaying(playing) {
     this.body.classList.toggle('playing', playing);
   }
@@ -217,11 +270,32 @@ export class UI {
       if (!el) {
         el = document.createElement('div');
         el.className = 'npc-label';
-        el.textContent = l.text;
+        el._say = document.createElement('div');
+        el._say.className = 'say';
+        el._say.hidden = true;
+        el._hp = document.createElement('div');
+        el._hp.className = 'hp';
+        el._hp.hidden = true;
+        el._bar = document.createElement('i');
+        el._hp.append(el._bar);
+        const name = document.createElement('span');
+        name.textContent = l.text;
+        el.append(el._say, name, el._hp);
         this.labelsEl.append(el);
         this._labels.set(l.id, el);
       }
       seen.add(l.id);
+      // What they are saying, in a bubble over the name; a health bar once hurt.
+      if (el._sayText !== l.say) {
+        el._sayText = l.say;
+        el._say.textContent = l.say || '';
+        el._say.hidden = !l.say;
+      }
+      el._hp.hidden = l.health === null || l.health === undefined;
+      if (!el._hp.hidden) {
+        el._bar.style.width = `${Math.round(l.health * 100)}%`;
+        el._bar.style.background = l.health > 0.5 ? '#c9a14a' : l.health > 0.25 ? '#d0702a' : '#c0392b';
+      }
       el.style.transform = `translate(${l.x.toFixed(1)}px, ${l.y.toFixed(1)}px) translate(-50%, -100%)`;
       el.style.opacity = l.opacity.toFixed(2);
       el.classList.toggle('focus', l.focus);
