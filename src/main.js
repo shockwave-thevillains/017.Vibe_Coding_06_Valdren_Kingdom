@@ -6,6 +6,7 @@ import { Animals } from './animals.js';
 import { Balloons } from './balloons.js';
 import { Boats } from './boats.js';
 import { Dragon } from './dragon.js';
+import { Post } from './post.js';
 import { Dialogue } from './dialogue.js';
 import { Lore, Reader, Journal, Progress } from './lore.js';
 import { Input } from './input.js';
@@ -34,7 +35,9 @@ const SLOW_FPS = 24;
 
 /*
  * Graphics presets. Low turns shadows and lantern lights off and renders at one
- * pixel per CSS pixel; touch devices start on Medium, everything else on High.
+ * pixel per CSS pixel; High adds bloom and a vignette (src/post.js), and then
+ * antialiases in those passes instead of in the canvas. Touch devices start on
+ * Medium, everything else on High.
  * The settings in LOAD_TIME shape the world as it is built (and antialias the
  * WebGL context), so a change to them waits for the next load; the rest apply
  * at once through World.setQuality and the pixel ratio.
@@ -43,17 +46,17 @@ const PRESETS = {
   low: {
     pixelRatio: 1, antialias: false, shadows: false, shadowMap: 1024, shadowExtent: 34,
     textureSize: 256, anisotropy: 2, treeDetail: 0, cropSparse: true,
-    grass: 2500, grassTile: 38, lampLights: 0, lodRadius: 40, people: 40,
+    grass: 2500, grassTile: 38, lampLights: 0, lodRadius: 40, people: 40, bloom: false,
   },
   medium: {
     pixelRatio: 1.5, antialias: true, shadows: true, shadowMap: 1024, shadowExtent: 34,
     textureSize: 256, anisotropy: 4, treeDetail: 0, cropSparse: true,
-    grass: 6000, grassTile: 46, lampLights: 2, lodRadius: 55, people: 60,
+    grass: 6000, grassTile: 46, lampLights: 2, lodRadius: 55, people: 60, bloom: false,
   },
   high: {
     pixelRatio: 2, antialias: true, shadows: true, shadowMap: 2048, shadowExtent: 46,
     textureSize: 512, anisotropy: 8, treeDetail: 1, cropSparse: false,
-    grass: 18000, grassTile: 64, lampLights: 4, lodRadius: 75, people: 90,
+    grass: 18000, grassTile: 64, lampLights: 4, lodRadius: 75, people: 90, bloom: true,
   },
 };
 const LOAD_TIME = ['antialias', 'textureSize', 'anisotropy', 'treeDetail', 'cropSparse'];
@@ -104,8 +107,9 @@ async function boot() {
   const level = isLevel(asked) ? asked : isLevel(settings.quality) ? settings.quality : coarse ? 'medium' : 'high';
 
   let renderer;
+  const contextAntialias = PRESETS[level].antialias && !PRESETS[level].bloom;
   try {
-    renderer = new THREE.WebGLRenderer({ antialias: PRESETS[level].antialias, powerPreference: 'high-performance' });
+    renderer = new THREE.WebGLRenderer({ antialias: contextAntialias, powerPreference: 'high-performance' });
   } catch (err) {
     console.error(err);
     ui.showFatal('WebGL is not available, so Valdren cannot run here. Try enabling hardware acceleration or another browser.');
@@ -122,6 +126,8 @@ async function boot() {
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.25, 1600);
+  const post = new Post(renderer, scene, camera, contextAntialias);
+  post.setQuality(quality);
 
   // The data files load while the world is being built.
   const peopleData = loadJSON('data/npcs.json').catch((err) => {
@@ -423,6 +429,7 @@ async function boot() {
     world.setQuality(current);
     npcs.range = current.people;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, current.pixelRatio));
+    post.setQuality(current);
     onResize();
     slow.warned = true;
   }
@@ -500,6 +507,7 @@ async function boot() {
     camera.fov = w < h ? 72 : 60;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
+    post.setSize();
     needsRender = true;
   }
   window.addEventListener('resize', onResize);
@@ -518,6 +526,14 @@ async function boot() {
   // --------------------------------------------------------------- loop
 
   const clock = new THREE.Clock();
+
+  // The passes render several times a frame, so the debug readout counts the whole frame.
+  renderer.info.autoReset = false;
+  function draw() {
+    renderer.info.reset();
+    if (post.active) post.render(world.night);
+    else renderer.render(scene, camera);
+  }
   const look = { yaw: 0, pitch: 0 };
   const stats = { frames: 0, time: 0 };
   const slow = { time: 0, warned: false };
@@ -669,7 +685,7 @@ async function boot() {
       world.update(dt, player.position, camera);
       ui.updateLabels(npcs.labels(camera, window.innerWidth, window.innerHeight, reachable && reachable.npc));
       updateHud(dt);
-      renderer.render(scene, camera);
+      draw();
       autosave -= dt;
       if (autosave <= 0) {
         autosave = AUTOSAVE_SECONDS;
@@ -690,7 +706,7 @@ async function boot() {
       dragon.update(dt);
       lore.update(dt);
       world.update(dt, player.position, camera);
-      renderer.render(scene, camera);
+      draw();
     } else if (mode === 'title') {
       follow.yaw += dt * 0.06;
       player.update(dt, NO_MOVE, follow.yaw);
@@ -702,9 +718,9 @@ async function boot() {
       lore.update(dt);
       follow.update(dt, player.position);
       world.update(dt, player.position, camera);
-      renderer.render(scene, camera);
+      draw();
     } else if (needsRender) {
-      renderer.render(scene, camera);
+      draw();
     }
     needsRender = false;
     updateDebug(elapsed);
@@ -713,12 +729,12 @@ async function boot() {
   ui.setStatus('Lighting the sky…');
   await nextFrame();
   renderer.compile(scene, camera);
-  renderer.render(scene, camera);
+  draw();
   renderer.setAnimationLoop(frame);
   ui.setReady(saved ? `Saved journey found: ${lore.found.length} of ${lore.total} discoveries.` : null, progress.available);
 
   // Handy from the browser console while developing.
-  window.valdren = { THREE, renderer, scene, camera, world, player, follow, input, ui, npcs, animals, balloons, boats, dragon, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
+  window.valdren = { THREE, renderer, post, scene, camera, world, player, follow, input, ui, npcs, animals, balloons, boats, dragon, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
 }
 
 boot().catch((err) => {

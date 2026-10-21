@@ -5,13 +5,17 @@ as a 100 % static site (HTML, ES modules and JSON), with no build step, backend 
 API keys, so it can be hosted on GitHub Pages as is. Every model and texture is
 generated in code at load time; the project ships no art assets.
 
-> **Status: complete (all five phases), then expanded.** The engine core, the
-> whole kingdom, its people with branching dialogue, ten secrets that add up to
-> one mystery, a journal, compass and maps, saved progress, a running day-night
-> cycle and Low / Medium / High graphics presets; since then a town twice the
-> size with houses, a bar and a town hall you can walk into, townsfolk and
-> children, animals, and hot-air balloons you can ride. The kingdom has no
-> religious buildings or symbols, so it sits comfortably with every faith.
+> **Status: complete (all five phases), then expanded twice.** The engine core,
+> the whole kingdom, its people with branching dialogue, ten secrets that add up
+> to one mystery, a journal, compass and maps, saved progress, a running
+> day-night cycle and Low / Medium / High graphics presets. The first expansion
+> doubled the town (houses, a bar and a town hall you can walk into, townsfolk
+> and children, animals, hot-air balloons you can ride). The second widened the
+> kingdom to 1.3 km across, with a lake and a harbour town full of ships, a
+> lighthouse, a riverside quarter, the village of Millbrook, the princess and her
+> garden, a dragon over the mountains, many more birds and street cats, and a
+> prettier sky, water and light. The kingdom has no religious buildings or
+> symbols, so it sits comfortably with every faith.
 
 ## The kingdom
 
@@ -33,15 +37,30 @@ generated in code at load time; the project ships no art assets.
   - **Fountain Square** in the east quarter, with a two-tier fountain, benches,
     stalls and the **bakery** (its domed oven glowing);
   - the **stables** and a paddock in the west quarter, the blacksmith's
-    **forge**, and the old **burial ground** with plain headstones;
+    **forge**, and the old **burial ground**: plain grassy earth mounds, each
+    marked only with a ring of white stones;
   - about twenty homes you can step into, each with a hearth, a bed, a table
     and stores. Walk through any open doorway.
 - **Outside the walls:** the royal road winding up the castle hill, a
-  three-arched stone bridge over the river, wheat, barley and cabbage fields with
+  three-arched stone bridge over the river, the **Riverside** quarter along the
+  north bank and a suburb on the road east, wheat, barley and cabbage fields with
   fences, a farmstead with a barn, haystacks and a pig sty, a turning windmill,
   woods to the west, north-east and south-west, a ruined watchtower on a knoll at
   the forest edge with a hermit's camp beside it, and the **Balloon Meadow**
   beyond the east gate.
+- **The Royal Garden** beside the castle: clipped hedges, a rose arch, flower
+  beds, a lily pond, a pavilion, benches and a swing, where the princess walks.
+- **Mirrormere and Aldra's Haven:** the river runs east into a wide lake. On its
+  west shore stands the harbour town of Aldra's Haven, with its own houses,
+  three wooden piers, a crane, fish stalls and crates on the quay; cogs, a
+  carrack and fishing boats sail the lake, barges and rowboats work the river,
+  and boats lie moored at the piers and pulled up on the banks. A **lighthouse**
+  watches the north shore.
+- **Millbrook**, a village down the south road: thatched and timbered cottages
+  round a green with a great oak, a well and a duck pond, and ***The
+  Millstone***, an inn you can walk into.
+- **Dragon's Peak** towers over the north-western mountains, with the lair of
+  **Old Ember**, the dragon, on a ledge high on its flank.
 
 ## The people
 
@@ -58,13 +77,20 @@ story to tell, and what one of them lets slip can open up another.
 | **Wynn Hollis**, farmer | The farmstead across the river | Walking out to the ploughed field, hoe in hand |
 | **The Old Hermit** | His camp beside the ruined watchtower | Pottering between the fire and the ruin |
 
-Around them some twenty-four townsfolk go about their day, and all of them will
+Around them some thirty-five townsfolk go about their day, and all of them will
 chat: guards at the gates, three regulars at the Broken Oar's tables, Hilde
 kneading dough in the bakery, the Town Hall's clerk, a fruit seller and a toy
 seller, a town crier, a stablehand and a carter at the paddock, walkers on the
-streets, Captain Gale the aeronaut on the Balloon Meadow, and six children:
-four playing tag round the fountain, one racing down the main street and one
-watching the horses.
+streets, Captain Gale the aeronaut on the Balloon Meadow, and seven children:
+four playing tag round the fountain, one racing down the main street, one
+watching the horses and one fishing off the end of a pier.
+
+Further afield you will meet **Princess Elinor**, the King's daughter, strolling
+round her garden with her lady-in-waiting Lady Rosamund and her guard Brenna
+(she has things to say about her uncle, and about the dragon); Corwin the
+harbour master, Nessa the fisherwoman and Jonas the sailor in Aldra's Haven;
+Morwen, keeper of the lighthouse; Gwen behind the Millstone's bar and Old Tom on
+the village bench; and Hob the shepherd with his flock.
 
 Walk up to someone and a prompt appears (their name also floats above their
 head). Press `E`, or tap **Interact**, to talk. The camera moves over your
@@ -72,15 +98,24 @@ shoulder, the line types itself out (click, tap or press `Space` to show it at
 once), and you pick a reply with the mouse, a tap or the keys `1`–`3`. `Esc`
 ends the conversation.
 
-## Animals and balloons
+## Animals, ships, balloons and the dragon
 
 - **Animals** live all over the kingdom: horses in the paddock (Chestnut likes a
   scratch; Ash bites), sheep on the meadows, cows by the windmill, pigs in their
-  sty, chickens at the farm and by the coops in town, ducks on the river, birds
-  circling overhead, cats (one asleep by the Broken Oar's fire) and dogs (Biscuit
-  at the market, Patch chasing the children, Rusty at the farm). Chickens, sheep,
-  cats and ducks shy away if you rush at them. Walk up to a dog, cat, horse,
-  sheep, cow or pig and press `E` to pet it.
+  sty, chickens at the farm and by the coops in town, ducks on the river and the
+  Millbrook pond, pigeons pecking about the market, Fountain Square and the quay,
+  stray cats on the streets (and one asleep by the Broken Oar's fire), and dogs
+  (Biscuit at the market, Patch chasing the children, Rusty at the farm).
+  Overhead fly flocks of birds: gulls over the lake and the harbour, crows over
+  the town and the castle, swallows above Millbrook, ravens round the dragon's
+  peak. Chickens, sheep, cats, pigeons and ducks shy away if you rush at them.
+  Walk up to a dog, cat, horse, sheep, cow or pig and press `E` to pet it.
+- **Ships and boats** sail Mirrormere and the river, rolling and pitching on the
+  water, while others lie at their moorings.
+- **Old Ember**, the dragon, circles the mountains and the valley, gliding and
+  beating her wings, banking into her turns, now and then breathing a plume of
+  fire at the clouds, and every so often landing at her lair to rest before she
+  takes off again.
 - **Hot-air balloons** drift high over the valley. On the Balloon Meadow, beyond
   the east gate, a tethered balloon waits on the grass: stand by its basket and
   press `E` (**Ride**) to go up on its rope for a look over the whole kingdom.
@@ -120,14 +155,18 @@ offer three presets. Touch devices start on **Medium**, everything else on
 | --- | --- | --- | --- |
 | Shadows | **off** | 1024² map, 34 m around you | 2048² map, 46 m around you |
 | Resolution (device pixel ratio cap) | 1 | 1.5 | 2 |
-| Edge smoothing (MSAA) | off | on | on |
+| Edge smoothing (MSAA) | off | on | on (4×, in the passes) |
 | Lantern lights at night, hearth lights indoors | none | 2 | 4 |
 | People drawn within | 40 m | 60 m | 90 m |
 | Grass tufts around you | 2,500 | 6,000 | 18,000 |
 | Full-detail trees within | 40 m | 55 m | 75 m |
 | Textures | 256 px | 256 px | 512 px |
+| Bloom (glowing lanterns, windows, sun) and vignette | off | off | on |
 
-Shadows, resolution, lights, people, grass and tree distance change at once.
+On High the picture is drawn through a short chain of passes (bloom, then tone
+mapping and a light vignette), and its edges are smoothed in those passes
+rather than by the canvas. Shadows, resolution, lights, people, grass, tree
+distance and bloom change at once.
 Texture size, tree and crop detail and edge smoothing are fixed when the world
 is built, so the menu says when those will follow on the next load. If the game
 runs below 24 frames per second for ten seconds, it suggests a lower preset
@@ -162,6 +201,7 @@ maps), on desktop and on phones, with WebGL 2.
 | Ride the balloon | `E` by its basket on the meadow | **Interact** button                 |
 | Journal     | `J`                            | **Journal** button                        |
 | Map         | `M`, or click the minimap      | Tap the minimap                           |
+| Map: town / kingdom | The button on the full map | The button on the full map           |
 | Close a page | `Esc`, `E` / `J` / `M` again  | The × button                              |
 | Pause       | `Esc`                          | Pause button (top right)                  |
 | Talk: reply | Click a reply, or `1`–`3`      | Tap a reply                               |
@@ -190,15 +230,30 @@ left mouse button and drag to look around.
 - **Three.js r170** (npm `three@0.170.0`). The core and the addons are loaded from
   jsDelivr through an `<script type="importmap">` pinned to that exact version.
 - All paths are relative, so the site works from `username.github.io/<repo>/`.
-- **Terrain:** a single 256 × 256 grid mesh, 800 m across, sampled from a height
-  function: rolling meadows, the castle hill, the town shelf, farmland, the ruins'
-  knoll, a ring of mountains and a carved river. Roads cut and fill the land along
-  smoothed profiles. Gameplay height queries interpolate the actual mesh
-  triangles, so feet always meet the rendered ground.
+- **Terrain:** a single 384 × 384 grid mesh, 1,280 m across, sampled from a
+  height function: rolling meadows, the castle hill, the town shelf, farmland,
+  the ruins' knoll, terraces for the harbour, the village and the garden, a ring
+  of craggy mountains, the dragon's peak, a carved river and the lake basin.
+  Roads cut and fill the land along smoothed profiles. Gameplay height queries
+  interpolate the actual mesh triangles, so feet always meet the rendered
+  ground. Steep and high ground is painted as layered rock, with snow on the
+  ledges near the summits.
 - **Procedural textures:** stone, cobbles, plaster, timber, planks, roof tiles,
   thatch, dirt, soil, bark, ground detail and water ripples are painted into data
   textures at load time, each with a matching normal map. The banner arms and the
   tavern sign are drawn with the 2D canvas API.
+- **Sky:** a shader dome with the sun and moon, stars at night and drifting
+  clouds (layered value noise projected onto a flat layer overhead, lit from the
+  sun's side, coloured by the hour: white at noon, gold and pink at sunset, faint
+  and moonlit at night).
+- **Water:** the river and the lake carry the water depth in each vertex. The
+  shallows turn clear and green, a line of foam marks the banks, and two layers
+  of ripples drift different ways so their tiling never shows; reflections come
+  from the sky's image-based lighting.
+- **Post-processing (High):** `EffectComposer` with a multisampled half-float
+  scene target, `UnrealBloomPass` (its threshold drops after dusk so lanterns and
+  windows glow, while by day only the sun and hard glints bloom) and a last pass
+  that tone-maps, converts to sRGB and adds a light vignette.
 - **Lighting:** physically based materials, ACES filmic tone mapping, and
   image-based lighting from a slightly desaturated copy of the sky. One
   shadow-casting directional light follows the player, with its shadow frustum
@@ -270,6 +325,18 @@ left mouse button and drag to look around.
   per-instance values; lying down folds the legs. On the CPU each animal
   wanders inside its pen or patch, grazes, rests, shies away, or trots after
   someone, checking the same colliders and steps as the player.
+- **Boats** (`src/boats.js`): hulls lofted from a few cross-sections, with
+  planked decks, masts, yards, rigging and striped square sails, one mesh per
+  vessel: rowboats, fishing boats, a river barge, cogs and a carrack. Each one
+  follows a loop on the lake, a stretch of river back and forth, or stays at a
+  berth, and rolls and pitches with the water.
+- **The dragon** (`src/dragon.js`): one mesh (body, neck, tail, head with jaw and
+  horns, legs and membrane wings) bent and flapped entirely in the vertex shader
+  (and its shadow pass) from a few uniforms: wingbeat, folding, the sway of
+  neck and tail, the jaw. On the CPU she picks waypoints over the realm, banks
+  and pitches into her turns, glides or beats her wings by how she is climbing,
+  breathes a cone of fire every half minute or so, and every seventh flight
+  lands at her lair.
 - **Balloons** (`src/balloons.js`): one mesh each (a lathed envelope striped per
   face, skirt, ropes, wicker basket, sandbags, burner) and a flame that roars
   in bursts. Four follow wide loops above the land; the tethered one climbs to
@@ -321,6 +388,9 @@ src/npc.js        the people: figures and accessories from data, patrols,
 src/animals.js    the animals: instanced species, their shader animation,
                   wandering, following, petting
 src/balloons.js   the hot-air balloons and the ride on the tethered one
+src/boats.js      ships and boats on the lake and the river
+src/dragon.js     the dragon: its mesh, shader animation and flight
+src/post.js       bloom, tone mapping and vignette passes (High preset)
 src/dialogue.js   branching conversations: typewriter, replies, flags
 src/lore.js       discoveries and their glints, the reader, the journal, the save
 data/npcs.json    the inhabitants: looks, outfits, routes, dialogue

@@ -333,13 +333,17 @@ function baseHeight(x, z) {
   // Mountains ring the kingdom; the dragon's peak towers over the north-west.
   const edge = Math.max(Math.abs(x), Math.abs(z)) + (fbm(x * 0.008 + 7, z * 0.008 + 3, 3) - 0.5) * 60;
   const mountain = smoothstep(MOUNTAIN_EDGE, MOUNTAIN_EDGE + 90, edge);
+  const dp = SITES.dragonPeak;
+  const peak = 1 - smoothstep(0, 150, Math.hypot(x - dp.x, z - dp.z));
+  // Sharp crags and gullies on the high slopes, but none on the dragon's ledge.
+  const craggy = Math.max(mountain * mountain, peak) * smoothstep(18, 40, Math.hypot(x - dp.x - 52, z - dp.z - 52));
+  const crag = craggy > 0 ? 1 - Math.abs(fbm(x * 0.045 - 11, z * 0.045 + 17, 3) * 2 - 1) : 0;
   if (mountain > 0) {
     const ridge = 1 - Math.abs(fbm(x * 0.012 + 3, z * 0.012 - 5, 4) * 2 - 1);
     h += mountain * (30 + ridge * 60);
   }
-  const dp = SITES.dragonPeak;
-  const peak = 1 - smoothstep(0, 150, Math.hypot(x - dp.x, z - dp.z));
   if (peak > 0) h += peak * peak * (125 + fbm(x * 0.03, z * 0.03, 3) * 30);
+  h += craggy * crag * crag * 16;
 
   FIELD.town = town;
   FIELD.farm = farm;
@@ -1234,6 +1238,7 @@ const PAL = {
   mud: C(0x6e6446),
   rock: C(0x8d877a),
   rockDark: C(0x625e56),
+  rockWarm: C(0x8a7458),
   snow: C(0xf0f4f6),
 };
 
@@ -1316,7 +1321,16 @@ class Terrain {
       col.lerp(PAL.mud, 1 - smoothstep(WATER_LEVEL - 1.4, WATER_LEVEL - 0.1, h));
 
       const rocky = Math.max(1 - smoothstep(0.66, 0.84, ny), smoothstep(38, 52, h));
-      if (rocky > 0) col.lerp(rock.copy(PAL.rock).lerp(PAL.rockDark, fbm(x * 0.05, z * 0.05, 2)), rocky);
+      if (rocky > 0) {
+        // Layered rock: warm and grey strata, darker on the steepest faces.
+        rock.copy(PAL.rock).lerp(PAL.rockDark, fbm(x * 0.05, z * 0.05, 2));
+        const strata = Math.sin(h * 0.55 + fbm(x * 0.02, z * 0.02, 2) * 6) * 0.5 + 0.5;
+        rock.lerp(PAL.rockWarm, strata * 0.35);
+        rock.multiplyScalar(1 - (1 - smoothstep(0.35, 0.7, ny)) * 0.3);
+        col.lerp(rock, rocky);
+        // Grass and scrub cling to the gentler ledges below the snow line.
+        col.lerp(PAL.forest, smoothstep(0.7, 0.86, ny) * (1 - smoothstep(40, 58, h)) * 0.5 * rocky);
+      }
       col.lerp(PAL.snow, smoothstep(64, 76, h) * smoothstep(0.55, 0.8, ny));
 
       const jitter = 0.92 + hash2(k, 7) * 0.16;
@@ -1386,6 +1400,8 @@ uniform float uSunVis;
 uniform float uMoonVis;
 uniform float uStars;
 uniform float uDesat;
+uniform float uTime;
+uniform float uCloud;
 varying vec3 vDir;
 
 float hash13(vec3 p) {
@@ -1394,21 +1410,62 @@ float hash13(vec3 p) {
   return fract((p.x + p.y) * p.z);
 }
 
+float hash12(vec2 p) {
+  vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+  p3 += dot(p3, p3.yzx + 33.33);
+  return fract((p3.x + p3.y) * p3.z);
+}
+
+float vnoise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash12(i), hash12(i + vec2(1.0, 0.0)), u.x),
+             mix(hash12(i + vec2(0.0, 1.0)), hash12(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+
+float fbm(vec2 p) {
+  float sum = 0.0;
+  float amp = 0.5;
+  for (int i = 0; i < 5; i++) {
+    sum += amp * vnoise(p);
+    p = mat2(1.6, 1.2, -1.2, 1.6) * p;
+    amp *= 0.5;
+  }
+  return sum;
+}
+
 void main() {
   vec3 d = normalize(vDir);
   float up = max(d.y, 0.0);
   vec3 col = mix(uHorizon, uZenith, pow(up, 0.55));
-
   float s = max(dot(d, uSunDir), 0.0);
-  col += uSunColor * (pow(s, 900.0) * 8.0 + pow(s, 24.0) * 0.35 + pow(s, 4.0) * 0.12) * uSunVis;
-
   float m = dot(d, uMoonDir);
-  col += vec3(0.85, 0.9, 1.0) * (smoothstep(0.99955, 0.9997, m) * 1.4 + pow(max(m, 0.0), 60.0) * 0.08) * uMoonVis;
+
+  // Drifting fair-weather clouds on a flat layer overhead, lit from the sun's side.
+  float cloud = 0.0;
+  if (d.y > 0.0 && uCloud > 0.0) {
+    vec2 uv = d.xz / (d.y + 0.1) * 2.6 + vec2(uTime * 0.012, uTime * 0.005);
+    float n = fbm(uv);
+    float toward = fbm(uv + uSunDir.xz * 0.35);
+    cloud = smoothstep(0.62 - uCloud * 0.22, 0.86 - uCloud * 0.2, n) * smoothstep(0.0, 0.2, d.y);
+    float day = smoothstep(-0.1, 0.3, uSunDir.y);
+    float lit = clamp(0.55 + (n - toward) * 5.0, 0.0, 1.0);
+    vec3 bright = uHorizon * 0.85 + vec3(0.96, 0.94, 0.9) * 0.62 * day + uSunColor * 0.3 * uSunVis * (1.0 - day * 0.6)
+                + vec3(0.85, 0.9, 1.0) * 0.025 * uMoonVis;
+    vec3 shade = mix(uHorizon, uZenith, 0.4) * (0.62 + 0.26 * day);
+    vec3 cloudCol = mix(shade, bright, lit) + uSunColor * pow(s, 7.0) * 0.5 * uSunVis;
+    col = mix(col, cloudCol, cloud * 0.94);
+  }
+  float clear = 1.0 - cloud;
+
+  col += uSunColor * (pow(s, 900.0) * 8.0 * clear + (pow(s, 24.0) * 0.35 + pow(s, 4.0) * 0.12) * (1.0 - cloud * 0.6)) * uSunVis;
+  col += vec3(0.85, 0.9, 1.0) * (smoothstep(0.99955, 0.9997, m) * 1.4 * clear + pow(max(m, 0.0), 60.0) * 0.08) * uMoonVis;
 
   if (uStars > 0.0) {
     vec3 cell = floor(d * 420.0);
     float star = step(0.9975, hash13(cell)) * (0.55 + 0.45 * hash13(cell + 7.0));
-    col += vec3(star * uStars * smoothstep(0.02, 0.25, d.y));
+    col += vec3(star * uStars * smoothstep(0.02, 0.25, d.y) * clear);
   }
 
   col = mix(col, vec3(dot(col, vec3(0.2126, 0.7152, 0.0722))), uDesat);
@@ -1419,8 +1476,10 @@ void main() {
 `;
 
 class SkyDome {
-  constructor() {
+  constructor(uTime) {
     this.uniforms = {
+      uTime,
+      uCloud: { value: 0.5 },
       uZenith: { value: new THREE.Color() },
       uHorizon: { value: new THREE.Color() },
       uSunColor: { value: new THREE.Color() },
@@ -3530,7 +3589,7 @@ function buildDragonLair(ctx) {
   const rot = Math.PI / 4;
   const F = new Frame(ctx, x, z, rot);
   const g = F.ground(0, 2);
-  F.geo('rock', extrude(archShape(14, 10, [{ x: 0, w: 8, y0: 0.2, spring: 5 }]), 3, 12), 0, g - 0.5, 0, 0, 0, 0, 1, 1, 1, C(0x6a6460));
+  F.geo('stone', extrude(archShape(14, 10, [{ x: 0, w: 8, y0: 0.2, spring: 5 }]), 3, 12), 0, g - 0.5, 0, 0, 0, 0, 1, 1, 1, C(0x8a8480));
   F.box('stone', 0, g + 3.5, -1.6, 7.8, 7.4, 0.3, C(0x14110f));
   for (let k = 0; k < 10; k++) {
     const bx = (rng() - 0.5) * 9;
@@ -4280,7 +4339,7 @@ function buildRuins(ctx) {
 // ================================================================== ground
 
 // Ribbon of quads along a path, conforming to height(x, z); offsets across the path in metres.
-function ribbon(ctx, key, pts, height, offsets, texScale, alphas = null) {
+function ribbon(ctx, key, pts, height, offsets, texScale, alphas = null, fade = null) {
   const cols = offsets.length;
   const n = pts.length;
   const pos = new Float32Array(n * cols * 3);
@@ -4309,7 +4368,7 @@ function ribbon(ctx, key, pts, height, offsets, texScale, alphas = null) {
       col[k * 4] = 1;
       col[k * 4 + 1] = 1;
       col[k * 4 + 2] = 1;
-      col[k * 4 + 3] = alphas ? alphas[c] : 1;
+      col[k * 4 + 3] = (alphas ? alphas[c] : 1) * (fade ? fade(x, z) : 1);
     }
   }
   const index = [];
@@ -4373,7 +4432,9 @@ function buildRoads(ctx) {
     const lift = 0.05 + idx * 0.004;
     if (road.kind === 'dirt') {
       const hw = road.w / 2;
-      ribbon(ctx, 'dirtRoad', road.pts, (x, z) => ctx.ground(x, z) + lift, [-hw - 1, -hw + 0.6, 0, hw - 0.6, hw + 1], 2.5, [0, 1, 1, 1, 0]);
+      // Dirt fades out where it runs onto a cobbled street rather than lying over it.
+      const fade = (x, z) => smoothstep(-0.4, 1.2, roadClearance(x, z, (r) => r.kind !== 'dirt'));
+      ribbon(ctx, 'dirtRoad', road.pts, (x, z) => ctx.ground(x, z) + lift, [-hw - 1, -hw + 0.6, 0, hw - 0.6, hw + 1], 2.5, [0, 1, 1, 1, 0], fade);
       return;
     }
     const hw = road.w / 2;
@@ -4748,7 +4809,7 @@ export class World {
     this.lighthouse = null;
     ANISOTROPY = quality.anisotropy;
 
-    this.sky = new SkyDome();
+    this.sky = new SkyDome(this.uTime);
     scene.add(this.sky.mesh);
     this.fog = new THREE.Fog(0xbfd8ee, 110, 820);
     scene.fog = this.fog;
@@ -4986,7 +5047,8 @@ export class World {
       soil: std({ map: T.soil.map, normalMap: T.soil.normal, normalScale: n(1.4), vertexColors: true, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
       soilCrop: std({ map: T.soil.map, normalMap: T.soil.normal, color: 0xb8a070, vertexColors: true, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
       dirtRoad: std({ map: T.dirt.map, normalMap: T.dirt.normal, vertexColors: true, transparent: true, depthWrite: false, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }),
-      cobbleRoad: std({ ...cobble, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }),
+      // Cobbles sit over the ends of dirt roads that run into them.
+      cobbleRoad: std({ ...cobble, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -6 }),
       tile: std({ map: T.tileRow.map, normalMap: T.tileRow.normal, roughness: 0.75 }),
       bark: std({ map: T.bark.map, normalMap: T.bark.normal, roughness: 0.95 }),
       leaves: nearFade(windMaterial(std({ vertexColors: true, roughness: 0.82 }), this.uTime, 0.012, 'wind-leaves'), 'leaves-fade'),
@@ -5017,14 +5079,28 @@ export class World {
   // --------------------------------------------------------------- water
 
   _water() {
+    // Each vertex knows how deep the water is under it (negative under the banks), so
+    // the shallows can turn clear and green and a line of foam can mark the shore.
+    const T = this.terrain;
+    const prepare = (geometry) => {
+      const pos = geometry.attributes.position;
+      const uv = geometry.attributes.uv;
+      const depth = new Float32Array(pos.count);
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i);
+        const z = pos.getZ(i);
+        uv.setXY(i, x / 14, z / 14);
+        depth[i] = clamp(WATER_LEVEL - T.getHeight(x, z), -2, 10);
+      }
+      geometry.setAttribute('aDepth', new THREE.BufferAttribute(depth, 1));
+    };
+
     // The river: a strip from the western edge to where it opens into the lake.
     const riverEnd = 392;
-    const geometry = new THREE.PlaneGeometry(WORLD_HALF + riverEnd, 116, 260, 28);
+    const geometry = new THREE.PlaneGeometry(WORLD_HALF + riverEnd, 116, 516, 58);
     geometry.rotateX(-Math.PI / 2);
     geometry.translate((riverEnd - WORLD_HALF) / 2, WATER_LEVEL, 128);
-    const uv = geometry.attributes.uv;
-    const pos = geometry.attributes.position;
-    for (let i = 0; i < uv.count; i++) uv.setXY(i, pos.getX(i) / 14, pos.getZ(i) / 14);
+    prepare(geometry);
     const normalMap = this.tex.ripples.normal;
     const material = new THREE.MeshStandardMaterial({
       color: 0x1f4a57,
@@ -5033,18 +5109,48 @@ export class World {
       normalMap,
       normalScale: new THREE.Vector2(0.5, 0.5),
       transparent: true,
-      opacity: 0.88,
+      opacity: 0.9,
     });
     const uTime = this.uTime;
     material.onBeforeCompile = (shader) => {
       shader.uniforms.uTime = uTime;
       shader.vertexShader = shader.vertexShader
-        .replace('#include <common>', '#include <common>\nuniform float uTime;')
+        .replace('#include <common>', '#include <common>\nuniform float uTime;\nattribute float aDepth;\nvarying float vDepth;\nvarying vec2 vWaterXZ;')
         .replace(
           '#include <begin_vertex>',
           `#include <begin_vertex>
+          vDepth = aDepth;
+          vWaterXZ = position.xz;
           transformed.y += sin(position.x * 0.42 + uTime * 1.5) * 0.04
                          + sin(position.z * 0.66 - uTime * 1.1 + position.x * 0.13) * 0.035;`,
+        );
+      shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', '#include <common>\nuniform float uTime;\nvarying float vDepth;\nvarying vec2 vWaterXZ;')
+        .replace(
+          '#include <color_fragment>',
+          `#include <color_fragment>
+          // Clear, greener shallows; foam where the water meets the bank.
+          float shallow = 1.0 - smoothstep(0.0, 2.4, vDepth);
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.16, 0.34, 0.3), shallow * 0.7);
+          diffuseColor.a *= 1.0 - shallow * 0.45;
+          float churn = texture2D(normalMap, vWaterXZ * 0.19 + vec2(uTime * 0.035, -uTime * 0.022)).r;
+          float foam = (1.0 - smoothstep(0.0, 0.32, vDepth - (churn - 0.5) * 0.35)) * 0.7;
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.86, 0.9, 0.88), foam);
+          diffuseColor.a = mix(diffuseColor.a, 0.96, foam);`,
+        )
+        .replace(
+          '#include <roughnessmap_fragment>',
+          `#include <roughnessmap_fragment>
+          roughnessFactor = mix(roughnessFactor, 0.7, foam);`,
+        )
+        .replace(
+          '#include <normal_fragment_maps>',
+          `// Two ripple layers drifting different ways, so the tiling never shows.
+          vec3 mapN = texture2D(normalMap, vNormalMapUv).xyz * 2.0 - 1.0;
+          vec3 mapN2 = texture2D(normalMap, vWaterXZ * 0.031 + vec2(uTime * -0.019, uTime * 0.012)).xyz * 2.0 - 1.0;
+          mapN = vec3(mapN.xy + mapN2.xy * 0.8, mapN.z * mapN2.z);
+          mapN.xy *= normalScale;
+          normal = normalize(tbn * mapN);`,
         );
     };
     material.customProgramCacheKey = () => 'river';
@@ -5054,13 +5160,21 @@ export class World {
     this.scene.add(this.water);
 
     // The lake: an ellipse a little larger than its shore, drawn just over the river's end.
-    const lake = new THREE.CircleGeometry(1, 96, 0, TAU);
+    // A square grid squeezed into a disc keeps its vertices evenly spaced.
+    const lake = new THREE.PlaneGeometry(2, 2, 96, 96);
     lake.rotateX(-Math.PI / 2);
-    lake.scale(LAKE.rx * 1.2, 1, LAKE.rz * 1.2);
-    lake.translate(LAKE.x, WATER_LEVEL, LAKE.z);
-    const luv = lake.attributes.uv;
     const lp = lake.attributes.position;
-    for (let i = 0; i < luv.count; i++) luv.setXY(i, lp.getX(i) / 14, lp.getZ(i) / 14);
+    for (let i = 0; i < lp.count; i++) {
+      const u = lp.getX(i);
+      const v = lp.getZ(i);
+      lp.setXYZ(
+        i,
+        LAKE.x + u * Math.sqrt(1 - (v * v) / 2) * LAKE.rx * 1.2,
+        WATER_LEVEL,
+        LAKE.z + v * Math.sqrt(1 - (u * u) / 2) * LAKE.rz * 1.2,
+      );
+    }
+    prepare(lake);
     const lakeMat = material.clone();
     lakeMat.polygonOffset = true;
     lakeMat.polygonOffsetFactor = -1;

@@ -18,7 +18,7 @@ const MAP_VIEWS = [
 const QUALITY_ABOUT = {
   low: 'No shadows or lantern light, sparse grass. For older phones and laptops.',
   medium: 'Soft shadows, lantern light at night, lighter grass and textures.',
-  high: 'Sharp shadows, dense grass, full-detail textures and trees.',
+  high: 'Sharp shadows, dense grass, full-detail textures and trees, glowing lights.',
 };
 
 export class UI {
