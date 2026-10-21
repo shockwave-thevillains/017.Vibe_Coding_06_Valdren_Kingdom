@@ -20,6 +20,7 @@ const NPC_RADIUS = 0.32;
 const TAU = Math.PI * 2;
 const SAY_RANGE = 30;            // speech bubbles show from farther away than names
 const FLEE_SPEED = 6.0;          // a fleeing criminal (the traveller runs at 8.2)
+const HEAD_START = 2.5;          // seconds a criminal runs before they will stand and fight
 const DOWN_TIME = 25;            // seconds someone knocked down stays down
 const BLOW_DAMAGE = 8;           // a criminal's punch (unless their data says otherwise), against the traveller's 100
 
@@ -409,15 +410,24 @@ class NPC {
   // Accused and found out: the criminal makes a run for it.
   bolt() {
     this.mood = 'flee';
+    this.moodTimer = HEAD_START;
     this._away = 0;
     this.talking = false;
     this.say('You\'ll never take me alive!', 3);
   }
 
-  // Bound by the traveller: follows them from now on.
-  bind() {
+  // Bound by the traveller: follows them from now on (quietly, when restored from a save).
+  bind(quiet = false) {
     this.mood = 'bound';
-    this.say('Alright, alright. I\'ll come quietly.', 3);
+    if (!quiet) this.say('Alright, alright. I\'ll come quietly.', 3);
+  }
+
+  // Set down at once at (x, z), e.g. a captive catching up with the traveller.
+  placeAt(x, z, heading = this.heading) {
+    this.position.set(x, this.world.getGroundHeight(x, z), z);
+    this._visualY = this.position.y;
+    this.heading = heading;
+    this._sync();
   }
 
   // Handed over to the guild and led away.
@@ -500,8 +510,9 @@ class NPC {
         }
         break;
       case 'flee': {
-        // Away from the traveller; turns to fight when caught.
-        if (dist < 2.2) {
+        // Away from the traveller; turns to fight when caught (after a head start).
+        this.moodTimer -= dt;
+        if (dist < 2.2 && this.moodTimer <= 0) {
           this.mood = 'fight';
           break;
         }

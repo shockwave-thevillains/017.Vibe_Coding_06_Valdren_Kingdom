@@ -176,6 +176,21 @@ body {
   color: #f0c060;
 }
 
+.compass-mark {
+  position: absolute;
+  left: 0;
+  top: 2px;
+  width: 10px;
+  height: 14px;
+  background: #d9483a;
+  clip-path: polygon(50% 100%, 0 40%, 0 15%, 25% 0, 75% 0, 100% 15%, 100% 40%);
+  filter: drop-shadow(0 0 1px #fff);
+}
+
+.compass-mark.edge {
+  opacity: 0.6;
+}
+
 .compass-track span.tick {
   top: 17px;
   width: 1px;
@@ -330,6 +345,57 @@ body.touch #health {
   #compass {
     width: 190px;
   }
+}
+
+/* The pointer to the traveller's mark: over the spot, or at the screen's edge pointing to it. */
+#waypoint {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+  will-change: transform;
+}
+
+#waypoint .wp-pin {
+  width: 18px;
+  height: 24px;
+  background: #d9483a;
+  clip-path: path('M9 24 C9 24 0 13 0 8.5 A9 9 0 0 1 18 8.5 C18 13 9 24 9 24 Z');
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+}
+
+#waypoint .wp-dist {
+  order: -1;
+  padding: 1px 7px;
+  border-radius: 9px;
+  background: rgba(20, 15, 10, 0.6);
+  color: #fff4d6;
+  font-size: 13px;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+#waypoint .wp-arrow {
+  display: none;
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-bottom: 14px solid #d9483a;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.6));
+}
+
+#waypoint.off .wp-arrow {
+  display: block;
+}
+
+#waypoint.off .wp-pin {
+  width: 14px;
+  height: 19px;
 }
 
 /* ------------------------------------------------- prompt and name labels */
@@ -797,6 +863,152 @@ button.close:focus-visible {
   color: var(--ink-soft);
 }
 
+/* Shops and the bag: one row per item, with its icon, a description and a button. */
+.panel.shop-panel {
+  width: min(560px, 100%);
+}
+
+.shop-greeting {
+  margin: 0 0 10px;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+.item-list,
+.bag-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item-list li,
+.bag-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 4px;
+  border-bottom: 1px solid rgba(107, 74, 36, 0.2);
+}
+
+.item-icon {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: inset 0 0 0 1px rgba(107, 74, 36, 0.3);
+  font-size: 22px;
+  line-height: 40px;
+  text-align: center;
+}
+
+.item-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.item-text b {
+  font-size: 17px;
+  color: #3a2614;
+}
+
+.item-text span {
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--ink-soft);
+}
+
+button.buy {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 72px;
+  justify-content: center;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: rgba(107, 74, 36, 0.8);
+  color: #fff4d6;
+  font: 600 15px/1 var(--font);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+button.buy:hover:not(:disabled),
+button.buy:focus-visible {
+  background: rgba(140, 98, 44, 0.95);
+  outline: none;
+}
+
+button.buy:disabled {
+  background: rgba(107, 74, 36, 0.25);
+  color: rgba(46, 32, 20, 0.6);
+  cursor: default;
+}
+
+.coin {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff1b0, #d9a832 55%, #8a6414);
+  box-shadow: inset 0 0 0 1.5px #a67c1c;
+  vertical-align: -2px;
+}
+
+.shop-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px 14px;
+  margin: 12px 0 0;
+  font-size: 15px;
+}
+
+.shop-note {
+  font-style: italic;
+  color: #2f6a3a;
+}
+
+.bag-purse {
+  margin: 4px 0 2px;
+  font-size: 18px;
+}
+
+#journal-page .case {
+  margin: 0 0 18px;
+  padding: 10px 12px;
+  border: 1px solid rgba(107, 74, 36, 0.3);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+#journal-page .case h4 {
+  margin: 0 0 2px;
+  font-size: 18px;
+  color: #3a2614;
+}
+
+#journal-page .case .meta {
+  margin-bottom: 6px;
+}
+
+#journal-page .case .clue {
+  padding-left: 10px;
+  border-left: 3px solid var(--gold);
+  font-style: italic;
+}
+
+#journal-page .case .status {
+  margin-bottom: 0;
+  font-weight: 600;
+  color: #6a3a14;
+}
+
 ul.rumours {
   margin: 8px 0 0;
   padding-left: 20px;
@@ -827,6 +1039,44 @@ ul.rumours li {
   position: absolute;
   inset: 0;
   pointer-events: none;
+}
+
+#map-canvas {
+  cursor: crosshair;
+}
+
+.map-tip {
+  flex: 1;
+  margin: 0 12px;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+/* The traveller's mark: a red pin with its point on the spot. */
+.mk.pin,
+.key.pin {
+  width: 14px;
+  height: 19px;
+  background: #c0392b;
+  clip-path: path('M7 19 C7 19 0 10.5 0 7 A7 7 0 0 1 14 7 C14 10.5 7 19 7 19 Z');
+}
+
+.mk.pin {
+  transform: translate(-50%, -100%);
+}
+
+.key.pin {
+  display: inline-block;
+  margin: 0 3px 0 12px;
+  vertical-align: -3px;
+}
+
+.mk.pin .name {
+  left: 16px;
+  top: 0;
+  font-weight: 600;
+  color: #7a1c12;
 }
 
 .mk {
@@ -991,6 +1241,10 @@ button.link {
 
   .panel.map-panel .book-head {
     margin-bottom: 4px;
+  }
+
+  .map-tip {
+    font-size: 12px;
   }
 
   .panel.map-panel h2 {

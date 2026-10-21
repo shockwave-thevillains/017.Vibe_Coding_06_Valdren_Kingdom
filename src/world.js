@@ -37,6 +37,7 @@ export const SITES = {
   market: { x: 0, z: 12, w: 40, d: 32 },
   tavern: { x: 12, z: -13 },
   townHall: { x: -22, z: -26 },
+  guild: { x: -28, z: -2 },         // the Wardens' Guild takes the house nearest this
   smithy: { x: -17, z: 35 },
   graveyard: { x: -40, z: -28 },
   fountain: { x: 84, z: 40 },
@@ -3706,6 +3707,75 @@ function chooseHome(ctx) {
   return { name: 'Your Cottage', x: best.x, z: best.z, door: best.door, bed: best.bed, interior: best };
 }
 
+/*
+ * The Wardens' Guild, who keep the peace and pay bounties: the walk-in house on the
+ * market's west street nearest SITES.guild. A painted sign hangs beside its door and
+ * a notice board of bounties stands by it; the guildmaster waits at the door (the
+ * 'guildmaster' spot). Built after the yards are filled, from no random numbers, so
+ * nothing else in the town moves.
+ */
+const IRON = C(0x3a3632);
+const NOTICES = [[-0.48, 0.18, 0.34, 0.42, 0.06], [-0.05, 0.22, 0.3, 0.36, -0.08], [0.38, 0.12, 0.36, 0.46, 0.04], [-0.3, -0.25, 0.4, 0.3, -0.03], [0.2, -0.24, 0.32, 0.3, 0.09]];
+function chooseGuild(ctx) {
+  const site = SITES.guild;
+  let best = null;
+  let bestD = Infinity;
+  for (const r of ctx.world.interiors) {
+    if (!r.bed || r.home) continue;
+    const d = Math.hypot(r.x - site.x, r.z - site.z);
+    if (d < bestD) {
+      bestD = d;
+      best = r;
+    }
+  }
+  if (!best) return null;
+  // (The room keeps its name 'house', so the cats curl up by the same hearths as before.)
+  best.guild = true;
+  const F = new Frame(ctx, best.x, best.z, best.rot);
+  // The doorway in the house's own frame: x along the front, z out through it.
+  const ox = best.door[0] - best.x;
+  const oz = best.door[1] - best.z;
+  const door = ox * F.c - oz * F.s;
+  const front = ox * F.s + oz * F.c - 1.4; // the outside face of the front wall
+  const side = door > 0 ? -1 : 1; // towards the longer stretch of wall
+  const floor = best.floor;
+
+  // The hanging sign: an iron arm out from the wall, a board with the guild's blue
+  // shield and gold coin on both faces.
+  const sx = door - side * 1.25;
+  const armY = floor + 3.05;
+  F.box('metal', sx, armY, front + 0.5, 0.05, 0.05, 1.0, IRON);
+  F.box('metal', sx, armY - 0.32, front + 0.24, 0.035, 0.035, 0.72, IRON, -0.72);
+  for (const cz of [front + 0.3, front + 0.86]) F.box('metal', sx, armY - 0.12, cz, 0.02, 0.22, 0.02, IRON);
+  const boardY = armY - 0.55;
+  F.box('planks', sx, boardY, front + 0.58, 0.07, 0.62, 0.8, TINT.door);
+  F.box('timber', sx, boardY, front + 0.58, 0.08, 0.68, 0.06, TINT.beam);
+  for (const f of [-1, 1]) {
+    F.box('plainCloth', sx + f * 0.04, boardY + 0.02, front + 0.58, 0.01, 0.4, 0.32, C(0x2f4f8f));
+    F.box('plainCloth', sx + f * 0.04, boardY - 0.2, front + 0.58, 0.01, 0.16, 0.16, C(0x2f4f8f), Math.PI / 4);
+    F.box('gold', sx + f * 0.047, boardY + 0.02, front + 0.58, 0.01, 0.15, 0.15, TINT.gold, Math.PI / 4);
+  }
+
+  // The notice board of bounties, under a little roof, its back to the wall.
+  const bx = door + side * 2.35;
+  const bz = front + 0.42;
+  const gy = F.ground(bx, bz);
+  for (const px of [-0.78, 0.78]) F.box('timber', bx + px, gy + 1.1, bz, 0.12, 2.2, 0.12, TINT.beam);
+  F.box('planks', bx, gy + 1.42, bz + 0.02, 1.5, 0.98, 0.06, TINT.door);
+  F.box('timber', bx, gy + 1.42, bz + 0.03, 1.56, 1.04, 0.04, TINT.beam);
+  F.box('planks', bx, gy + 2.16, bz + 0.1, 1.85, 0.06, 0.5, TINT.beam, 0.3);
+  NOTICES.forEach(([nx, ny, w, h, tilt], i) => {
+    F.box('plainCloth', bx + nx, gy + 1.42 + ny, bz + 0.07, w, h, 0.01, C(i === 2 ? 0xe8d6a8 : 0xf2e8d0), 0, 0, tilt);
+    F.box('plainCloth', bx + nx, gy + 1.42 + ny + h / 2 - 0.04, bz + 0.08, 0.05, 0.05, 0.012, C(0x8e1f22));
+  });
+  F.collideBox(bx, bz, 0.9, 0.14, gy - 0.5, gy + 2.3);
+
+  const [mx, mz] = F.world(door + side * 1.2, front + 1.05);
+  ctx.world.spots.guildmaster = { x: mx, z: mz, heading: best.rot };
+  const [nx, nz] = F.world(bx, bz + 0.5);
+  return { name: 'Wardens\u2019 Guild', x: best.x, z: best.z, door: best.door, board: [nx, nz], interior: best };
+}
+
 // Houses outside the walls: the riverside quarter, the road east, the harbour town and Millbrook.
 function placeOuterHouses(ctx) {
   const dry = (x, z) => ctx.ground(x, z) > WATER_LEVEL + 0.9 && lakeWeight(x, z) < 0.01 && (x > 410 || Math.abs(z - riverZ(x)) > 19);
@@ -4990,6 +5060,7 @@ export class World {
     streetLamps(ctx, (r) => r.town || r.district === 'harbour' || r.district === 'riverside', 19);
     streetBunting(ctx);
     fillYards(ctx);
+    this.guild = chooseGuild(ctx);
 
     await progress('Fortifying the castle…');
     buildCastle(ctx);

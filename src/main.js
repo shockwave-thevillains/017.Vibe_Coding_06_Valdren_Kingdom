@@ -10,6 +10,7 @@ import { Post } from './post.js';
 import { Lantern } from './lantern.js';
 import { Sword } from './gear.js';
 import { Combat, MAX_HEALTH } from './combat.js';
+import { Quests, CASES } from './quests.js';
 import { Music } from './music.js';
 import { Dialogue } from './dialogue.js';
 import { Lore, Reader, Journal, Progress } from './lore.js';
@@ -21,7 +22,7 @@ import { UI } from './ui.js';
  * runs the game loop and the state machine:
  *   title -> playing <-> paused
  *   playing <-> talking (a conversation), reading (a discovery),
- *               journal, map, sleeping (and knocked out)
+ *               journal, map, shop, sleeping (and knocked out)
  * Progress is saved to the browser as you play and restored on the next visit.
  *
  * URL options: ?debug shows the performance readout (also F3 or `),
@@ -33,11 +34,13 @@ const params = new URLSearchParams(window.location.search);
 const ui = new UI();
 const NO_MOVE = Object.freeze({ x: 0, y: 0, magnitude: 0, run: false });
 const AUTOSAVE_SECONDS = 20;
-const OVERLAYS = new Set(['reading', 'journal', 'map']);
+const OVERLAYS = new Set(['reading', 'journal', 'map', 'shop']);
 const SETTINGS_KEY = 'valdren.settings.v1';
 const SLOW_FPS = 24;
 const GUARD_SIGHT = 26; // metres within which a guard sees a brawl
+const FINE = 5;         // crowns a guard fines the traveller for it
 const BIND_RANGE = 2.2;
+const MARK_REACHED = 6;   // metres from the mark at which it counts as reached
 
 /*
  * Graphics presets. Low turns shadows and lantern lights off and renders at one
@@ -190,6 +193,19 @@ async function boot() {
   const dialogue = new Dialogue(flags);
   const reader = new Reader();
   const journal = new Journal(lore, flags);
+  const quests = new Quests(flags, npcs);
+  quests.heal = (amount) => {
+    if (combat.health >= MAX_HEALTH - 0.5) return false;
+    combat.heal(amount);
+    return true;
+  };
+  quests.equip = (id) => sword.setSteel(id === 'steel');
+  quests.say = (text) => ui.toast(text, 3000);
+  quests.purse = (coins) => ui.setPurse(coins);
+  journal.pages = {
+    bag: (page, refresh) => quests.renderBag(page, refresh),
+    bounties: (page) => quests.renderBounties(page),
+  };
   ui.setTouchMode(input.touchMode);
   ui.setDebugVisible(params.has('debug'));
 
@@ -197,6 +213,7 @@ async function boot() {
 
   const progress = new Progress();
   let saveWarned = false;
+  let mark = null; // { x, z }: the spot the traveller has marked on the map
 
   function snapshot() {
     const visited = {};
@@ -207,6 +224,8 @@ async function boot() {
       flags: [...flags],
       lore: [...lore.found],
       visited,
+      mark,
+      quests: quests.snapshot(),
     };
   }
 
@@ -236,16 +255,19 @@ async function boot() {
     if (standable(p.x, p.z)) player.teleport(p.x, p.z, Number.isFinite(p.heading) ? p.heading : player.heading);
     combat.health = Number.isFinite(p.health) ? Math.min(MAX_HEALTH, Math.max(20, p.health)) : MAX_HEALTH;
     if (Number.isFinite(data.time)) world.setTime(data.time);
+    mark = data.mark && Number.isFinite(data.mark.x) && Number.isFinite(data.mark.z) ? { x: data.mark.x, z: data.mark.z } : null;
+    quests.restore(data.quests, player);
   }
 
   function newJourney() {
     progress.clear();
-    restore({ flags: [], lore: [], visited: {}, player: { x: SITES.spawn.x, z: SITES.spawn.z, heading: SITES.spawn.heading }, time: 9.5 });
+    restore({ flags: [], lore: [], visited: {}, player: { x: SITES.spawn.x, z: SITES.spawn.z, heading: SITES.spawn.heading }, time: 9.5, mark: null });
     ui.setNewJourney();
   }
 
   const saved = progress.load();
   if (saved) restore(saved);
+  else quests.restore(null, player);
   const hour = parseFloat(params.get('time'));
   if (Number.isFinite(hour)) world.setTime(hour);
   follow.update(0, player.position, true);
@@ -276,6 +298,7 @@ async function boot() {
       reachable = null;
       ui.setPrompt(null);
       ui.updateLabels([]);
+      ui.updateWaypoint(null);
     }
     needsRender = true;
     refreshHint();
@@ -313,7 +336,9 @@ async function boot() {
   // --------------------------------------------------------- conversation
 
   function startTalk(npc) {
-    if (mode !== 'playing' || !dialogue.start(npc)) return;
+    if (mode !== 'playing') return;
+    quests.prepareTalk(npc);
+    if (!dialogue.start(npc)) return;
     talkingTo = npc;
     npc.talking = true;
     savedView.pitch = follow.pitch;
@@ -327,13 +352,49 @@ async function boot() {
     return ((secrets && secrets.rumours) || []).filter((r) => flags.has(r.flag)).length;
   }
 
+  // What a reply asks the game to do: open a shop when the talk ends, a culprit
+  // bolting, a place marked on the map, a captive handed over to the guild.
+  let pendingShop = null;
+  let afterTalk = null; // a line to show once the conversation is over
+  dialogue.onAction = (action, npc) => {
+    const [verb, arg] = action.split(':');
+    if (verb === 'shop' && quests.hasShop(npc.id)) {
+      pendingShop = npc.id;
+    } else if (verb === 'bolt') {
+      npc.bolt();
+      afterTalk = `${npc.name} makes a run for it! Catch them and beat them until they yield.`;
+    } else if (verb === 'mark') {
+      const c = CASES.find((k) => k.id === arg);
+      if (c) {
+        mark = { ...c.at };
+        afterTalk = `Marked on your map: ${c.place}. Follow the red pointer.`;
+      }
+    } else if (verb === 'handover') {
+      const c = quests.handOver(arg);
+      if (c) {
+        ui.toast(`+${c.bounty} crowns. ${c.title}: closed.`, 4000);
+        saveNow();
+      }
+    }
+  };
+
   dialogue.onClose = (npc, reason) => {
     npc.talking = false;
     talkingTo = null;
     if (mode !== 'talking') return;
     restoreView = 0.9;
-    backToPlay(reason);
-    if (rumourCount() > rumoursBefore) ui.toast('Noted in your journal under Rumours (J).', 2600);
+    const shop = pendingShop;
+    pendingShop = null;
+    if (shop) {
+      quests.touch = input.touchMode;
+      quests.showShop(shop);
+      setMode('shop');
+    } else {
+      backToPlay(reason);
+    }
+    if (afterTalk) ui.toast(afterTalk, 4500);
+    else if (rumourCount() > rumoursBefore) ui.toast('Noted in your journal under Rumours (J).', 2600);
+    afterTalk = null;
     saveNow();
   };
 
@@ -351,6 +412,7 @@ async function boot() {
     if (mode === 'reading') reader.hide();
     else if (mode === 'journal') journal.hide();
     else if (mode === 'map') ui.hideMap();
+    else if (mode === 'shop') quests.hideShop();
     else return;
     backToPlay(reason);
     // The last discovery completes the story: show it straight away.
@@ -367,23 +429,37 @@ async function boot() {
     enter('journal');
   }
 
-  function openMap() {
-    if (mode !== 'playing') return;
-    const metPeople = npcs.list.filter((n) => flags.has(`met_${n.id}`));
-    ui.showMap({
+  function mapView() {
+    const metPeople = npcs.list.filter((n) => flags.has(`met_${n.id}`) && n.mood !== 'gone');
+    return {
       x: player.position.x,
       z: player.position.z,
       heading: player.heading,
-      places: PLACES,
+      places: world.guild ? [...PLACES, { name: world.guild.name, x: world.guild.board[0], z: world.guild.board[1], size: 0 }] : PLACES,
       people: metPeople.map((n) => ({ x: n.position.x, z: n.position.z, name: n.name })),
       finds: lore.found.map((id) => lore.byId.get(id)).map((e) => ({ x: e.pos.x, z: e.pos.z, title: e.title })),
       home: world.home,
-    });
+      mark,
+      touch: input.touchMode,
+    };
+  }
+
+  function openMap() {
+    if (mode !== 'playing') return;
+    ui.showMap(mapView());
     enter('map');
   }
 
+  // Marking the map: a pin to head for, with a pointer on screen and on the compass.
+  ui.onMark = (spot) => {
+    mark = spot;
+    if (mode === 'map') ui.showMap(mapView());
+    saveNow();
+  };
+
   reader.onClose = closeOverlay;
   journal.onClose = closeOverlay;
+  quests.onShopClose = closeOverlay;
   ui.onMapClose = closeOverlay;
   ui.onMap = openMap;
 
@@ -578,12 +654,15 @@ async function boot() {
     if (type === 'blow' && mode === 'playing') {
       ui.flashHurt();
       if (combat.hurt(value)) knockedOut(npc);
+    } else if (type === 'escaped' && npc.criminal) {
+      ui.toast(`${npc.name} has given you the slip. Find them again and confront them.`, 4000);
     }
   };
 
   // A guard who sees an unprovoked blow fines the traveller (quests.js keeps the purse).
   let lastFine = -Infinity;
   combat.onLanded = (npc, result, wasCalm) => {
+    if (result === 'yield') ui.toast(`${npc.name} yields! ${input.touchMode ? 'Tap Interact' : 'Press E'} to bind their hands.`, 4000);
     if (!wasCalm) return;
     if (result === 'down') ui.toast(`${npc.name} is knocked to the ground.`, 2200);
     const now = performance.now();
@@ -596,13 +675,20 @@ async function boot() {
     fine(guard, npc);
   };
   function fine(guard) {
-    ui.toast(`${guard.name} saw that. Keep the peace, traveller!`, 3000);
+    const paid = quests.fine(FINE);
+    ui.toast(paid ? `${guard.name} saw that and fines you ${paid} crown${paid === 1 ? '' : 's'}. Keep the peace!` : `${guard.name} saw that. Your purse is empty, so it's a warning this time.`, 3500);
   }
 
   // A beaten criminal has their hands bound and follows the traveller from then on.
   function bindCaptive(npc) {
-    npc.bind();
-    ui.toast(`You bind ${npc.name}'s hands. They will follow you now.`, 3500);
+    quests.bind(npc);
+    let where = 'Lead them to the Wardens\' Guild';
+    if (!mark && world.guild) {
+      mark = { x: world.guild.door[0], z: world.guild.door[1] };
+      where += ' (marked on your map)';
+    }
+    ui.toast(`You bind ${npc.name}'s hands. ${where}.`, 4500);
+    saveNow();
   }
 
   // Beaten senseless: the traveller comes to in their cottage, and whoever did it gets away.
@@ -812,7 +898,57 @@ async function boot() {
       people: npcs.list.filter((n) => n.figure.root.visible).map((n) => ({ x: n.position.x, z: n.position.z, met: flags.has(`met_${n.id}`) })),
       finds: lore.found.map((id) => lore.byId.get(id).pos),
       home: world.home,
+      mark,
     });
+  }
+
+  // The pointer to the mark: over the spot when it is in view, else at the edge of the
+  // screen pointing the way. Reaching the spot clears the mark.
+  const markPoint = new THREE.Vector3();
+  function updateMark() {
+    if (!mark) {
+      ui.updateWaypoint(null);
+      ui.setCompassMark(null);
+      return;
+    }
+    const p = player.position;
+    const dx = mark.x - p.x;
+    const dz = mark.z - p.z;
+    const distance = Math.hypot(dx, dz);
+    if (distance < MARK_REACHED && !player.flying) {
+      mark = null;
+      ui.updateWaypoint(null);
+      ui.setCompassMark(null);
+      ui.toast('You have reached your mark.', 2500);
+      saveNow();
+      return;
+    }
+    ui.setCompassMark(THREE.MathUtils.radToDeg(Math.atan2(dx, -dz)), THREE.MathUtils.radToDeg(-follow.yaw));
+    const ground = Math.max(world.getGroundHeight(mark.x, mark.z), WATER_LEVEL);
+    markPoint.set(mark.x, ground + 2.2, mark.z).project(camera);
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    let x = (markPoint.x * 0.5 + 0.5) * W;
+    let y = (-markPoint.y * 0.5 + 0.5) * H;
+    const behind = markPoint.z > 1;
+    const margin = 40;
+    const onScreen = !behind && x > margin && x < W - margin && y > margin + 40 && y < H - margin;
+    let angle = 0;
+    if (!onScreen) {
+      // Behind the camera the projection comes out mirrored.
+      let vx = x - W / 2;
+      let vy = y - H / 2;
+      if (behind) {
+        vx = -vx;
+        vy = -vy;
+      }
+      if (Math.abs(vx) < 1e-3 && Math.abs(vy) < 1e-3) vy = 1;
+      const k = Math.min((W / 2 - margin) / Math.max(Math.abs(vx), 1e-3), (H / 2 - margin - 30) / Math.max(Math.abs(vy), 1e-3));
+      x = W / 2 + vx * k;
+      y = H / 2 + vy * k;
+      angle = Math.atan2(vx, -vy);
+    }
+    ui.updateWaypoint({ x, y, distance, onScreen, angle });
   }
 
   // Once a session, a struggling device is pointed to the lighter presets.
@@ -875,6 +1011,7 @@ async function boot() {
       }
       combat.update(dt);
       npcs.update(dt, player);
+      quests.update(dt, player, standable);
       if (!balloons.riding) npcs.separate(player);
       animals.update(dt, player, npcs);
       if (!balloons.riding) animals.separate(player);
@@ -904,6 +1041,7 @@ async function boot() {
       world.update(dt, player.position, camera);
       ui.updateLabels(npcs.labels(camera, window.innerWidth, window.innerHeight, reachable && reachable.npc));
       updateHud(dt);
+      updateMark();
       draw();
       autosave -= dt;
       if (autosave <= 0) {
@@ -957,7 +1095,7 @@ async function boot() {
   ui.setReady(saved ? `Saved journey found: ${lore.found.length} of ${lore.total} discoveries.` : null, progress.available);
 
   // Handy from the browser console while developing.
-  window.valdren = { THREE, renderer, post, scene, camera, world, player, lantern, setLantern, sword, combat, setFlying, music, sleep, follow, input, ui, npcs, animals, balloons, boats, dragon, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
+  window.valdren = { THREE, renderer, post, scene, camera, world, player, lantern, setLantern, sword, combat, quests, setFlying, music, sleep, follow, input, ui, npcs, animals, balloons, boats, dragon, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
 }
 
 boot().catch((err) => {

@@ -799,6 +799,18 @@ function paintFace(look) {
       curve([[nx, ny], [nx - 0.05 + rand() * 0.1, ny - 0.05], [nx + rand() * 0.1 - 0.05, ny - 0.1 - rand() * 0.08]], 1.2, 'rgba(120,45,40,0.25)');
     }
   }
+  if (look.scar === 'cut') {
+    // An old blade cut from under the left eye down across the cheek to the jaw.
+    const line = [[-0.74, 0.0], [-0.56, -0.3], [-0.3, -0.66]];
+    curve(line, 5, 'rgba(125,45,38,0.6)');
+    curve(line, 1.8, 'rgba(235,190,175,0.65)');
+    for (let i = 1; i < 5; i++) {
+      const t = i / 5;
+      const x = -0.74 + 0.44 * t;
+      const y = 0.0 - 0.66 * t;
+      curve([[x - 0.06, y - 0.03], [x + 0.06, y + 0.03]], 1.4, 'rgba(110,40,35,0.5)');
+    }
+  }
 
   for (const s of [-1, 1]) {
     blob(s * 0.45, -0.22, 0.22, 0.15, '200,90,80', look.female ? 0.3 : 0.22);
@@ -1058,7 +1070,7 @@ function hairMesh(look, S) {
  * Builds a ~1.8 m human facing +Z with its feet at y = 0. look sets colours and
  * style:
  *   body     female, belly (0..1), skirt ('tunic' | 'robe'), age (0..1),
- *            scar (null | 'burn'), gloveL (a colour for a gloved left hand)
+ *            scar (null | 'burn' | 'cut'), gloveL (a colour for a gloved left hand)
  *   head     skin, hair, hairStyle ('short' | 'long' | 'bun' | 'bald'),
  *            beard (null | 'short' | 'full'), stubble, eyes, brows, lips
  *   clothes  tunic, sleeves, trousers, boots, belt, pouch (null for none), trim,

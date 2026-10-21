@@ -620,6 +620,10 @@
             "text": "Mind the sparks. If you're buying, I've nails, hinges and a decent knife. If you're gawping, gawp from over there.",
             "choices": [
               {
+                "text": "Show me your blades.",
+                "do": "shop"
+              },
+              {
                 "text": "What are you forging?",
                 "next": "forging"
               },
@@ -635,6 +639,10 @@
           "again": {
             "text": "Back for that knife, then?",
             "choices": [
+              {
+                "text": "Show me your blades.",
+                "do": "shop"
+              },
               {
                 "text": "Tell me again about the donjon door.",
                 "next": "chains",
@@ -802,6 +810,10 @@
             "text": "Welcome to the Broken Oar! Ale's brown, stew's hot, and the gossip's free. What'll it be, love?",
             "choices": [
               {
+                "text": "I'll buy something, Maera.",
+                "do": "shop"
+              },
+              {
                 "text": "Why ‘the Broken Oar’?",
                 "next": "name"
               },
@@ -817,6 +829,10 @@
           "again": {
             "text": "Back already? Stew's still hot.",
             "choices": [
+              {
+                "text": "I'll buy something, Maera.",
+                "do": "shop"
+              },
               {
                 "text": "Any more gossip?",
                 "next": "gossip"
@@ -1000,6 +1016,10 @@
             "text": "Cloth from the coast, pepper from beyond the sea, needles finer than a lady's eyelash! Ah, a new face. Tobias Fenn, at your service.",
             "choices": [
               {
+                "text": "What are you selling?",
+                "do": "shop"
+              },
+              {
                 "text": "You're not from Valdren?",
                 "next": "outsider"
               },
@@ -1015,6 +1035,10 @@
           "again": {
             "text": "Back for pepper? No? Then for gossip, which is cheaper.",
             "choices": [
+              {
+                "text": "What are you selling?",
+                "do": "shop"
+              },
               {
                 "text": "Tell me about the bridge stone.",
                 "next": "bridge"
@@ -2340,6 +2364,10 @@
             "text": "Fresh loaves! Rye, barley, honey bread. Oh, a new face! Welcome, welcome.",
             "choices": [
               {
+                "text": "I'd like to buy something.",
+                "do": "shop"
+              },
+              {
                 "text": "Honey bread?",
                 "next": "t0"
               },
@@ -2355,6 +2383,10 @@
           "again": {
             "text": "Back for more? The honey bread's just out.",
             "choices": [
+              {
+                "text": "I'd like to buy something.",
+                "do": "shop"
+              },
               {
                 "text": "Honey bread?",
                 "next": "t0"
@@ -2585,6 +2617,10 @@
             "text": "Apples! Pears! Plums from the south orchards! Taste one, go on.",
             "choices": [
               {
+                "text": "What have you got today?",
+                "do": "shop"
+              },
+              {
                 "text": "How much for an apple?",
                 "next": "t0"
               },
@@ -2600,6 +2636,10 @@
           "again": {
             "text": "Changed your mind about those plums?",
             "choices": [
+              {
+                "text": "What have you got today?",
+                "do": "shop"
+              },
               {
                 "text": "How much for an apple?",
                 "next": "t0"
@@ -2684,6 +2724,10 @@
             "text": "Ribbons, flowers, wooden toys! Something for the little ones?",
             "choices": [
               {
+                "text": "Show me your wares.",
+                "do": "shop"
+              },
+              {
                 "text": "Wooden toys?",
                 "next": "t0"
               },
@@ -2699,6 +2743,10 @@
           "again": {
             "text": "Back again? The wooden balloons are going fast.",
             "choices": [
+              {
+                "text": "Show me your wares.",
+                "do": "shop"
+              },
               {
                 "text": "Wooden toys?",
                 "next": "t0"
@@ -2786,6 +2834,22 @@
             "text": "Hear ye, hear ye! News of Valdren, fresh as Hilde's bread!",
             "choices": [
               {
+                "text": "Tell me again about the cutpurse.",
+                "next": "case1_w",
+                "if": [
+                  "case1_clue",
+                  "!case1_done"
+                ]
+              },
+              {
+                "text": "The Wardens' Guild sent me about the cutpurse.",
+                "next": "case1_w",
+                "if": [
+                  "case1_open",
+                  "!case1_clue"
+                ]
+              },
+              {
                 "text": "What's the news?",
                 "next": "t0"
               },
@@ -2801,6 +2865,22 @@
           "again": {
             "text": "Hear ye, again!",
             "choices": [
+              {
+                "text": "Tell me again about the cutpurse.",
+                "next": "case1_w",
+                "if": [
+                  "case1_clue",
+                  "!case1_done"
+                ]
+              },
+              {
+                "text": "The Wardens' Guild sent me about the cutpurse.",
+                "next": "case1_w",
+                "if": [
+                  "case1_open",
+                  "!case1_clue"
+                ]
+              },
               {
                 "text": "What's the news?",
                 "next": "t0"
@@ -2859,6 +2939,32 @@
               },
               {
                 "text": "Goodbye."
+              }
+            ]
+          },
+          "case1_w": {
+            "text": "The cutpurse? Saw him plain as day! A skinny young fellow, no beard, a green hat with a red feather, and a patched brown cloak. Cut a purse off a farmer's belt by the stalls and strolled off as if he owned the market. He'll be back; that sort always is.",
+            "set": [
+              "case1_clue"
+            ],
+            "choices": [
+              {
+                "text": "Where does he hang about?",
+                "next": "case1_w2"
+              },
+              {
+                "text": "A green hat and a brown cloak. Thank you."
+              }
+            ]
+          },
+          "case1_w2": {
+            "text": "Round the stalls, where the purses are fattest. Look for the hat, but mind: half of Valdren wears a hat, and Tobias the merchant has a green one too. Check the cloak, and the chin.",
+            "choices": [
+              {
+                "text": "I'll look closely."
+              },
+              {
+                "text": "Thank you, Bartholomew."
               }
             ]
           }
@@ -5235,6 +5341,22 @@
             "text": "Mind the nets. Took me all morning to untangle the last lot.",
             "choices": [
               {
+                "text": "Tell me again about the smuggler.",
+                "next": "case2_w",
+                "if": [
+                  "case2_clue",
+                  "!case2_done"
+                ]
+              },
+              {
+                "text": "The Wardens' Guild sent me about the smuggling.",
+                "next": "case2_w",
+                "if": [
+                  "case2_open",
+                  "!case2_clue"
+                ]
+              },
+              {
                 "text": "What do you catch?",
                 "next": "t0"
               },
@@ -5250,6 +5372,22 @@
           "again": {
             "text": "Nets are still tangled, thank you for asking.",
             "choices": [
+              {
+                "text": "Tell me again about the smuggler.",
+                "next": "case2_w",
+                "if": [
+                  "case2_clue",
+                  "!case2_done"
+                ]
+              },
+              {
+                "text": "The Wardens' Guild sent me about the smuggling.",
+                "next": "case2_w",
+                "if": [
+                  "case2_open",
+                  "!case2_clue"
+                ]
+              },
               {
                 "text": "What do you catch?",
                 "next": "t0"
@@ -5284,6 +5422,32 @@
               },
               {
                 "text": "Goodbye."
+              }
+            ]
+          },
+          "case2_w": {
+            "text": "I was out before dawn and saw a rowing boat slip in to the quay, no lantern. The man at the oars wore a grey cowl, and when he turned there was a scar right across his cheek. Went off with a barrel on his shoulder like it weighed nothing.",
+            "set": [
+              "case2_clue"
+            ],
+            "choices": [
+              {
+                "text": "Where did he go?",
+                "next": "case2_w2"
+              },
+              {
+                "text": "A grey cowl and a scar. Thank you."
+              }
+            ]
+          },
+          "case2_w2": {
+            "text": "Along the quay. He works the docks, I'd swear to it. There's more than one grey cowl on this quay, mind; it's cold before dawn. Look for the scar.",
+            "choices": [
+              {
+                "text": "I'll find him."
+              },
+              {
+                "text": "Thank you, Nessa."
               }
             ]
           }
@@ -5791,6 +5955,22 @@
             "text": "Sit a while. The green doesn't charge.",
             "choices": [
               {
+                "text": "Tell me again about the sheep thief.",
+                "next": "case3_w",
+                "if": [
+                  "case3_clue",
+                  "!case3_done"
+                ]
+              },
+              {
+                "text": "The Wardens' Guild sent me about the sheep thief.",
+                "next": "case3_w",
+                "if": [
+                  "case3_open",
+                  "!case3_clue"
+                ]
+              },
+              {
                 "text": "Have you lived here long?",
                 "next": "t0"
               },
@@ -5806,6 +5986,22 @@
           "again": {
             "text": "Still here. So am I.",
             "choices": [
+              {
+                "text": "Tell me again about the sheep thief.",
+                "next": "case3_w",
+                "if": [
+                  "case3_clue",
+                  "!case3_done"
+                ]
+              },
+              {
+                "text": "The Wardens' Guild sent me about the sheep thief.",
+                "next": "case3_w",
+                "if": [
+                  "case3_open",
+                  "!case3_clue"
+                ]
+              },
               {
                 "text": "Have you lived here long?",
                 "next": "t0"
@@ -5840,6 +6036,32 @@
               },
               {
                 "text": "Goodbye."
+              }
+            ]
+          },
+          "case3_w": {
+            "text": "Saw him, I did, from this very bench. Big as a barn door, red beard down to here, a straw hat, and a sack over his shoulder that was bleating. Bleating! He went off down the lane as if he'd every right.",
+            "set": [
+              "case3_clue"
+            ],
+            "choices": [
+              {
+                "text": "Did he see you?",
+                "next": "case3_w2"
+              },
+              {
+                "text": "Red beard and a straw hat. Thank you."
+              }
+            ]
+          },
+          "case3_w2": {
+            "text": "Me? I'm part of the bench by now. Half the village wears a straw hat in summer, mind. Look for the beard.",
+            "choices": [
+              {
+                "text": "I'll find him."
+              },
+              {
+                "text": "Thank you, Tom."
               }
             ]
           }
@@ -5941,6 +6163,1275 @@
               },
               {
                 "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "guildmaster",
+      "name": "Edric Vane",
+      "role": "Master of the Wardens' Guild",
+      "position": {
+        "x": -30.14,
+        "z": 2.87
+      },
+      "heading": -0.3276,
+      "spot": "guildmaster",
+      "action": "behind",
+      "look": {
+        "female": false,
+        "skin": "#c49577",
+        "hair": "#6e6258",
+        "eyes": "#5a7a4a",
+        "tunic": "#24356e",
+        "trousers": "#3a2e24",
+        "boots": "#4a3322",
+        "belt": "#4a3020",
+        "trim": "#d4a640",
+        "cloak": "#1c2a4e",
+        "age": 0.5,
+        "hairStyle": "short",
+        "beard": "short",
+        "sleeves": "#2f4f8f",
+        "cloakTrim": "#d4a640"
+      },
+      "outfit": {
+        "pauldrons": true,
+        "sword": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "case1_here",
+              "!case1_done"
+            ],
+            "node": "hand1"
+          },
+          {
+            "if": [
+              "case2_here",
+              "!case2_done"
+            ],
+            "node": "hand2"
+          },
+          {
+            "if": [
+              "case3_here",
+              "!case3_done"
+            ],
+            "node": "hand3"
+          },
+          {
+            "if": [
+              "case1_bound",
+              "!case1_done"
+            ],
+            "node": "lag"
+          },
+          {
+            "if": [
+              "case2_bound",
+              "!case2_done"
+            ],
+            "node": "lag"
+          },
+          {
+            "if": [
+              "case3_bound",
+              "!case3_done"
+            ],
+            "node": "lag"
+          },
+          {
+            "if": [
+              "!met_guildmaster"
+            ],
+            "node": "greet"
+          },
+          {
+            "if": [
+              "!case1_open"
+            ],
+            "node": "offer1"
+          },
+          {
+            "if": [
+              "!case1_done"
+            ],
+            "node": "on1"
+          },
+          {
+            "if": [
+              "!case2_open"
+            ],
+            "node": "offer2"
+          },
+          {
+            "if": [
+              "!case2_done"
+            ],
+            "node": "on2"
+          },
+          {
+            "if": [
+              "!case3_open"
+            ],
+            "node": "offer3"
+          },
+          {
+            "if": [
+              "!case3_done"
+            ],
+            "node": "on3"
+          },
+          {
+            "node": "cleared"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Welcome to the Wardens' Guild. We keep the peace the castle guard is too grand to bother with: cutpurses, smugglers, rustlers. The crown pays a bounty for every one we bring in, and you look like you can handle yourself.",
+            "choices": [
+              {
+                "text": "How does it work?",
+                "next": "how"
+              },
+              {
+                "text": "Have you any work for me?",
+                "next": "offer1"
+              },
+              {
+                "text": "Not today."
+              }
+            ]
+          },
+          "how": {
+            "text": "Take a case from the board and ask the witness what they saw. Then find whoever matches it, and look closely: faces, beards, hats and cloaks. Name them to their face and they'll run. Catch them and beat them till they yield, bind their hands, and bring them here to me. And don't thump the wrong person. The guards fine brawlers.",
+            "choices": [
+              {
+                "text": "What's the reward?",
+                "next": "reward"
+              },
+              {
+                "text": "Understood."
+              }
+            ]
+          },
+          "reward": {
+            "text": "Crowns, paid the moment you hand a culprit over. Spend them at the market. Brannoc at the forge sells a steel sword that's worth every one.",
+            "choices": [
+              {
+                "text": "How does it work, again?",
+                "next": "how"
+              },
+              {
+                "text": "Good."
+              }
+            ]
+          },
+          "offer1": {
+            "text": "Here's one. Purses are being cut at the market, in broad daylight, bold as you like. Bartholomew the crier saw the thief make off. Twenty-five crowns if you bring him in.",
+            "choices": [
+              {
+                "text": "I'll take it.",
+                "next": "took1",
+                "set": [
+                  "case1_open"
+                ]
+              },
+              {
+                "text": "How does it work?",
+                "next": "how"
+              },
+              {
+                "text": "Not now."
+              }
+            ]
+          },
+          "took1": {
+            "text": "Good. Talk to Bartholomew; he cries the news from the middle of the market. And watch your own purse.",
+            "choices": [
+              {
+                "text": "Mark the market on my map.",
+                "do": "mark:case1"
+              },
+              {
+                "text": "I'll find him."
+              }
+            ]
+          },
+          "on1": {
+            "text": "Any luck with the cutpurse? Bartholomew the crier saw him, in the market.",
+            "choices": [
+              {
+                "text": "Mark the market on my map.",
+                "do": "mark:case1"
+              },
+              {
+                "text": "Remind me how this works.",
+                "next": "how"
+              },
+              {
+                "text": "I'm on it."
+              }
+            ]
+          },
+          "hand1": {
+            "text": "Well, well. The market cutpurse. You look smaller up close, Wat.",
+            "choices": [
+              {
+                "text": "He's all yours.",
+                "next": "paid1",
+                "do": "handover:case1"
+              },
+              {
+                "text": "One moment."
+              }
+            ]
+          },
+          "paid1": {
+            "text": "Into the cells with him. Twenty-five crowns, as promised; you earned every one. Come back when you want more work.",
+            "choices": [
+              {
+                "text": "What else is on the board?",
+                "next": "offer2"
+              },
+              {
+                "text": "Thank you."
+              }
+            ]
+          },
+          "offer2": {
+            "text": "A harder one. Barrels of Saltmere wine keep vanishing off the night boats at Aldra's Haven, on the lake. Smuggling, under the harbour master's nose. Nessa the fisherwoman is out before dawn; she may have seen something. Forty crowns.",
+            "choices": [
+              {
+                "text": "I'll take it.",
+                "next": "took2",
+                "set": [
+                  "case2_open"
+                ]
+              },
+              {
+                "text": "Not now."
+              }
+            ]
+          },
+          "took2": {
+            "text": "The harbour's a long way east, past the balloon meadow. Smugglers fight dirty, so keep your blade handy.",
+            "choices": [
+              {
+                "text": "Mark the harbour on my map.",
+                "do": "mark:case2"
+              },
+              {
+                "text": "I'll go."
+              }
+            ]
+          },
+          "on2": {
+            "text": "The smuggler? Talk to Nessa the fisherwoman at Aldra's Haven.",
+            "choices": [
+              {
+                "text": "Mark the harbour on my map.",
+                "do": "mark:case2"
+              },
+              {
+                "text": "Remind me how this works.",
+                "next": "how"
+              },
+              {
+                "text": "I'm on it."
+              }
+            ]
+          },
+          "hand2": {
+            "text": "Silas Marr! Two summers I've been after you. Fine work, traveller.",
+            "choices": [
+              {
+                "text": "Take him.",
+                "next": "paid2",
+                "do": "handover:case2"
+              },
+              {
+                "text": "One moment."
+              }
+            ]
+          },
+          "paid2": {
+            "text": "Forty crowns. The harbour master will sleep better, and so will I.",
+            "choices": [
+              {
+                "text": "Anything else on the board?",
+                "next": "offer3"
+              },
+              {
+                "text": "Thank you."
+              }
+            ]
+          },
+          "offer3": {
+            "text": "One more, and the worst. Someone's stealing sheep from Hob's flock and driving them south through Millbrook. A big brute, they say, and he won't come quietly. Old Tom sits on the Millbrook green all day; if anyone saw him, Tom did. Fifty-five crowns.",
+            "choices": [
+              {
+                "text": "I'll take it.",
+                "next": "took3",
+                "set": [
+                  "case3_open"
+                ]
+              },
+              {
+                "text": "Not now."
+              }
+            ]
+          },
+          "took3": {
+            "text": "Millbrook's south, over the old bridge and past the farms. Eat something first; I hear he hits hard.",
+            "choices": [
+              {
+                "text": "Mark Millbrook on my map.",
+                "do": "mark:case3"
+              },
+              {
+                "text": "I'll go."
+              }
+            ]
+          },
+          "on3": {
+            "text": "The sheep thief? Old Tom on the Millbrook green may have seen him.",
+            "choices": [
+              {
+                "text": "Mark Millbrook on my map.",
+                "do": "mark:case3"
+              },
+              {
+                "text": "Remind me how this works.",
+                "next": "how"
+              },
+              {
+                "text": "I'm on it."
+              }
+            ]
+          },
+          "hand3": {
+            "text": "Dunstan Rook. Hob will want his sheep back, and the crown wants you. Splendid work, traveller.",
+            "choices": [
+              {
+                "text": "He's yours.",
+                "next": "paid3",
+                "do": "handover:case3"
+              },
+              {
+                "text": "One moment."
+              }
+            ]
+          },
+          "paid3": {
+            "text": "Fifty-five crowns, and the guild's thanks. That clears the board, thanks to you. Valdren's a quieter place for it.",
+            "choices": [
+              {
+                "text": "Glad to help."
+              },
+              {
+                "text": "Will there be more?",
+                "next": "cleared"
+              }
+            ]
+          },
+          "cleared": {
+            "text": "The board is clear: cutpurse, smuggler and sheep thief, all in the cells. Valdren owes you, and the guild won't forget it.",
+            "choices": [
+              {
+                "text": "Glad to help."
+              },
+              {
+                "text": "How did it all work, again?",
+                "next": "how"
+              }
+            ]
+          },
+          "lag": {
+            "text": "You've bound them? Good. Now bring them here, right beside me, and I'll take them off your hands.",
+            "choices": [
+              {
+                "text": "They're on their way."
+              },
+              {
+                "text": "How does this work?",
+                "next": "how"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "wat",
+      "name": "Wat Nimble",
+      "role": "Market Idler",
+      "position": {
+        "x": -10.0,
+        "z": 12.0
+      },
+      "heading": 0,
+      "patrol": {
+        "mode": "loop",
+        "speed": 1.0,
+        "points": [
+          {
+            "x": -10.0,
+            "z": 12.0,
+            "wait": 5
+          },
+          {
+            "x": -10.0,
+            "z": 22.0,
+            "wait": 4
+          },
+          {
+            "x": 4.0,
+            "z": 22.0,
+            "wait": 6
+          },
+          {
+            "x": 4.0,
+            "z": 12.0,
+            "wait": 4
+          }
+        ]
+      },
+      "look": {
+        "female": false,
+        "skin": "#6e4630",
+        "hair": "#a0703a",
+        "eyes": "#6a4a2a",
+        "tunic": "#7a6a4a",
+        "trousers": "#4a3a2a",
+        "boots": "#2e2118",
+        "belt": "#2e2116",
+        "trim": "#8a6a3a",
+        "cloak": "#6a4a2a",
+        "age": 0.05,
+        "hairStyle": "short",
+        "beard": null
+      },
+      "outfit": {
+        "hat": "#2f4a2c"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "case1_exposed"
+            ],
+            "node": "caught"
+          },
+          {
+            "if": [
+              "met_wat"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Afternoon, friend! Lovely day for the market. Lots of folk about. Lots of… busy folk.",
+            "choices": [
+              {
+                "text": "You seem very taken with people's belts.",
+                "next": "t0"
+              },
+              {
+                "text": "Green hat, brown cloak, smooth chin. You're the cutpurse, Wat. The guild wants you.",
+                "next": "accuse",
+                "if": [
+                  "case1_clue",
+                  "!case1_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "again": {
+            "text": "You again? I've done nothing. Nothing at all.",
+            "choices": [
+              {
+                "text": "Where were you this morning?",
+                "next": "t1"
+              },
+              {
+                "text": "Green hat, brown cloak, smooth chin. You're the cutpurse, Wat. The guild wants you.",
+                "next": "accuse",
+                "if": [
+                  "case1_clue",
+                  "!case1_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Belts? No, no. I like looking at the… fruit. Lovely fruit, Jory has.",
+            "choices": [
+              {
+                "text": "Where were you this morning?",
+                "next": "t1"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Here and there. Mostly there. Ask anyone. Well, don't ask anyone. Ask me, and I'll tell you: there.",
+            "choices": [
+              {
+                "text": "You seem very taken with people's belts.",
+                "next": "t0"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "accuse": {
+            "text": "The guild? Ha! You'll have to catch me first, and nobody's ever caught Wat Nimble!",
+            "set": [
+              "case1_exposed"
+            ],
+            "choices": [
+              {
+                "text": "Stop, thief!",
+                "do": "bolt"
+              },
+              {
+                "text": "Don't make this harder.",
+                "do": "bolt"
+              }
+            ]
+          },
+          "caught": {
+            "text": "You again! I'm not going to any guild!",
+            "choices": [
+              {
+                "text": "Stop right there!",
+                "do": "bolt"
+              },
+              {
+                "text": "Come quietly.",
+                "do": "bolt"
+              }
+            ]
+          }
+        }
+      },
+      "criminal": "case1"
+    },
+    {
+      "id": "perkin",
+      "name": "Perkin Ashe",
+      "role": "Pedlar",
+      "position": {
+        "x": 11.0,
+        "z": 28.0
+      },
+      "heading": 0,
+      "patrol": {
+        "mode": "pingpong",
+        "speed": 0.9,
+        "points": [
+          {
+            "x": 11.0,
+            "z": 28.0,
+            "wait": 9,
+            "face": 0
+          },
+          {
+            "x": 18.0,
+            "z": 28.0,
+            "wait": 7,
+            "face": 0
+          }
+        ]
+      },
+      "look": {
+        "female": false,
+        "skin": "#8a5a3a",
+        "hair": "#4a2e1a",
+        "eyes": "#4a3a2a",
+        "tunic": "#8a6a2a",
+        "trousers": "#4c3d31",
+        "boots": "#4a3322",
+        "belt": "#2e2116",
+        "trim": "#8a6a3a",
+        "cloak": "#3d6a4a",
+        "age": 0.2,
+        "hairStyle": "short",
+        "beard": null
+      },
+      "outfit": {
+        "hat": "#6a4a2a"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_perkin"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Buttons, buckles, bootlaces! Perkin Ashe, pedlar, at your service.",
+            "choices": [
+              {
+                "text": "Seen anyone cutting purses?",
+                "next": "t0"
+              },
+              {
+                "text": "A hat, a cloak, no beard. You're the cutpurse, aren't you?",
+                "next": "accuse",
+                "if": [
+                  "case1_clue",
+                  "!case1_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "again": {
+            "text": "Changed your mind about the bootlaces?",
+            "choices": [
+              {
+                "text": "What did he look like?",
+                "next": "t1"
+              },
+              {
+                "text": "A hat, a cloak, no beard. You're the cutpurse, aren't you?",
+                "next": "accuse",
+                "if": [
+                  "case1_clue",
+                  "!case1_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Seen? I've lost a purse myself this week! A skinny lad brushed past me by the fruit stall, and when I looked, my purse was gone.",
+            "choices": [
+              {
+                "text": "What did he look like?",
+                "next": "t1"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Never saw his face. A hat, I think, but green or brown? Everything's green in spring.",
+            "choices": [
+              {
+                "text": "Seen anyone cutting purses?",
+                "next": "t0"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "accuse": {
+            "text": "Me?! Look at me: a brown hat, a green cloak, and I'm the one who's been robbed! Ask the crier who he saw; it wasn't me.",
+            "choices": [
+              {
+                "text": "Seen anyone cutting purses?",
+                "next": "t0"
+              },
+              {
+                "text": "My mistake. Sorry."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "silas",
+      "name": "Silas Marr",
+      "role": "Dockhand",
+      "position": {
+        "x": 366.0,
+        "z": 42.0
+      },
+      "heading": 2.0,
+      "patrol": {
+        "mode": "pingpong",
+        "speed": 1.0,
+        "points": [
+          {
+            "x": 366.0,
+            "z": 42.0,
+            "wait": 8,
+            "face": 1.6
+          },
+          {
+            "x": 374.0,
+            "z": 47.0,
+            "wait": 9,
+            "face": 1.6
+          }
+        ]
+      },
+      "look": {
+        "female": false,
+        "skin": "#a8774f",
+        "hair": "#4a2e1a",
+        "eyes": "#4a3a2a",
+        "tunic": "#5a5a5a",
+        "trousers": "#3a3a3a",
+        "boots": "#3a2a1e",
+        "belt": "#2e2116",
+        "trim": "#c8b48a",
+        "cloak": "#6e6e6a",
+        "age": 0.35,
+        "hairStyle": "short",
+        "beard": null,
+        "scar": "cut"
+      },
+      "outfit": {
+        "cowl": "#6e6e6a"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "case2_exposed"
+            ],
+            "node": "caught"
+          },
+          {
+            "if": [
+              "met_silas"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "What d'you want? Can't you see I'm working?",
+            "choices": [
+              {
+                "text": "What do you haul?",
+                "next": "t0"
+              },
+              {
+                "text": "A grey cowl and a scar across your cheek. You're the smuggler, Silas.",
+                "next": "accuse",
+                "if": [
+                  "case2_clue",
+                  "!case2_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "again": {
+            "text": "You. Again.",
+            "choices": [
+              {
+                "text": "Do you work nights?",
+                "next": "t1"
+              },
+              {
+                "text": "A grey cowl and a scar across your cheek. You're the smuggler, Silas.",
+                "next": "accuse",
+                "if": [
+                  "case2_clue",
+                  "!case2_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Barrels, crates, sacks. Whatever comes off the boats. I don't ask what's in them.",
+            "choices": [
+              {
+                "text": "Do you work nights?",
+                "next": "t1"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Who works nights? Nobody works nights. Boats don't come in at night.",
+            "choices": [
+              {
+                "text": "What do you haul?",
+                "next": "t0"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "accuse": {
+            "text": "Clever, aren't you? Not clever enough to catch me!",
+            "set": [
+              "case2_exposed"
+            ],
+            "choices": [
+              {
+                "text": "Stop, thief!",
+                "do": "bolt"
+              },
+              {
+                "text": "Don't make this harder.",
+                "do": "bolt"
+              }
+            ]
+          },
+          "caught": {
+            "text": "Still sniffing after me? You'll have to run for it!",
+            "choices": [
+              {
+                "text": "Stop right there!",
+                "do": "bolt"
+              },
+              {
+                "text": "Come quietly.",
+                "do": "bolt"
+              }
+            ]
+          }
+        }
+      },
+      "criminal": "case2",
+      "health": 130,
+      "blow": 10
+    },
+    {
+      "id": "ned",
+      "name": "Ned Tarry",
+      "role": "Net Mender",
+      "position": {
+        "x": 359.0,
+        "z": 62.0
+      },
+      "heading": 1.5708,
+      "look": {
+        "female": false,
+        "skin": "#e8c0a0",
+        "hair": "#8a8580",
+        "eyes": "#4a5e72",
+        "tunic": "#5a6a6a",
+        "trousers": "#4c3d31",
+        "boots": "#4a3322",
+        "belt": "#4a3020",
+        "trim": "#8a6a3a",
+        "cloak": "#6e6e6a",
+        "age": 0.6,
+        "hairStyle": "short",
+        "beard": "short"
+      },
+      "outfit": {
+        "cowl": "#6e6e6a"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_ned"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Mind the nets, traveller. I've only just mended them.",
+            "choices": [
+              {
+                "text": "Seen anything odd at night?",
+                "next": "t0"
+              },
+              {
+                "text": "A grey cowl on the docks before dawn. Is it you smuggling the wine?",
+                "next": "accuse",
+                "if": [
+                  "case2_clue",
+                  "!case2_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "again": {
+            "text": "Nets are mended. Mostly.",
+            "choices": [
+              {
+                "text": "Who works the docks?",
+                "next": "t1"
+              },
+              {
+                "text": "A grey cowl on the docks before dawn. Is it you smuggling the wine?",
+                "next": "accuse",
+                "if": [
+                  "case2_clue",
+                  "!case2_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t0": {
+            "text": "I sleep at night, like an honest man. Though I've heard oars, before dawn, when the boats should all be in.",
+            "choices": [
+              {
+                "text": "Who works the docks?",
+                "next": "t1"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Half the town. The loud ones, the quiet ones. The quiet ones you want to watch.",
+            "choices": [
+              {
+                "text": "Seen anything odd at night?",
+                "next": "t0"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "accuse": {
+            "text": "Me? With my knees? Look at my face, young one. Not a mark on it but the wrinkles. Whoever Nessa saw, it wasn't me.",
+            "choices": [
+              {
+                "text": "Seen anything odd at night?",
+                "next": "t0"
+              },
+              {
+                "text": "My mistake. Sorry."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "dunstan",
+      "name": "Dunstan Rook",
+      "role": "Drover",
+      "position": {
+        "x": 20.0,
+        "z": 372.0
+      },
+      "heading": 1.5708,
+      "scale": 1.1,
+      "patrol": {
+        "mode": "pingpong",
+        "speed": 1.0,
+        "points": [
+          {
+            "x": 20.0,
+            "z": 372.0,
+            "wait": 8
+          },
+          {
+            "x": 39.0,
+            "z": 370.5,
+            "wait": 8
+          }
+        ]
+      },
+      "look": {
+        "female": false,
+        "skin": "#c49577",
+        "hair": "#b85a2a",
+        "eyes": "#6a4a2a",
+        "tunic": "#6a5a3a",
+        "trousers": "#5a4a3a",
+        "boots": "#4a3322",
+        "belt": "#4a3020",
+        "trim": "#b8923e",
+        "cloak": null,
+        "age": 0.4,
+        "hairStyle": "short",
+        "beard": "full",
+        "belly": 0.4
+      },
+      "outfit": {
+        "strawHat": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "case3_exposed"
+            ],
+            "node": "caught"
+          },
+          {
+            "if": [
+              "met_dunstan"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Hrm. Who're you, then?",
+            "choices": [
+              {
+                "text": "What do you drive?",
+                "next": "t0"
+              },
+              {
+                "text": "A big man with a red beard and a straw hat, with a sack that bleats. You're the sheep thief, Dunstan.",
+                "next": "accuse",
+                "if": [
+                  "case3_clue",
+                  "!case3_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "again": {
+            "text": "You still here?",
+            "choices": [
+              {
+                "text": "Where are you from?",
+                "next": "t1"
+              },
+              {
+                "text": "A big man with a red beard and a straw hat, with a sack that bleats. You're the sheep thief, Dunstan.",
+                "next": "accuse",
+                "if": [
+                  "case3_clue",
+                  "!case3_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Cattle, mostly. Sheep, sometimes. Whatever needs driving. Why?",
+            "choices": [
+              {
+                "text": "Where are you from?",
+                "next": "t1"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Here and there. South. Further south. Never you mind.",
+            "choices": [
+              {
+                "text": "What do you drive?",
+                "next": "t0"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "accuse": {
+            "text": "Sheep thief, am I? Then come and take me, if you can!",
+            "set": [
+              "case3_exposed"
+            ],
+            "choices": [
+              {
+                "text": "Stop, thief!",
+                "do": "bolt"
+              },
+              {
+                "text": "Don't make this harder.",
+                "do": "bolt"
+              }
+            ]
+          },
+          "caught": {
+            "text": "Back for another go? Come on, then!",
+            "choices": [
+              {
+                "text": "Stop right there!",
+                "do": "bolt"
+              },
+              {
+                "text": "Come quietly.",
+                "do": "bolt"
+              }
+            ]
+          }
+        }
+      },
+      "criminal": "case3",
+      "health": 160,
+      "blow": 12
+    },
+    {
+      "id": "wilf",
+      "name": "Wilf Cobb",
+      "role": "Thatcher",
+      "position": {
+        "x": 74.0,
+        "z": 388.0
+      },
+      "heading": -1.5708,
+      "look": {
+        "female": false,
+        "skin": "#f0d0b4",
+        "hair": "#7a4a24",
+        "eyes": "#6a4a2a",
+        "tunic": "#8a6a2a",
+        "trousers": "#3a2e24",
+        "boots": "#3a2a1e",
+        "belt": "#3a2a1a",
+        "trim": "#b8923e",
+        "cloak": null,
+        "age": 0.3,
+        "hairStyle": "short",
+        "beard": null
+      },
+      "outfit": {
+        "strawHat": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_wilf"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Mind the ladder. Half the roofs in Millbrook leak, and I'm the only thatcher.",
+            "choices": [
+              {
+                "text": "Lost any sheep round here?",
+                "next": "t0"
+              },
+              {
+                "text": "A straw hat… Are you the sheep thief?",
+                "next": "accuse",
+                "if": [
+                  "case3_clue",
+                  "!case3_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "again": {
+            "text": "Still dry, are you? Lucky.",
+            "choices": [
+              {
+                "text": "Seen any strangers?",
+                "next": "t1"
+              },
+              {
+                "text": "A straw hat… Are you the sheep thief?",
+                "next": "accuse",
+                "if": [
+                  "case3_clue",
+                  "!case3_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Hob's lost six this month, and he's fit to be tied. Someone's driving them south by night.",
+            "choices": [
+              {
+                "text": "Seen any strangers?",
+                "next": "t1"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t1": {
+            "text": "There's a big drover come up from the south this summer. Loud. Never buys a round.",
+            "choices": [
+              {
+                "text": "Lost any sheep round here?",
+                "next": "t0"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "accuse": {
+            "text": "Me? Everyone wears a straw hat in summer! And look: not a whisker on my chin. Ask Tom who he saw.",
+            "choices": [
+              {
+                "text": "Lost any sheep round here?",
+                "next": "t0"
+              },
+              {
+                "text": "My mistake. Sorry."
               }
             ]
           }

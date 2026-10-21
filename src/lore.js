@@ -223,6 +223,8 @@ export class Journal {
     this.tab = 'finds';
     this.selected = null;
     this.onClose = null;
+    // Pages other modules write: tab name -> render(pageEl, refresh).
+    this.pages = {};
     $('journal-close').addEventListener('click', () => this.onClose && this.onClose('click'));
     for (const t of this.tabs) t.addEventListener('click', () => this.show(t.dataset.tab));
   }
@@ -231,7 +233,8 @@ export class Journal {
     return !this.el.classList.contains('hidden');
   }
 
-  // Opens on a tab ('finds', 'heard' or 'truth'); the truth tab exists once everything is found.
+  // Opens on a tab ('finds', 'heard', 'truth' or one of this.pages); the truth tab exists once
+  // everything is found.
   show(tab = this.tab) {
     const lore = this.lore;
     if (tab === 'truth' && !lore.complete) tab = 'finds';
@@ -242,7 +245,11 @@ export class Journal {
       t.setAttribute('aria-selected', t.dataset.tab === tab ? 'true' : 'false');
       if (t.dataset.tab === 'truth') t.classList.toggle('hidden', !lore.complete);
     }
-    if (tab === 'finds') this._finds();
+    if (this.pages[tab]) {
+      this.el.classList.add('single');
+      this.listEl.replaceChildren();
+      this.pages[tab](this.pageEl, () => this.show(tab));
+    } else if (tab === 'finds') this._finds();
     else if (tab === 'heard') this._heard();
     else this._truth();
     this.el.classList.remove('hidden');

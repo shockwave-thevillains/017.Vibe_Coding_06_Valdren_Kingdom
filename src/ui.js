@@ -58,6 +58,15 @@ export class UI {
     this.mapZoomBtn = $('map-zoom');
     this.mapView = 0;
     this._mapData = null;
+    this.mapTip = $('map-tip');
+    this.waypointEl = $('waypoint');
+    this.waypointDist = this.waypointEl.querySelector('.wp-dist');
+    this.waypointArrow = this.waypointEl.querySelector('.wp-arrow');
+    this._waypoint = '';
+    this.compassMark = null;
+    // Clicking the full map sets the traveller's mark there, or clears it when clicked again.
+    this.onMark = null;
+    this.mapCanvas.addEventListener('click', (e) => this._clickMap(e));
     this.mapZoomBtn.addEventListener('click', () => {
       this.mapView = 1 - this.mapView;
       if (this._mapData) this.showMap(this._mapData);
@@ -332,6 +341,64 @@ export class UI {
     strip.append(track);
     this.compassTrack = track;
     this.compassStrip = strip;
+    // The mark's bearing, a pin riding along the strip.
+    this.compassMark = document.createElement('span');
+    this.compassMark.className = 'compass-mark';
+    this.compassMark.hidden = true;
+    strip.append(this.compassMark);
+  }
+
+  // Shows where the mark lies on the compass: bearing in degrees (null hides it).
+  setCompassMark(bearing, cameraBearing) {
+    const el = this.compassMark;
+    if (bearing === null) {
+      el.hidden = true;
+      return;
+    }
+    const off = ((((bearing - cameraBearing) % 360) + 540) % 360) - 180;
+    const half = this.compassStrip.clientWidth / 2;
+    const x = Math.max(-half + 8, Math.min(half - 8, off * COMPASS_PX_PER_DEG));
+    el.hidden = false;
+    el.classList.toggle('edge', Math.abs(off * COMPASS_PX_PER_DEG) > half - 8);
+    el.style.transform = `translateX(${(half + x).toFixed(1)}px) translateX(-50%)`;
+  }
+
+  /*
+   * The on-screen pointer to the mark: at (x, y) in pixels when it is in view, or
+   * pinned to the screen's edge and pointing (angle, radians clockwise from up) when
+   * it is not. null hides it.
+   */
+  updateWaypoint(w) {
+    const el = this.waypointEl;
+    if (!w) {
+      if (this._waypoint !== '') {
+        this._waypoint = '';
+        el.classList.add('hidden');
+      }
+      return;
+    }
+    if (this._waypoint === '') el.classList.remove('hidden');
+    const text = w.distance >= 1000 ? `${(w.distance / 1000).toFixed(1)} km` : `${Math.round(w.distance)} m`;
+    if (text !== this._waypoint) {
+      this._waypoint = text;
+      this.waypointDist.textContent = text;
+    }
+    el.classList.toggle('off', !w.onScreen);
+    el.style.transform = `translate(${w.x.toFixed(1)}px, ${w.y.toFixed(1)}px) translate(-50%, ${w.onScreen ? -100 : -50}%)`;
+    if (!w.onScreen) this.waypointArrow.style.transform = `rotate(${w.angle.toFixed(3)}rad)`;
+  }
+
+  // A click on the full map: the world point under it, handed to onMark.
+  _clickMap(e) {
+    if (!this._mapData || !this.onMark) return;
+    const rect = this.mapCanvas.getBoundingClientRect();
+    const V = MAP_VIEWS[this.mapView];
+    const x = V.x - V.half + ((e.clientX - rect.left) / rect.width) * V.half * 2;
+    const z = V.z - V.half + ((e.clientY - rect.top) / rect.height) * V.half * 2;
+    const mark = this._mapData.mark;
+    // Clicking on (or right by) the mark clears it.
+    const near = mark && Math.hypot(mark.x - x, mark.z - z) < V.half * 0.035;
+    this.onMark(near ? null : { x: Math.round(x * 10) / 10, z: Math.round(z * 10) / 10 });
   }
 
   // bearing: degrees clockwise from north the camera looks towards; hours: time of day.
@@ -359,7 +426,7 @@ export class UI {
 
   /*
    * The minimap turns with the camera, so "up" is the way you are looking.
-   * view: { x, z, heading, yaw, people: [{ x, z, met }], finds: [{ x, z }], home: { x, z } }
+   * view: { x, z, heading, yaw, people: [{ x, z, met }], finds: [{ x, z }], home: { x, z }, mark: { x, z } }
    */
   drawMinimap(view) {
     const el = this.miniEl;
@@ -423,6 +490,31 @@ export class UI {
       g.strokeStyle = '#2e2014';
       g.stroke();
     }
+    if (view.mark) {
+      // The mark: a red pin, held at the rim when it lies farther away.
+      const dx = view.mark.x - view.x;
+      const dz = view.mark.z - view.z;
+      const d = Math.hypot(dx, dz);
+      const k = d > MINIMAP_RADIUS - 6 ? (MINIMAP_RADIUS - 6) / d : 1;
+      g.save();
+      g.translate(view.x + dx * k, view.z + dz * k);
+      g.rotate(-view.yaw);
+      const u = px * dpr;
+      g.beginPath();
+      g.moveTo(0, 0);
+      g.arc(0, -9 * u, 5 * u, Math.PI * 0.82, Math.PI * 0.18);
+      g.closePath();
+      g.fillStyle = '#c0392b';
+      g.fill();
+      g.lineWidth = 1.3 * u;
+      g.strokeStyle = '#fff4d6';
+      g.stroke();
+      g.beginPath();
+      g.arc(0, -9 * u, 1.8 * u, 0, Math.PI * 2);
+      g.fillStyle = '#fff4d6';
+      g.fill();
+      g.restore();
+    }
     // The player, pointing where they face.
     const s = Math.sin(view.heading);
     const c = Math.cos(view.heading);
@@ -463,11 +555,14 @@ export class UI {
     return !this.mapEl.classList.contains('hidden');
   }
 
-  // The whole kingdom, north up. view: { x, z, heading, places, people: [{ x, z, name }], finds: [{ x, z, title }], home: { x, z, name } }
+  // The whole kingdom, north up. view: { x, z, heading, places, people: [{ x, z, name }],
+  // finds: [{ x, z, title }], home: { x, z, name }, mark: { x, z } or null, touch }
   showMap(view) {
     this._mapData = view;
     this.mapEl.classList.remove('hidden');
     this.mapZoomBtn.textContent = this.mapView === 0 ? 'Show the whole kingdom' : 'Show the town';
+    const tap = view.touch ? 'Tap' : 'Click';
+    this.mapTip.textContent = view.mark ? `${tap} the map to move your mark, or on it to clear it.` : `${tap} the map to set a mark and follow its pointer.`;
     const cv = this.mapCanvas;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const size = Math.max(64, Math.round(cv.clientWidth * dpr));
@@ -510,6 +605,7 @@ export class UI {
     if (view.home && inView(view.home.x, view.home.z)) mark('home', view.home.x, view.home.z, null, view.home.name).title = view.home.name;
     for (const f of view.finds) if (inView(f.x, f.z)) mark('dot find', f.x, f.z).title = f.title;
     for (const p of view.people) if (inView(p.x, p.z)) mark('dot person', p.x, p.z, null, roomy ? p.name : null).title = p.name;
+    if (view.mark && inView(view.mark.x, view.mark.z)) mark('pin', view.mark.x, view.mark.z, null, 'Your mark');
     const you = mark('you', clamp(view.x, V.x - V.half, V.x + V.half), clamp(view.z, V.z - V.half, V.z + V.half));
     // Bearing of the facing direction (north = -z, east = +x).
     you.style.transform = `translate(-50%, -50%) rotate(${Math.atan2(Math.sin(view.heading), -Math.cos(view.heading))}rad)`;

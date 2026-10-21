@@ -32,6 +32,7 @@
       <div id="health" role="meter" aria-label="Health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><i></i></div>
       <div id="purse" title="Crowns in your purse"><span class="coin" aria-hidden="true"></span><b id="purse-count">0</b></div>
     </div>
+    <div id="waypoint" class="hidden" aria-hidden="true"><span class="wp-arrow"></span><span class="wp-pin"></span><span class="wp-dist"></span></div>
     <div id="prompt" class="hidden"></div>
     <div id="hint" class="hidden"></div>
     <div id="toast" role="status" aria-live="polite"></div>
@@ -67,7 +68,7 @@
       </header>
       <p id="dlg-text" aria-live="polite"></p>
       <div id="dlg-choices"></div>
-      <p class="dlg-help desktop-only"><kbd>1</kbd>–<kbd>3</kbd> answer · <kbd>Space</kbd> skip · <kbd>Esc</kbd> leave</p>
+      <p class="dlg-help desktop-only"><kbd>1</kbd>–<kbd>4</kbd> answer · <kbd>Space</kbd> skip · <kbd>Esc</kbd> leave</p>
     </div>
   </section>
 
@@ -106,6 +107,8 @@
       <nav class="tabs" role="tablist">
         <button type="button" role="tab" data-tab="finds">Discoveries <span id="journal-count">0/10</span></button>
         <button type="button" role="tab" data-tab="heard">Rumours</button>
+        <button type="button" role="tab" data-tab="bag">Bag</button>
+        <button type="button" role="tab" data-tab="bounties">Bounties</button>
         <button type="button" role="tab" data-tab="truth" class="hidden">The Truth</button>
       </nav>
       <div class="book-body">
@@ -115,17 +118,30 @@
     </div>
   </section>
 
+  <section id="shop" class="overlay hidden" role="dialog" aria-labelledby="shop-title">
+    <div class="panel book shop-panel">
+      <header class="book-head">
+        <h2 id="shop-title">Market</h2>
+        <button type="button" id="shop-close" class="close" aria-label="Close the shop">×</button>
+      </header>
+      <p id="shop-greeting" class="shop-greeting"></p>
+      <ul id="shop-list" class="item-list"></ul>
+      <p class="shop-foot"><span class="shop-purse"><span class="coin" aria-hidden="true"></span> <b id="shop-coins">0</b> crowns in your purse</span> <span id="shop-note" class="shop-note" aria-live="polite"></span></p>
+    </div>
+  </section>
+
   <section id="map" class="overlay hidden" role="dialog" aria-labelledby="map-title">
     <div class="panel map-panel">
       <header class="book-head">
         <h2 id="map-title">Valdren</h2>
+        <p id="map-tip" class="map-tip">Click the map to set your mark; click it again to clear it.</p>
         <button type="button" id="map-close" class="close" aria-label="Close the map">×</button>
       </header>
       <div class="map-frame">
         <canvas id="map-canvas"></canvas>
         <div id="map-marks"></div>
       </div>
-      <p class="map-legend"><span class="key you"></span> You <span class="key person"></span> People you have met <span class="key find"></span> Discoveries <span class="key home"></span> Your cottage
+      <p class="map-legend"><span class="key you"></span> You <span class="key person"></span> People you have met <span class="key find"></span> Discoveries <span class="key home"></span> Your cottage <span class="key pin"></span> Your mark
         <button type="button" id="map-zoom" class="link map-zoom">Show the whole kingdom</button></p>
     </div>
   </section>

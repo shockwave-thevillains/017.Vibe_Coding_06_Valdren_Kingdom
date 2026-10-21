@@ -8,6 +8,9 @@
  * flags are the game's memory of what the player has heard, so one character's
  * answers can open up another's. "start" is a node id or a list of
  * { if, node } tried in order. "met_<npc id>" is set after the first talk.
+ * A reply may also ask the game to do something ("do": opening a shop, a culprit
+ * bolting, marking the map, handing a captive over); onAction(action, npc) hears it
+ * as the reply is chosen, before the next line or the end of the conversation.
  *
  * Text appears with a typewriter effect: click, tap, Space, Enter or E shows it
  * at once. Replies are buttons, also chosen with the number keys; Esc leaves.
@@ -29,6 +32,7 @@ export class Dialogue {
     this.npc = null;
     this.node = null;
     this.onClose = null;
+    this.onAction = null;
     this.visited = new Map(); // npc id -> Set of node ids seen
     this._full = '';
     this._shown = 0;
@@ -159,6 +163,7 @@ export class Dialogue {
   _choose(choice) {
     if (!this.isOpen) return;
     for (const flag of choice.set || []) this.flags.add(flag);
+    if (choice.do && this.onAction) this.onAction(choice.do, this.npc);
     if (choice.next) this._go(choice.next);
     else this.close();
   }
