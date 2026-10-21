@@ -342,11 +342,11 @@ export class UI {
       marks.push(el);
       return el;
     };
-    // On a small map only the larger places are named, or the town's labels pile up.
-    const roomy = cv.clientWidth >= 520;
+    // On a small map only the larger places and no people are named, or the town's labels pile up.
+    const roomy = cv.clientWidth >= 620;
     for (const p of view.places) if (roomy || p.size > 0) mark(`place${p.size === 2 ? ' big' : ''}`, p.x, p.z, p.name);
     for (const f of view.finds) mark('dot find', f.x, f.z).title = f.title;
-    for (const p of view.people) mark('dot person', p.x, p.z, null, p.name);
+    for (const p of view.people) mark('dot person', p.x, p.z, null, roomy ? p.name : null).title = p.name;
     const you = mark('you', view.x, view.z);
     // Bearing of the facing direction (north = -z, east = +x).
     you.style.transform = `translate(-50%, -50%) rotate(${Math.atan2(Math.sin(view.heading), -Math.cos(view.heading))}rad)`;
