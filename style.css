@@ -1071,6 +1071,64 @@ button.primary:disabled {
   color: var(--ink-soft);
 }
 
+/* Graphics choice: three buttons joined into one control. */
+.quality {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(107, 74, 36, 0.35);
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.segmented button {
+  min-width: 84px;
+  padding: 8px 14px;
+  border: none;
+  border-left: 1px solid rgba(107, 74, 36, 0.45);
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--ink-soft);
+  font: 15px/1.2 var(--font);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.segmented button:first-child {
+  border-left: none;
+}
+
+.segmented button:hover,
+.segmented button:focus-visible {
+  background: rgba(255, 255, 255, 0.45);
+  outline: none;
+}
+
+.segmented button.active {
+  background: linear-gradient(180deg, #8a5a1c, #6b4416);
+  color: var(--parchment);
+  font-weight: 600;
+}
+
+.quality-about,
+.quality-note {
+  margin: 8px auto 0;
+  max-width: 380px;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.quality-note {
+  font-style: italic;
+}
+
+#pause-status:empty {
+  display: none;
+}
+
 kbd {
   display: inline-block;
   min-width: 1.7em;
@@ -1109,9 +1167,19 @@ body.touch .desktop-only {
     margin-bottom: 8px;
   }
 
-  .controls {
+  .controls,
+  .quality {
     margin-top: 12px;
     padding-top: 10px;
+  }
+
+  .segmented button {
+    min-width: 72px;
+    padding: 6px 10px;
+  }
+
+  .quality-about {
+    font-size: 13px;
   }
 
   .controls dl {

@@ -5,11 +5,10 @@ as a 100 % static site (HTML, ES modules and JSON), with no build step, backend 
 API keys, so it can be hosted on GitHub Pages as is. Every model and texture is
 generated in code at load time; the project ships no art assets.
 
-> **Status: Phase 4 of 5, the mystery.** The engine core (phase 1), the whole
-> kingdom (phase 2), its seven inhabitants with branching dialogue (phase 3),
-> and its secrets, journal, compass and maps, saved progress and a running
-> day-night cycle (phase 4) are in place. The quality menu and final polish
-> (phase 5) are still to come.
+> **Status: complete (all five phases).** The engine core, the whole kingdom,
+> its seven inhabitants with branching dialogue, ten secrets that add up to one
+> mystery, a journal, compass and maps, saved progress, a running day-night
+> cycle, and Low / Medium / High graphics presets.
 
 ## The kingdom
 
@@ -75,6 +74,28 @@ into your journal.
   continue or to start a new journey. If the browser blocks storage the game
   still runs; it just cannot remember you.
 
+## Graphics quality
+
+The title screen and the pause menu (`Esc`, or the pause button on a phone)
+offer three presets. Touch devices start on **Medium**, everything else on
+**High**; the choice is remembered in this browser.
+
+| | Low | Medium | High |
+| --- | --- | --- | --- |
+| Shadows | **off** | 1024² map, 34 m around you | 2048² map, 46 m around you |
+| Resolution (device pixel ratio cap) | 1 | 1.5 | 2 |
+| Edge smoothing (MSAA) | off | on | on |
+| Lantern lights at night | none | 2 | 4 |
+| Grass tufts around you | 2,500 | 6,000 | 18,000 |
+| Full-detail trees within | 40 m | 55 m | 75 m |
+| Textures | 256 px | 256 px | 512 px |
+
+Shadows, resolution, lantern lights, grass and tree distance change at once.
+Texture size, tree and crop detail and edge smoothing are fixed when the world
+is built, so the menu says when those will follow on the next load. If the game
+runs below 24 frames per second for ten seconds, it suggests a lower preset
+(once per visit).
+
 ## Run it locally
 
 ES modules do not load from `file://`, so serve the folder over HTTP:
@@ -86,6 +107,9 @@ python -m http.server 8000
 Then open <http://localhost:8000/>. On a phone on the same network, open
 `http://<your-computer-ip>:8000/`. The page needs internet access, because
 Three.js loads from jsDelivr.
+
+It runs in current Chrome, Edge, Firefox and Safari (16.4 or later, for import
+maps), on desktop and on phones, with WebGL 2.
 
 ## Controls
 
@@ -114,6 +138,9 @@ left mouse button and drag to look around.
   `F3` or the backtick key `` ` `` toggles it in game.
 - `?time=HH` starts at a given hour (0–24), for example `?time=18` for sunset or
   `?time=22` for night (instead of the saved time).
+- `?quality=low`, `medium` or `high` starts with that preset, overriding (but not
+  changing) the saved choice. The choice itself is stored under the
+  `valdren.settings.v1` key, apart from the journey.
 - `window.valdren` exposes the renderer, scene, world, player, people, lore and
   the save in the browser console.
 - To forget your progress, use *Start a new journey* on the title screen, or
@@ -188,8 +215,8 @@ left mouse button and drag to look around.
 - **Day and night:** the clock runs continuously. The sky, fog, sun, moon and
   ambient light follow it every frame, while the image-based lighting is only
   rebuilt when the sky has visibly changed (often at dawn and dusk, never at
-  noon or midnight). A small pool of point lights (four on desktop, two on touch
-  devices) moves to the lanterns nearest the player after dark, so the light
+  noon or midnight). A small pool of point lights (four on High, two on Medium,
+  none on Low) moves to the lanterns nearest the player after dark, so the light
   pools on walls and cobbles cost the same anywhere in the kingdom.
 - **Maps** are painted once at load from the world itself: the terrain's own
   colours with hill shading, the river, forests drawn as tree marks, the fields,
@@ -205,17 +232,21 @@ left mouse button and drag to look around.
   above the terrain; steps up to 45 cm can be climbed; deep water and slopes above
   45° cannot. The camera pulls in rather than pass through walls, and stays under
   the Throne Hall's ceiling.
-- **Budget:** the device pixel ratio is capped at 2 (1.5 on touch devices). Touch
-  devices also get a 1024² shadow map (2048² on desktop), half-size textures,
-  fewer grass tufts and simpler trees.
+- **Budget:** one shadow-casting light, the device pixel ratio capped at 2, and
+  the presets above. Switching presets re-seeds the grass, resizes or drops the
+  shadow map and adds or removes lantern lights in place; the lit materials
+  recompile once for the new light setup. In the starting view, High draws about
+  200 calls and 0.9 M triangles a frame (shadow pass included), Low about 165
+  calls and 0.6 M triangles, at a quarter of the pixels on a high-density screen.
 
 ### Project layout
 
 ```
 index.html        page shell, import map, overlays and touch controls
 style.css         UI styles (parchment panels, HUD, touch controls)
-src/main.js       renderer, game loop, states (title, playing, paused, talking,
-                  reading, journal, map), interaction, saving
+src/main.js       renderer, graphics presets, game loop, states (title,
+                  playing, paused, talking, reading, journal, map),
+                  interaction, saving
 src/world.js      terrain, textures, sky, day-night and lighting, every building
                   and prop, vegetation, grass, colliders, walkable surfaces,
                   lore spots, lantern lights, the painted map
@@ -228,8 +259,9 @@ src/lore.js       discoveries and their glints, the reader, the journal, the sav
 data/npcs.json    the seven inhabitants: looks, outfits, routes, dialogue
 data/lore.json    the ten discoverables, rumours, the truth and the epilogue
 src/input.js      keyboard, mouse / pointer lock, touch joystick and look, buttons
-src/ui.js         start screen, pause menu, toasts, hints, prompt, name labels,
-                  compass and clock, minimap, full map, debug readout
+src/ui.js         start screen, pause menu, graphics choice, toasts, hints,
+                  prompt, name labels, compass and clock, minimap, full map,
+                  debug readout
 .nojekyll         serve files exactly as they are on GitHub Pages
 ```
 
@@ -258,8 +290,24 @@ python -m http.server 8000
 # then open http://localhost:8000/<repo-folder>/
 ```
 
+## Troubleshooting
+
+- **"Still loading…" or "Could not download the game scripts":** the page could
+  not reach `cdn.jsdelivr.net`. Check the connection, or a blocker that filters
+  CDNs.
+- **"WebGL is not available":** turn on hardware acceleration in the browser
+  settings, or try another browser.
+- **Slow or hot phone:** choose **Low** in the pause menu, then reload for the
+  lighter textures as well.
+- **Progress is not kept:** private windows and some privacy settings block
+  `localStorage`. The title screen says so; the game still runs.
+- **404 on GitHub Pages:** wait for the "pages build and deployment" run to
+  finish, check that Pages points at the right branch and `/ (root)`, and open
+  the address with the repository name exactly as GitHub shows it.
+
 ## Credits and licences
 
-- All geometry, textures, colours and the sky are generated procedurally in code.
-  The project ships no third-party models, textures, fonts or sounds.
+- All geometry, textures, colours, the sky and the tower icon are generated in
+  code. The project ships no third-party models, textures, fonts or sounds, so
+  there are no CC0 or other asset licences to list.
 - [Three.js](https://threejs.org/) © three.js authors, MIT licence.

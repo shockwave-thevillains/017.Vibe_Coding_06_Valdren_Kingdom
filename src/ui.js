@@ -1,14 +1,19 @@
 /*
- * ui.js: DOM overlays and HUD. The start screen, pause menu, toasts, the
- * pointer-lock hint, the interaction prompt, name labels, the compass and
- * clock, the minimap, the full map and the debug readout all live here (the
- * dialogue box, journal and reader have their own modules). Game logic calls
- * in; the UI calls back out only through the on* hooks.
+ * ui.js: DOM overlays and HUD. The start screen, pause menu and graphics
+ * choice, toasts, the pointer-lock hint, the interaction prompt, name labels,
+ * the compass and clock, the minimap, the full map and the debug readout all
+ * live here (the dialogue box, journal and reader have their own modules).
+ * Game logic calls in; the UI calls back out only through the on* hooks.
  */
 
 const COMPASS_PX_PER_DEG = 2.4;
 const MINIMAP_RADIUS = 70;   // metres from the centre to the rim
 const MAP_VIEW = { x: -50, z: 30, half: 290 }; // the full map: from the Greywatch to the farms
+const QUALITY_ABOUT = {
+  low: 'No shadows or lantern light, sparse grass. For older phones and laptops.',
+  medium: 'Soft shadows, lantern light at night, lighter grass and textures.',
+  high: 'Sharp shadows, dense grass, full-detail textures and trees.',
+};
 
 export class UI {
   constructor() {
@@ -43,6 +48,7 @@ export class UI {
     this.onNewJourney = null;
     this.onMap = null;
     this.onMapClose = null;
+    this.onQuality = null;
     this._buildCompass($('compass-strip'));
     this.newBtn.addEventListener('click', () => this.onNewJourney && this.onNewJourney());
     this.miniEl.addEventListener('click', () => this.onMap && this.onMap());
@@ -54,6 +60,19 @@ export class UI {
     document.querySelectorAll('.controls-slot').forEach((slot) => {
       slot.replaceWith(template.content.cloneNode(true));
     });
+    // The graphics choice appears on the start screen and in the pause menu.
+    const qualityTemplate = $('tpl-quality');
+    document.querySelectorAll('.quality-slot').forEach((slot) => {
+      slot.replaceWith(qualityTemplate.content.cloneNode(true));
+    });
+    this.qualityEls = [...document.querySelectorAll('.quality')];
+    for (const el of this.qualityEls) {
+      el.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-quality]');
+        if (btn && this.onQuality) this.onQuality(btn.dataset.quality);
+      });
+    }
+    this.pauseStatusEl = $('pause-status');
 
     this.beginBtn.addEventListener('click', () => {
       if (!this.beginBtn.disabled && this.onBegin) this.onBegin();
@@ -100,7 +119,8 @@ export class UI {
 
   // --------------------------------------------------------------- pause
 
-  showPause() {
+  showPause(status = '') {
+    this.pauseStatusEl.textContent = status;
     this.pauseEl.classList.remove('hidden');
     try {
       this.resumeBtn.focus({ preventScroll: true });
@@ -111,6 +131,19 @@ export class UI {
 
   hidePause() {
     this.pauseEl.classList.add('hidden');
+  }
+
+  // Marks the chosen preset; reload: whether part of it waits for the next load.
+  setQuality(level, reload) {
+    for (const el of this.qualityEls) {
+      for (const btn of el.querySelectorAll('[data-quality]')) {
+        const on = btn.dataset.quality === level;
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-checked', String(on));
+      }
+      el.querySelector('.quality-about').textContent = QUALITY_ABOUT[level] || '';
+      el.querySelector('.quality-note').classList.toggle('hidden', !reload);
+    }
   }
 
   // ----------------------------------------------------------------- HUD

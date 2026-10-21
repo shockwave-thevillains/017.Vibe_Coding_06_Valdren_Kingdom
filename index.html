@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#14110d">
-  <meta name="description" content="Valdren: a low-poly medieval kingdom you can explore in the browser.">
+  <meta name="description" content="Valdren: a 3D medieval kingdom to explore in the browser. Talk to its people and uncover what it has forgotten.">
   <title>Valdren</title>
-  <link rel="icon" href="data:,">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23c9a14a' d='M3 2h2v2h2V2h2v2h2V2h2v5l-1 1v6h3v1H0v-1h3V8L2 7V2h1z'/%3E%3Cpath fill='%2314110d' d='M7 10h2v4H7z'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css">
   <!-- Three.js r170 (npm three@0.170.0), core and addons pinned to the same version. -->
   <script type="importmap">
@@ -62,6 +62,7 @@
       <button type="button" id="btn-begin" class="primary" disabled>Begin</button>
       <p id="save-status" class="status small"></p>
       <button type="button" id="btn-new" class="link hidden">Start a new journey</button>
+      <div class="quality-slot"></div>
       <div class="controls-slot"></div>
     </div>
   </section>
@@ -114,9 +115,24 @@
     <div class="panel">
       <h2>Paused</h2>
       <button type="button" id="btn-resume" class="primary">Resume</button>
+      <p id="pause-status" class="status small"></p>
+      <div class="quality-slot"></div>
       <div class="controls-slot"></div>
     </div>
   </section>
+
+  <template id="tpl-quality">
+    <div class="quality">
+      <h3>Graphics</h3>
+      <div class="segmented" role="radiogroup" aria-label="Graphics quality">
+        <button type="button" role="radio" aria-checked="false" data-quality="low">Low</button>
+        <button type="button" role="radio" aria-checked="false" data-quality="medium">Medium</button>
+        <button type="button" role="radio" aria-checked="false" data-quality="high">High</button>
+      </div>
+      <p class="quality-about"></p>
+      <p class="quality-note hidden">Texture and tree detail will change the next time Valdren loads.</p>
+    </div>
+  </template>
 
   <template id="tpl-controls">
     <div class="controls desktop-only">

@@ -2828,13 +2828,13 @@ function buildFarm(ctx, q) {
     fenceAround(ctx, f, f.z > 225 ? 'north' : 'west');
     const F = new Frame(ctx, f.x, f.z, f.rot);
     if (f.crop === 'wheat' || f.crop === 'barley') {
-      const sp = q.mobile ? 1.15 : 0.82;
+      const sp = q.cropSparse ? 1.15 : 0.82;
       for (let lz = -f.d / 2 + 0.5; lz <= f.d / 2 - 0.5; lz += sp) {
         for (let lx = -f.w / 2 + 0.5; lx <= f.w / 2 - 0.5; lx += sp) {
           const jx = lx + (rng() - 0.5) * sp * 0.5;
           const jz = lz + (rng() - 0.5) * sp * 0.4;
           const s = (f.crop === 'barley' ? 0.72 : 1) * (0.85 + rng() * 0.3);
-          F.inst(f.crop, jx, F.ground(jx, jz) + 0.03, jz, 0, rng() * TAU, 0, s * (q.mobile ? 1.25 : 1), s, s * (q.mobile ? 1.25 : 1), ctx.vary(f.crop === 'barley' ? C(0xb8c070) : C(0xffe2a0), 0.08));
+          F.inst(f.crop, jx, F.ground(jx, jz) + 0.03, jz, 0, rng() * TAU, 0, s * (q.cropSparse ? 1.25 : 1), s, s * (q.cropSparse ? 1.25 : 1), ctx.vary(f.crop === 'barley' ? C(0xb8c070) : C(0xffe2a0), 0.08));
         }
       }
     } else if (f.crop === 'cabbage') {
@@ -3451,17 +3451,9 @@ export class World {
 
     // The one shadow-casting light. It follows the player so the shadow map stays sharp.
     this.sun = new THREE.DirectionalLight(0xfff1dc, 3);
-    this.sun.castShadow = quality.shadows;
-    this.shadowExtent = quality.shadowExtent;
-    const shadowCam = this.sun.shadow.camera;
-    shadowCam.left = -this.shadowExtent;
-    shadowCam.right = this.shadowExtent;
-    shadowCam.top = this.shadowExtent;
-    shadowCam.bottom = -this.shadowExtent;
-    shadowCam.near = 1;
-    shadowCam.far = 340;
-    shadowCam.updateProjectionMatrix();
-    this.sun.shadow.mapSize.set(quality.shadowMap, quality.shadowMap);
+    this.sun.shadow.camera.near = 1;
+    this.sun.shadow.camera.far = 340;
+    this._setShadows(quality);
     this.sun.shadow.bias = -0.0003;
     this.sun.shadow.normalBias = 0.04;
     scene.add(this.sun, this.sun.target);
@@ -3538,13 +3530,83 @@ export class World {
       this.scene.add(this.torchLight);
     }
     this._grass(ctx, q);
-    // A few warm lights follow the player from lantern to lantern after dark.
-    for (let i = 0; i < (q.lampLights ?? 0); i++) {
+    this._setLampLights(q.lampLights);
+    this.setTime(this.timeOfDay);
+  }
+
+  /*
+   * Applies the parts of a quality preset that can change while playing: shadows,
+   * grass density, lantern lights and tree detail distance. Textures, tree meshes
+   * and crops keep the values the world was built with (this.quality) until the
+   * next load. Changing the number of shadows or lights recompiles the lit
+   * materials once.
+   */
+  setQuality(q) {
+    this._setShadows(q);
+    this._setLampLights(q.lampLights);
+    if (this.lod) this.lod.uLodRadius.value = q.lodRadius;
+    if (this.grass) this._setGrass(q.grass, q.grassTile);
+  }
+
+  // The one shadow map: on or off, its resolution and how far around the player it reaches.
+  _setShadows(q) {
+    const shadow = this.sun.shadow;
+    this.renderer.shadowMap.enabled = q.shadows;
+    this.sun.castShadow = q.shadows;
+    if (shadow.mapSize.x !== q.shadowMap) {
+      shadow.mapSize.set(q.shadowMap, q.shadowMap);
+      if (shadow.map) {
+        shadow.map.dispose();
+        shadow.map = null;
+      }
+    }
+    this.shadowExtent = q.shadowExtent;
+    const cam = shadow.camera;
+    cam.left = -q.shadowExtent;
+    cam.right = q.shadowExtent;
+    cam.top = q.shadowExtent;
+    cam.bottom = -q.shadowExtent;
+    cam.updateProjectionMatrix();
+  }
+
+  // A few warm lights follow the player from lantern to lantern after dark.
+  _setLampLights(count = 0) {
+    const pool = this.lampLights;
+    while (pool.length < count) {
       const light = new THREE.PointLight(0xffb468, 0, 15, 2);
       this.scene.add(light);
-      this.lampLights.push({ light, fade: 0 });
+      pool.push({ light, fade: 0 });
     }
-    this.setTime(this.timeOfDay);
+    while (pool.length > count) {
+      const { light } = pool.pop();
+      this.scene.remove(light);
+      light.dispose();
+    }
+    this._lampTimer = 0;
+  }
+
+  // Blade positions within the grass tile that wraps around the player.
+  _grassSeeds(count, tile) {
+    const seeds = new Float32Array(count * 4);
+    const grng = mulberry32(4242);
+    for (let i = 0; i < count; i++) {
+      seeds[i * 4] = grng() * tile;
+      seeds[i * 4 + 1] = grng() * tile;
+      seeds[i * 4 + 2] = grng() * TAU;
+      seeds[i * 4 + 3] = grng();
+    }
+    return new THREE.InstancedBufferAttribute(seeds, 4);
+  }
+
+  _setGrass(count, tile) {
+    const { mesh, uniforms } = this.grass;
+    const geo = mesh.geometry;
+    if (geo.instanceCount === count && uniforms.uTile.value === tile) return;
+    geo.setAttribute('aSeed', this._grassSeeds(count, tile));
+    geo.instanceCount = count;
+    uniforms.uTile.value = tile;
+    // Frees the old buffers; the blade is uploaded again with the new seeds on the next frame.
+    geo.dispose();
   }
 
   // ------------------------------------------------------------ textures
@@ -3611,7 +3673,7 @@ export class World {
     };
     this.mat.stoneFloor = this.mat.stone;
     const foliage = (amount, key) => nearFade(windMaterial(std({ vertexColors: true, roughness: 0.85 }), this.uTime, amount, `${key}-wind`), `${key}-fade`);
-    this.lod = { uLodCenter: { value: new THREE.Vector3() }, uLodRadius: { value: this.quality.mobile ? 55 : 75 } };
+    this.lod = { uLodCenter: { value: new THREE.Vector3() }, uLodRadius: { value: this.quality.lodRadius } };
     this.mat.leavesHi = lodMaterial(foliage(0.012, 'leaves-hi'), this.lod, 'leaves-lod-hi');
     this.mat.leavesLo = lodMaterial(foliage(0.012, 'leaves-lo'), this.lod, 'leaves-lod-lo');
     this.mat.needlesHi = lodMaterial(foliage(0.006, 'needles-hi'), this.lod, 'needles-lod-hi');
@@ -3954,17 +4016,8 @@ export class World {
     geo.setAttribute('position', blade.attributes.position);
     geo.setAttribute('normal', blade.attributes.normal);
     geo.setAttribute('color', blade.attributes.color);
-    const count = q.grass;
-    const seeds = new Float32Array(count * 4);
-    const grng = mulberry32(4242);
-    for (let i = 0; i < count; i++) {
-      seeds[i * 4] = grng() * q.grassTile;
-      seeds[i * 4 + 1] = grng() * q.grassTile;
-      seeds[i * 4 + 2] = grng() * TAU;
-      seeds[i * 4 + 3] = grng();
-    }
-    geo.setAttribute('aSeed', new THREE.InstancedBufferAttribute(seeds, 4));
-    geo.instanceCount = count;
+    geo.setAttribute('aSeed', this._grassSeeds(q.grass, q.grassTile));
+    geo.instanceCount = q.grass;
 
     const uniforms = {
       uHeightMap: { value: heightTex },

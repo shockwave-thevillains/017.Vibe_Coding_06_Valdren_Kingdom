@@ -16,7 +16,8 @@ import { UI } from './ui.js';
  * Progress is saved to the browser as you play and restored on the next visit.
  *
  * URL options: ?debug shows the performance readout (also F3 or `),
- *              ?time=HH starts at that hour (0-24) instead of the saved one.
+ *              ?time=HH starts at that hour (0-24) instead of the saved one,
+ *              ?quality=low|medium|high overrides the saved graphics setting.
  */
 
 const params = new URLSearchParams(window.location.search);
@@ -24,14 +25,58 @@ const ui = new UI();
 const NO_MOVE = Object.freeze({ x: 0, y: 0, magnitude: 0, run: false });
 const AUTOSAVE_SECONDS = 20;
 const OVERLAYS = new Set(['reading', 'journal', 'map']);
+const SETTINGS_KEY = 'valdren.settings.v1';
+const SLOW_FPS = 24;
 
-// Rendering budget. Touch devices get a lighter default; phase 5 exposes these as presets.
-function qualityFor(coarse, maxAnisotropy) {
-  const q = coarse
-    ? { mobile: true, pixelRatio: 1.5, shadows: true, shadowMap: 1024, shadowExtent: 34, textureSize: 256, anisotropy: 2, treeDetail: 0, grass: 6000, grassTile: 46, lampLights: 2 }
-    : { mobile: false, pixelRatio: 2, shadows: true, shadowMap: 2048, shadowExtent: 46, textureSize: 512, anisotropy: 8, treeDetail: 1, grass: 18000, grassTile: 64, lampLights: 4 };
+/*
+ * Graphics presets. Low turns shadows and lantern lights off and renders at one
+ * pixel per CSS pixel; touch devices start on Medium, everything else on High.
+ * The settings in LOAD_TIME shape the world as it is built (and antialias the
+ * WebGL context), so a change to them waits for the next load; the rest apply
+ * at once through World.setQuality and the pixel ratio.
+ */
+const PRESETS = {
+  low: {
+    pixelRatio: 1, antialias: false, shadows: false, shadowMap: 1024, shadowExtent: 34,
+    textureSize: 256, anisotropy: 2, treeDetail: 0, cropSparse: true,
+    grass: 2500, grassTile: 38, lampLights: 0, lodRadius: 40,
+  },
+  medium: {
+    pixelRatio: 1.5, antialias: true, shadows: true, shadowMap: 1024, shadowExtent: 34,
+    textureSize: 256, anisotropy: 4, treeDetail: 0, cropSparse: true,
+    grass: 6000, grassTile: 46, lampLights: 2, lodRadius: 55,
+  },
+  high: {
+    pixelRatio: 2, antialias: true, shadows: true, shadowMap: 2048, shadowExtent: 46,
+    textureSize: 512, anisotropy: 8, treeDetail: 1, cropSparse: false,
+    grass: 18000, grassTile: 64, lampLights: 4, lodRadius: 75,
+  },
+};
+const LOAD_TIME = ['antialias', 'textureSize', 'anisotropy', 'treeDetail', 'cropSparse'];
+const isLevel = (name) => typeof name === 'string' && Object.hasOwn(PRESETS, name);
+
+function qualityFor(level, maxAnisotropy) {
+  const q = { level, ...PRESETS[level] };
   q.anisotropy = Math.min(q.anisotropy, maxAnisotropy);
   return q;
+}
+
+// Settings live apart from the journey, so a new journey keeps them.
+function loadSettings() {
+  try {
+    const data = JSON.parse(window.localStorage.getItem(SETTINGS_KEY));
+    return data && typeof data === 'object' ? data : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveSettings(settings) {
+  try {
+    window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  } catch {
+    // Without storage the choice simply lasts until the page is closed.
+  }
 }
 
 function nextFrame() {
@@ -50,18 +95,22 @@ async function boot() {
   ui.setTouchMode(coarse);
   ui.setStatus('Preparing the realm…');
 
+  const settings = loadSettings();
+  const asked = params.get('quality');
+  const level = isLevel(asked) ? asked : isLevel(settings.quality) ? settings.quality : coarse ? 'medium' : 'high';
+
   let renderer;
   try {
-    renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer = new THREE.WebGLRenderer({ antialias: PRESETS[level].antialias, powerPreference: 'high-performance' });
   } catch (err) {
     console.error(err);
     ui.showFatal('WebGL is not available, so Valdren cannot run here. Try enabling hardware acceleration or another browser.');
     return;
   }
-  const quality = qualityFor(coarse, renderer.capabilities.getMaxAnisotropy());
+  const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
+  const quality = qualityFor(level, maxAnisotropy);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, quality.pixelRatio));
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.shadowMap.enabled = quality.shadows;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
@@ -135,10 +184,12 @@ async function boot() {
   }
 
   function saveNow() {
-    if (!progress.save(snapshot()) && progress.available && !saveWarned) {
+    const ok = progress.save(snapshot());
+    if (!ok && progress.available && !saveWarned) {
       saveWarned = true;
       ui.toast('Your progress could not be saved (browser storage is full or blocked).', 5000);
     }
+    return ok;
   }
 
   // Somewhere the player can stand: inside the kingdom, out of walls and deep water.
@@ -312,8 +363,10 @@ async function boot() {
     setMode('paused');
     input.reset();
     input.exitPointerLock();
-    ui.showPause();
-    saveNow();
+    const status = saveNow()
+      ? `Saved: ${lore.found.length} of ${lore.total} discoveries.`
+      : progress.available ? 'Your progress could not be saved just now.' : 'This browser is blocking storage, so progress is not being saved.';
+    ui.showPause(status);
   }
 
   function resume(fromClick) {
@@ -324,7 +377,33 @@ async function boot() {
     if (fromClick) input.requestPointerLock();
   }
 
+  // ------------------------------------------------------------ quality
+
+  const builtWith = quality;
+  let current = quality;
+
+  // Whether a load-time setting differs from the world as it was built (the menu notes it).
+  function pendingReload(q) {
+    return LOAD_TIME.some((key) => q[key] !== builtWith[key]);
+  }
+
+  async function setQuality(next) {
+    if (!isLevel(next) || next === current.level) return;
+    current = qualityFor(next, maxAnisotropy);
+    settings.quality = next;
+    saveSettings(settings);
+    ui.setQuality(next, pendingReload(current));
+    // Let the menu show the choice before the materials recompile for the new lights.
+    await nextFrame();
+    world.setQuality(current);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, current.pixelRatio));
+    onResize();
+    slow.warned = true;
+  }
+
   ui.onBegin = begin;
+  ui.onQuality = setQuality;
+  ui.setQuality(level, false);
   ui.onResume = () => resume(true);
   ui.onNewJourney = () => {
     if (window.confirm('Start a new journey? Your saved progress in this browser will be forgotten.')) newJourney();
@@ -412,6 +491,7 @@ async function boot() {
   const clock = new THREE.Clock();
   const look = { yaw: 0, pitch: 0 };
   const stats = { frames: 0, time: 0 };
+  const slow = { time: 0, warned: false };
   const head = new THREE.Vector3();
   const shotFocus = new THREE.Vector3();
   const sideDocked = window.matchMedia('(max-height: 520px) and (orientation: landscape)');
@@ -474,12 +554,22 @@ async function boot() {
     });
   }
 
+  // Once a session, a struggling device is pointed to the lighter presets.
+  function noticeSlow(fps, seconds) {
+    if (slow.warned || current.level === 'low' || mode !== 'playing' || document.hidden) return;
+    slow.time = fps < SLOW_FPS ? slow.time + seconds : 0;
+    if (slow.time < 10) return;
+    slow.warned = true;
+    ui.toast(`Running slowly? Lower the graphics quality in the menu (${input.touchMode ? 'the pause button' : 'Esc'}).`, 6000);
+  }
+
   function updateDebug(elapsed) {
     stats.frames++;
     stats.time += elapsed;
     if (stats.time < 0.5) return;
     const fps = stats.frames / stats.time;
     const ms = (stats.time / stats.frames) * 1000;
+    noticeSlow(fps, stats.time);
     stats.frames = 0;
     stats.time = 0;
     if (!ui.debugVisible) return;
@@ -491,7 +581,7 @@ async function boot() {
       `calls ${info.calls}  tris ${(info.triangles / 1000).toFixed(1)}k`,
       `pos ${p.x.toFixed(1)} ${p.y.toFixed(1)} ${p.z.toFixed(1)}`,
       `speed ${player.speed.toFixed(1)} m/s${depth > 0 ? `  wading ${depth.toFixed(2)} m` : ''}`,
-      `time ${world.timeOfDay.toFixed(2)} h  night ${world.night.toFixed(2)}  dpr ${renderer.getPixelRatio()}`,
+      `time ${world.timeOfDay.toFixed(2)} h  night ${world.night.toFixed(2)}  dpr ${renderer.getPixelRatio()}  ${current.level}`,
       `people ${npcs.list.length}  lore ${lore.found.length}/${lore.total}  flags ${flags.size}`,
       `${mode}${input.touchMode ? ' · touch' : ''}${input.pointerLocked ? ' · locked' : ''}${progress.available ? '' : ' · no storage'}`,
     ].join('\n'));
@@ -568,7 +658,7 @@ async function boot() {
   ui.setReady(saved ? `Saved journey found: ${lore.found.length} of ${lore.total} discoveries.` : null, progress.available);
 
   // Handy from the browser console while developing.
-  window.valdren = { THREE, renderer, scene, camera, world, player, follow, input, ui, npcs, dialogue, flags, lore, journal, reader, progress, saveNow };
+  window.valdren = { THREE, renderer, scene, camera, world, player, follow, input, ui, npcs, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
 }
 
 boot().catch((err) => {
