@@ -44,6 +44,9 @@ export class UI {
     this.healthBar = this.healthEl.querySelector('i');
     this.purseEl = $('purse-count');
     this.hurtEl = $('hurt');
+    this.burstEl = $('burst');
+    this.orbEls = [$('btn-orb'), $('skill')];
+    this._orb = -1;
     this._health = -1;
     this._purse = -1;
     this.newBtn = $('btn-new');
@@ -229,6 +232,25 @@ export class UI {
       void this.purseEl.offsetWidth;
       this.purseEl.parentElement.classList.add('gain');
     }
+  }
+
+  // How ready the Rasengan is (0..1), on its touch button and the desktop HUD.
+  setOrb(ready) {
+    const v = Math.round(ready * 40) / 40;
+    if (v === this._orb) return;
+    this._orb = v;
+    for (const el of this.orbEls) {
+      el.style.setProperty('--ready', String(v));
+      el.classList.toggle('cooling', v < 1);
+    }
+  }
+
+  // A blue-white flash as a Rasengan bursts.
+  flashBurst() {
+    const el = this.burstEl;
+    el.classList.remove('on');
+    void el.offsetWidth;
+    el.classList.add('on');
   }
 
   // A red pulse round the screen edge when the traveller is struck.

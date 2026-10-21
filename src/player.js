@@ -1256,6 +1256,17 @@ const ACTIONS = {
     right: true,
     pose: () => ({ ...SWORD_ARM }),
   },
+  // Gathering a sphere of wind: the right palm held out and up at chest height, the
+  // left hand cupped over it.
+  orb: {
+    carry: true,
+    right: true,
+    pose: (t) => ({
+      upperArmR: [-0.85, 0.1, -0.3], forearmR: [-0.95, 0.55, 0], handR: [0.55, 0, 0],
+      upperArmL: [-0.95, 0, 0.12], forearmL: [-1.05, -0.75, 0], handL: [-0.45 + Math.sin(t * 9) * 0.06, 0, 0],
+      chest: [0.04, -0.12, 0], head: [0.18, -0.1, 0],
+    }),
+  },
   // The lantern in the left hand, while the right holds a sword.
   lanternL: {
     carry: true,
@@ -1355,7 +1366,18 @@ const STRIKES = {
     ],
   },
 };
-export const STRIKE_HIT = { punch: 0.45, slash: 0.55 };
+STRIKES.thrust = {
+  // Driving a sphere of wind forward with the right palm, leaning into it.
+  dur: 0.55,
+  keys: [
+    { p: 0, pose: { upperArmR: [-0.85, 0.1, -0.3], forearmR: [-0.95, 0.55, 0], handR: [0.55, 0, 0] } },
+    { p: 0.22, pose: { upperArmR: [-0.6, 0.2, -0.45], forearmR: [-1.5, 0.3, 0], handR: [0.4, 0, 0], chest: [0, -0.4, 0] } },
+    { p: 0.45, pose: { upperArmR: [-1.6, 0.1, -0.02], forearmR: [-0.05, 0, 0], handR: [-0.9, 0, 0], chest: [0.15, 0.5, 0], spine: [0.3, 0.15, 0] } },
+    { p: 0.7, pose: { upperArmR: [-1.55, 0.1, -0.02], forearmR: [-0.08, 0, 0], handR: [-0.8, 0, 0], chest: [0.12, 0.45, 0], spine: [0.25, 0.12, 0] } },
+    { p: 1, pose: {} },
+  ],
+};
+export const STRIKE_HIT = { punch: 0.45, slash: 0.55, thrust: 0.45 };
 // Seconds from the start of a blow to the moment it lands.
 export function strikeImpact(kind) {
   return STRIKES[kind].dur * STRIKE_HIT[kind];
@@ -1621,6 +1643,7 @@ export class Player {
     // In the air: after a jump or a fall (airborne), or in flight (flying).
     this.airborne = false;
     this.flying = false;
+    this._dash = null; // a lunge: { vx, vz, t } overriding the controls for t seconds
     this._visualY = this.position.y;
     this._sync();
   }
@@ -1654,6 +1677,17 @@ export class Player {
     const k = 1 - Math.exp(-rate * dt);
     vel.x += (ix * top - vel.x) * k;
     vel.z += (iz * top - vel.z) * k;
+    const dash = this._dash;
+    if (dash) {
+      vel.x = dash.vx;
+      vel.z = dash.vz;
+      dash.t -= dt;
+      if (dash.t <= 0) {
+        this._dash = null;
+        vel.x *= 0.25;
+        vel.z *= 0.25;
+      }
+    }
 
     const px = pos.x;
     const pz = pos.z;
@@ -1706,7 +1740,9 @@ export class Player {
     }
 
     this.speed = dt > 0 ? Math.hypot(pos.x - px, pos.z - pz) / dt : 0;
-    if (pushing && Math.hypot(vel.x, vel.z) > 0.3) {
+    if (dash) {
+      this.heading = Math.atan2(dash.vx, dash.vz);
+    } else if (pushing && Math.hypot(vel.x, vel.z) > 0.3) {
       this.heading = dampAngle(this.heading, Math.atan2(vel.x, vel.z), this.flying ? 6 : 12, dt);
     } else if (this.aiming && !pushing) {
       this.heading = dampAngle(this.heading, cameraYaw + Math.PI, 5, dt);
@@ -1755,6 +1791,14 @@ export class Player {
     this.flying = false;
     this.airborne = false;
     this.velocity.y = 0;
+    this._dash = null;
+  }
+
+  // Lunges along (vx, vz) metres per second for a moment, whatever the controls say;
+  // walls still stop it.
+  lunge(vx, vz, seconds) {
+    this._dash = { vx, vz, t: seconds };
+    this.heading = Math.atan2(vx, vz);
   }
 
   // Stands still and turns towards (x, z), e.g. to face someone in a conversation.

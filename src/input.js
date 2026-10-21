@@ -3,8 +3,8 @@
  * joystick and look area, and the on-screen buttons. Everything is reduced to
  * a movement vector, accumulated look/zoom deltas, and named action events.
  *
- * Events emitted: interact, journal, map, lantern, jump, fly, attack, sword, pause, debug,
- * lockchange, lockerror, touchmode.
+ * Events emitted: interact, journal, map, lantern, jump, fly, attack, sword, rasengan, pause,
+ * debug, lockchange, lockerror, touchmode.
  */
 
 const MOVE_KEYS = {
@@ -27,6 +27,7 @@ const ACTION_KEYS = {
   KeyG: 'fly',
   KeyQ: 'attack',
   KeyR: 'sword',
+  KeyV: 'rasengan',
   Escape: 'pause',
   Backquote: 'debug',
   F3: 'debug',
@@ -287,9 +288,9 @@ export class Input {
     if (e.pointerType === 'mouse') {
       if (this.touchMode) this.setTouchMode(false);
       if (!this.active) return;
-      // With the mouse captured, a left click is a blow.
-      if (this.pointerLocked && e.button === 0) {
-        this.emit('attack', { source: 'mouse' });
+      // With the mouse captured, a left click is a blow and a right click the Rasengan.
+      if (this.pointerLocked && (e.button === 0 || e.button === 2)) {
+        this.emit(e.button === 0 ? 'attack' : 'rasengan', { source: 'mouse' });
         return;
       }
       if (!this.pointerLocked) {

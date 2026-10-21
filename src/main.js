@@ -10,6 +10,7 @@ import { Post } from './post.js';
 import { Lantern } from './lantern.js';
 import { Sword } from './gear.js';
 import { Combat, MAX_HEALTH } from './combat.js';
+import { Rasengan } from './rasengan.js';
 import { Quests, CASES } from './quests.js';
 import { Music } from './music.js';
 import { Dialogue } from './dialogue.js';
@@ -180,6 +181,9 @@ async function boot() {
   const lantern = new Lantern(scene, quality);
   const sword = new Sword(scene);
   const combat = new Combat(player, npcs, sword);
+  const rasengan = new Rasengan(scene);
+  // Its sounds play through the music's audio context (once Begin has started it).
+  rasengan.audio = () => (music.ctx && music.noise ? { ctx: music.ctx, noise: music.noise } : null);
   const music = new Music();
   music.volume = typeof settings.music === 'number' ? Math.min(1, Math.max(0, settings.music)) : 0.6;
   const follow = new FollowCamera(camera, world);
@@ -299,6 +303,10 @@ async function boot() {
       ui.setPrompt(null);
       ui.updateLabels([]);
       ui.updateWaypoint(null);
+      if (rasengan.busy) {
+        rasengan.cancel();
+        endOrb();
+      }
     }
     needsRender = true;
     refreshHint();
@@ -605,15 +613,53 @@ async function boot() {
     setFlying(!player.flying);
   });
   input.on('sword', () => {
-    if (mode !== 'playing' || balloons.riding) return;
+    if (mode !== 'playing' || balloons.riding || rasengan.busy) return;
     sword.drawn = !sword.drawn;
     holdGear();
     ui.toast(sword.drawn ? `You draw your ${sword.steel ? 'steel ' : ''}sword.` : 'You sheathe your sword.', 1600);
   });
   input.on('attack', () => {
-    if (mode !== 'playing' || balloons.riding) return;
+    if (mode !== 'playing' || balloons.riding || rasengan.busy) return;
     combat.attack(follow.yaw + Math.PI);
   });
+
+  // The Rasengan: gathered in the right hand (the sword goes back in its scabbard for
+  // it and comes out again after; a lit lantern moves to the left hand), then driven
+  // into whoever is closest in the direction of the view.
+  let orbSword = false;
+  let orbUsed = false;
+  let orbNagged = 0;
+  input.on('rasengan', () => {
+    if (mode !== 'playing' || balloons.riding || rasengan.busy) return;
+    if (!rasengan.begin()) {
+      if (performance.now() - orbNagged > 1500) {
+        orbNagged = performance.now();
+        ui.toast('Your Rasengan is still gathering strength…', 1400);
+      }
+      return;
+    }
+    orbSword = sword.drawn;
+    sword.drawn = false;
+    lantern.hand = 'handL';
+    player.animator.action = 'orb';
+    ui.setSword(false);
+    if (!orbUsed) {
+      orbUsed = true;
+      ui.toast('Rasengan! A sphere of wind gathers in your palm. In a moment you lunge and drive it into whoever is in front of you.', 4500);
+    }
+  });
+  // Back to sword and lantern as they were.
+  function endOrb() {
+    sword.drawn = orbSword;
+    orbSword = false;
+    holdGear();
+  }
+  let shake = 0;
+  rasengan.onImpact = (npc, result, wasCalm) => combat.onLanded(npc, result, wasCalm);
+  rasengan.onBurst = (strength) => {
+    shake = 0.32 * strength;
+    ui.flashBurst();
+  };
 
   // The hand lantern: held out in front while lit, and the traveller turns to shine it
   // wherever the camera looks when standing still.
@@ -626,6 +672,8 @@ async function boot() {
 
   // What the hands hold: a drawn sword in the right, so the lantern moves to the left.
   function holdGear() {
+    // While a Rasengan is in hand the hands stay as they are; endOrb() calls this after.
+    if (rasengan.busy) return;
     lantern.hand = sword.drawn ? 'handL' : 'handR';
     if (lantern.on) player.animator.action = sword.drawn ? 'lanternL' : 'lantern';
     else player.animator.action = sword.drawn ? 'sword' : null;
@@ -891,6 +939,7 @@ async function boot() {
     // Bearing the camera looks towards: yaw 0 looks north (-z), east is +x.
     ui.updateCompass(THREE.MathUtils.radToDeg(-follow.yaw), world.timeOfDay);
     ui.setHealth(combat.health / MAX_HEALTH);
+    ui.setOrb(rasengan.ready);
     minimapTimer -= dt;
     if (minimapTimer > 0) return;
     minimapTimer = 1 / 30;
@@ -1014,6 +1063,11 @@ async function boot() {
         player.update(dt, input.getMove(), follow.yaw);
       }
       combat.update(dt);
+      const orbBusy = rasengan.busy;
+      rasengan.update(dt, player, npcs, follow.yaw + Math.PI);
+      // The left hand lets go of the sphere as the lunge begins; the gear returns after.
+      if (rasengan.state === 'lunge' && player.animator.action === 'orb') player.animator.action = lantern.on ? 'lanternL' : null;
+      if (orbBusy && !rasengan.busy) endOrb();
       npcs.update(dt, player);
       quests.update(dt, player, standable);
       if (!balloons.riding) npcs.separate(player);
@@ -1021,6 +1075,12 @@ async function boot() {
       if (!balloons.riding) animals.separate(player);
       lore.update(dt);
       follow.update(dt, player.position);
+      if (shake > 0.002) {
+        camera.position.x += (Math.random() - 0.5) * shake;
+        camera.position.y += (Math.random() - 0.5) * shake;
+        camera.position.z += (Math.random() - 0.5) * shake;
+        shake *= Math.exp(-7 * dt);
+      }
       // Hide the player when an obstacle squeezes the camera right up to them.
       player.figure.root.visible = follow.actualDistance > 1.0;
       lantern.update(dt, player, camera, world.night);
@@ -1099,7 +1159,7 @@ async function boot() {
   ui.setReady(saved ? `Saved journey found: ${lore.found.length} of ${lore.total} discoveries.` : null, progress.available);
 
   // Handy from the browser console while developing.
-  window.valdren = { THREE, renderer, post, scene, camera, world, player, lantern, setLantern, sword, combat, quests, setFlying, music, sleep, follow, input, ui, npcs, animals, balloons, boats, dragon, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
+  window.valdren = { THREE, renderer, post, scene, camera, world, player, lantern, setLantern, sword, combat, rasengan, quests, setFlying, music, sleep, follow, input, ui, npcs, animals, balloons, boats, dragon, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
 }
 
 boot().catch((err) => {

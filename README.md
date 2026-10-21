@@ -173,6 +173,18 @@ ends the conversation.
   someone for no reason fines you 5 crowns. Your own health is the red bar at
   the top left; it comes back slowly when nobody has hit you for a while, or at
   once with food. If it runs out, you wake up in your cottage.
+- **Rasengan:** press `V` (or right-click, or the blue swirl button on a phone).
+  A sphere of churning blue wind gathers in your right palm, your left hand cupped
+  over it; after a moment you lunge (up to about five metres) at whoever is
+  closest in the direction you are looking and drive it into them. It deals 90
+  damage, almost a whole life, throws them back several metres with a blue
+  burst, a shock ring along the ground, sparks, a boom and a shake of the camera,
+  and catches anyone right beside them for 28 more. A fleeing culprit usually
+  yields to a single one. It then needs 3.5 seconds to gather strength again
+  (the icon fills back up, top left on a computer). Your sword goes back in its
+  scabbard for it and comes out again after; a lit lantern moves to your other
+  hand. Children are too quick for it, and guards fine you for using it on
+  honest folk, as for any blow.
 - **Mark the map:** open the map (`M`) and click or tap anywhere to set your
   mark, a red pin. A pointer then shows the way on screen, with the distance
   (at the edge of the screen when the spot is out of view), and the mark rides
@@ -280,6 +292,7 @@ maps), on desktop and on phones, with WebGL 2.
 | Fly / land  | `G` (`Space` climbs, `C` sinks) | **Fly** / **Land**, hold **Up** / **Down** |
 | Punch, swing the sword | Left click (while looking around) or `Q` | **Attack** button       |
 | Draw / sheathe the sword | `R`                 | **Sword** button                          |
+| Rasengan    | `V`, or right click (while looking around) | The blue swirl button          |
 | Bind a beaten culprit | `E` next to them        | **Interact** button                       |
 | Buy something | Ask a shopkeeper, then **Buy**  | The same                                  |
 | Mark the map | Click the full map             | Tap the full map                          |
@@ -361,6 +374,14 @@ left mouse button and drag to look around.
   kneeling to yield, walking with bound hands) are poses too. An accused culprit
   flees (a little slower than you run), turns to fight when caught, and slips
   back to their haunts if you lose them for long.
+- **Rasengan** (`src/rasengan.js`): the sphere is a shader shell whose bands of
+  wind spiral round its axis and brighten at the rim, over a white core, three
+  whirling rings and a glow sprite, all additive (so it glows through the bloom on
+  High). The lunge overrides the controls for a moment (walls still stop it); the
+  burst is a growing fresnel shell, an expanding ring on the ground and ninety
+  sparks with drag and gravity. The struck are thrown back by a sliding fling with
+  a hop, which walls stop. Its whirr and boom are Web Audio noise through sweeping
+  filters and falling oscillators, played through the music's audio context.
 - **Bounties:** each case is a handful of dialogue flags (taken, clue heard,
   exposed, bound, handed over), so it is saved with the conversations; a reply
   can carry an action for the game (open a shop, bolt, mark the map, hand over).
@@ -548,6 +569,7 @@ src/post.js       bloom, tone mapping and vignette passes (High preset)
 src/lantern.js    the traveller's lantern: the prop, its beam and glow
 src/gear.js       the traveller's sword and scabbard
 src/combat.js     blows, the traveller's health, aiming at whoever is near
+src/rasengan.js   the Rasengan: the sphere, the lunge, the burst and its sound
 src/quests.js     purse, bag, shops, and the Wardens' Guild's bounties
 src/music.js      the music: synthesised instruments and a tune generator
 src/dialogue.js   branching conversations: typewriter, replies, flags

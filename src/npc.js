@@ -345,6 +345,8 @@ class NPC {
     this._blowIn = -1;
     this._away = 0;
     this._dodge = 1;
+    this._fling = null; // thrown back by a heavy blow: { vx, vz, t, dur, hop }
+    this._lift = 0;     // how far off the ground that throw has them
 
     this.animator.action = this.route[this.index].action;
     this.animator.settle();
@@ -434,6 +436,38 @@ class NPC {
   leave() {
     this.mood = 'gone';
     this.figure.root.visible = false;
+  }
+
+  // Thrown `distance` metres back from `from` by a heavy blow, with a hop; walls stop it.
+  fling(from, distance) {
+    const dx = this.position.x - from.x;
+    const dz = this.position.z - from.z;
+    const d = Math.hypot(dx, dz) || 1;
+    const dur = 0.5;
+    // Slowing linearly to a stop covers half of speed * dur.
+    const speed = (2 * distance) / dur;
+    this._fling = { vx: (dx / d) * speed, vz: (dz / d) * speed, t: 0, dur, hop: Math.min(1.1, distance * 0.2) };
+  }
+
+  _flight(dt) {
+    const f = this._fling;
+    f.t += dt;
+    const u = Math.min(1, f.t / f.dur);
+    const k = 1 - u;
+    const pos = this.position;
+    const nx = pos.x + f.vx * k * dt;
+    const nz = pos.z + f.vz * k * dt;
+    if (this.world.canStep(pos.x, pos.z, nx, nz)) {
+      pos.x = clamp(nx, -PLAY_HALF + 2, PLAY_HALF - 2);
+      pos.z = clamp(nz, -PLAY_HALF + 2, PLAY_HALF - 2);
+      this.world.colliders.resolve(pos, NPC_RADIUS * this.scale, pos.y + 0.15, pos.y + 1.7);
+      pos.y = this.world.getGroundHeight(pos.x, pos.z);
+    }
+    this._lift = Math.sin(Math.PI * u) * f.hop;
+    if (u >= 1) {
+      this._fling = null;
+      this._lift = 0;
+    }
   }
 
   // Shoved a little away from `from`, unless something solid is in the way.
@@ -599,12 +633,14 @@ class NPC {
     this.sinceHurt += dt;
     if (this.health < this.maxHealth && this.sinceHurt > 12 && this.mood === null) this.health = Math.min(this.maxHealth, this.health + dt * 3);
     root.visible = dist < range || this.talking || (this.mood !== null && dist < range * 2);
+    const flung = !!this._fling;
+    if (flung) this._flight(dt);
     // A hidden figure's bones and gear need no matrices until it is shown again.
     root.matrixWorldAutoUpdate = root.visible;
     if (!root.visible) {
       // Out of sight, people keep to their routine without being animated.
       if (this.mood) this._behave(dt, dist, dx, dz, player, events);
-      else this._walk(dt, dist, dx, dz);
+      else if (!flung) this._walk(dt, dist, dx, dz);
       this._visualY = pos.y;
       this._sync();
       return;
@@ -618,6 +654,8 @@ class NPC {
     let action = this.animator.action;
     if (this.mood) {
       action = this._behave(dt, dist, dx, dz, player, events);
+    } else if (flung) {
+      this.moveSpeed = 0;
     } else if (this.talking) {
       // Someone seated stays put and turns only their head.
       if (!isSeated(action)) this.heading = dampAngle(this.heading, Math.atan2(dx, dz), 6, dt);
@@ -702,7 +740,7 @@ class NPC {
 
   _sync() {
     const root = this.figure.root;
-    root.position.set(this.position.x, this._visualY, this.position.z);
+    root.position.set(this.position.x, this._visualY + this._lift, this.position.z);
     root.rotation.y = this.heading;
   }
 }

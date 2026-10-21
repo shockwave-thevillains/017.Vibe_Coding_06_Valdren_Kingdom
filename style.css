@@ -317,6 +317,85 @@ body.touch #health {
   }
 }
 
+/* The Rasengan: a swirl of blue air, shaded round while it gathers strength again. */
+.orb-icon {
+  position: relative;
+  display: inline-block;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(from 20deg, rgba(255, 255, 255, 0.55) 0 14deg, rgba(255, 255, 255, 0) 14deg 45deg),
+    radial-gradient(circle at 50% 50%, #ffffff 0 18%, #9fd8ff 34%, #3c8cf0 62%, #1d4fa8 100%);
+  box-shadow: 0 0 10px rgba(120, 190, 255, 0.85);
+}
+
+.orb-icon.inline {
+  width: 16px;
+  height: 16px;
+  vertical-align: -3px;
+}
+
+#skill,
+#btn-orb {
+  --ready: 1;
+}
+
+#skill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: max-content;
+  padding: 3px 8px 3px 4px;
+  border-radius: 16px;
+  background: rgba(20, 15, 10, 0.45);
+  color: var(--parchment);
+}
+
+#skill kbd {
+  font-size: 12px;
+}
+
+#skill.cooling .orb-icon,
+#btn-orb.cooling .orb-icon {
+  filter: grayscale(0.7) brightness(0.75);
+}
+
+#skill .orb-icon::after,
+#btn-orb .orb-icon::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  background: conic-gradient(rgba(10, 8, 6, 0) calc(var(--ready) * 360deg), rgba(10, 8, 6, 0.6) 0);
+}
+
+#btn-orb {
+  right: calc(146px + var(--safe-right));
+  bottom: calc(210px + var(--safe-bottom));
+  width: 52px;
+  height: 52px;
+}
+
+#btn-orb .orb-icon {
+  width: 30px;
+  height: 30px;
+}
+
+/* A blue-white flash as a Rasengan bursts. */
+#burst {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(ellipse at center, rgba(200, 230, 255, 0.55) 0%, rgba(120, 180, 255, 0.25) 45%, rgba(80, 140, 255, 0) 75%);
+}
+
+#burst.on {
+  animation: hurt-flash 0.45s ease-out;
+}
+
 /* A red pulse round the edges when the traveller is struck. */
 #hurt {
   position: fixed;
