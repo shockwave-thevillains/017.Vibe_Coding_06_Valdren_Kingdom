@@ -548,6 +548,7 @@ async function boot() {
   renderer.info.autoReset = false;
   function draw() {
     renderer.info.reset();
+    animals.draw(camera, player.position);
     if (post.active) post.render(world.night);
     else renderer.render(scene, camera);
   }

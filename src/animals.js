@@ -72,6 +72,11 @@ const _e = new THREE.Euler();
 const _v = new THREE.Vector3();
 const _s = new THREE.Vector3();
 const _c = new THREE.Color();
+const _proj = new THREE.Matrix4();
+const _frustum = new THREE.Frustum();
+const _sphere = new THREE.Sphere();
+// Animals this close to the player are always drawn: they may cast a shadow into view.
+const SHADOW_REACH = 70;
 
 function M(x, y, z, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1) {
   return new THREE.Matrix4().compose(_v.set(x, y, z), _q.setFromEuler(_e.set(rx, ry, rz)), _s.set(sx, sy, sz));
@@ -493,8 +498,14 @@ export class Animals {
       if (kind === 'dog') members.forEach((m, i) => mesh.setColorAt(i, _c.set({ Biscuit: 0x8a5a2e, Patch: 0xeae4d8, Rusty: 0xc8783a }[m.name] || 0x5a4a3a)));
       if (kind === 'cat') members.forEach((m, i) => { if (m.name === 'Smudge') mesh.setColorAt(i, _c.set(0x3a3a3a)); if (m.name === 'Tansy') mesh.setColorAt(i, _c.set(0xd88a3a)); });
       mesh.instanceColor.needsUpdate = true;
+      // Each frame only the animals that can be seen fill the first instances, so every
+      // member keeps its colour and takes it to whichever instance it is drawn in.
+      members.forEach((m, i) => {
+        m.color = new THREE.Color();
+        mesh.getColorAt(i, m.color);
+      });
       scene.add(mesh);
-      this.groups.set(kind, { mesh, anim, members, spec });
+      this.groups.set(kind, { mesh, anim, members, spec, slots: new Array(members.length).fill(null) });
     }
     this._time = 0;
     this.update(0, { position: new THREE.Vector3(1e6, 0, 1e6) }, null);
@@ -539,7 +550,7 @@ export class Animals {
     const w = this.world;
     if (Math.abs(x) > PLAY_HALF || Math.abs(z) > PLAY_HALF) return false;
     const g = w.getGroundHeight(x, z);
-    if (w.waterDepth(x, z) > 0.25) return false;
+    if (WATER_LEVEL - g > 0.25) return false;
     return !w.colliders.contains(x, g + Math.max(0.3, a.spec.legLen), z, a.spec.radius * 0.8);
   }
 
@@ -547,10 +558,19 @@ export class Animals {
     this._time += dt;
     const pp = player.position;
     for (const a of this.list) this._think(a, dt, pp);
-    for (const g of this.groups.values()) {
-      if (g.spec.flies) this._updateBirds(g, dt);
-      else this._write(g);
-    }
+    for (const g of this.groups.values()) if (g.spec.flies) this._flyBirds(g, dt);
+  }
+
+  /*
+   * Writes the instances to draw this frame: the animals inside the camera's view, and
+   * on the ground those near focus (the player), whose shadows may fall into view.
+   * The rest are skipped, so an animal far off costs nothing until it can be seen.
+   */
+  draw(camera, focus) {
+    camera.updateMatrixWorld();
+    _proj.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    _frustum.setFromProjectionMatrix(_proj);
+    for (const g of this.groups.values()) this._write(g, focus);
   }
 
   _think(a, dt, pp) {
@@ -667,42 +687,72 @@ export class Animals {
     return Math.hypot(x - h.x, z - h.z) < h.r + (a.state === 'flee' ? 6 : 2);
   }
 
-  _write(g) {
-    const { mesh, anim, members, spec } = g;
+  _write(g, focus) {
+    const { mesh, anim, members, spec, slots } = g;
+    let n = 0;
+    let recolour = false;
     for (const a of members) {
       const s = a.scale;
-      const drop = a.fold * (spec.legLen || 0) * 0.75 * s;
-      _m.compose(_v.set(a.x, a.y - drop + (a.air || 0) * 2.4 + (spec.swims ? Math.sin(this._time * 2 + a.phase) * 0.015 : 0), a.z), _q.setFromAxisAngle(UP, a.heading), _s.set(s, s, s));
-      mesh.setMatrixAt(a.index, _m);
-      const stride = a.fold > 0.05 ? -a.fold : Math.min(1.3, a.speed / Math.max(spec.walk, 0.1));
-      // Chickens keep their wings folded unless they are running away.
-      const swing = spec.peck ? (a.state === 'flee' ? this._time * 22 : 0.08) : a.swing;
-      anim.setXYZW(a.index, a.phase, stride, a.head, swing);
+      let y;
+      if (spec.flies) {
+        y = a.y;
+        _sphere.set(_v.set(a.x, y, a.z), 2);
+        if (!_frustum.intersectsSphere(_sphere)) continue;
+        _m.compose(_v, _q.setFromEuler(_e.set(0, a.heading, a.bank)), _s.set(1.4, 1.4, 1.4));
+      } else {
+        const drop = a.fold * (spec.legLen || 0) * 0.75 * s;
+        y = a.y - drop + (a.air || 0) * 2.4 + (spec.swims ? Math.sin(this._time * 2 + a.phase) * 0.015 : 0);
+        const near = Math.abs(a.x - focus.x) < SHADOW_REACH && Math.abs(a.z - focus.z) < SHADOW_REACH;
+        if (!near) {
+          _sphere.set(_v.set(a.x, y + 0.6 * s, a.z), Math.max(1.2, spec.radius * 3) * s);
+          if (!_frustum.intersectsSphere(_sphere)) continue;
+        }
+        _m.compose(_v.set(a.x, y, a.z), _q.setFromAxisAngle(UP, a.heading), _s.set(s, s, s));
+      }
+      mesh.setMatrixAt(n, _m);
+      if (spec.flies) {
+        anim.setXYZW(n, 0, 0, 0, a.gliding ? 0.25 : a.flap);
+      } else {
+        const stride = a.fold > 0.05 ? -a.fold : Math.min(1.3, a.speed / Math.max(spec.walk, 0.1));
+        // Chickens keep their wings folded unless they are running away.
+        const swing = spec.peck ? (a.state === 'flee' ? this._time * 22 : 0.08) : a.swing;
+        anim.setXYZW(n, a.phase, stride, a.head, swing);
+      }
+      if (slots[n] !== a) {
+        slots[n] = a;
+        mesh.setColorAt(n, a.color);
+        recolour = true;
+      }
+      n++;
     }
+    mesh.count = n;
+    mesh.visible = n > 0;
+    if (!n) return;
+    mesh.instanceMatrix.clearUpdateRanges();
+    mesh.instanceMatrix.addUpdateRange(0, n * 16);
     mesh.instanceMatrix.needsUpdate = true;
+    anim.clearUpdateRanges();
+    anim.addUpdateRange(0, n * 4);
     anim.needsUpdate = true;
+    if (recolour) mesh.instanceColor.needsUpdate = true;
   }
 
-  _updateBirds(g, dt) {
-    const { mesh, anim, members } = g;
-    for (const b of members) {
+  // Birds circle their flocks; where each one is goes to _write.
+  _flyBirds(g, dt) {
+    for (const b of g.members) {
       const f = b.flock;
       b.a += f.speed * dt;
       b.glide += dt;
       const r = f.r + b.dr + Math.sin(b.glide * 0.3) * 4;
-      const x = f.x + Math.sin(b.a) * r;
-      const z = f.z + Math.cos(b.a) * r;
-      const y = this.world.getHeight(f.x, f.z) + f.y + b.dy + Math.sin(b.glide * 0.7) * 1.5;
-      const heading = b.a + (f.speed > 0 ? Math.PI / 2 : -Math.PI / 2);
+      b.x = f.x + Math.sin(b.a) * r;
+      b.z = f.z + Math.cos(b.a) * r;
+      b.y = this.world.getHeight(f.x, f.z) + f.y + b.dy + Math.sin(b.glide * 0.7) * 1.5;
+      b.heading = b.a + (f.speed > 0 ? Math.PI / 2 : -Math.PI / 2);
+      b.bank = f.speed > 0 ? -0.25 : 0.25;
       // Flap for a while, then glide with the wings held out.
-      const gliding = Math.sin(b.glide * 0.5 + b.fi) > 0.3;
-      b.flap += dt * (gliding ? 0 : 14);
-      _m.compose(_v.set(x, y, z), _q.setFromEuler(_e.set(0, heading, f.speed > 0 ? -0.25 : 0.25)), _s.set(1.4, 1.4, 1.4));
-      mesh.setMatrixAt(b.index, _m);
-      anim.setXYZW(b.index, 0, 0, 0, gliding ? 0.25 : b.flap);
+      b.gliding = Math.sin(b.glide * 0.5 + b.fi) > 0.3;
+      b.flap += dt * (b.gliding ? 0 : 14);
     }
-    mesh.instanceMatrix.needsUpdate = true;
-    anim.needsUpdate = true;
   }
 
   // Keeps the player from walking through the larger animals.

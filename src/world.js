@@ -1390,6 +1390,17 @@ void main() {
 }
 `;
 
+// The visible sky sits on the far plane and is drawn after the opaque scene, so its
+// clouds and stars are only worked out for the pixels that nothing covers.
+const SKY_VERT_FAR = /* glsl */ `
+varying vec3 vDir;
+void main() {
+  vDir = position;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  gl_Position.z = gl_Position.w;
+}
+`;
+
 const SKY_FRAG = /* glsl */ `
 uniform vec3 uZenith;
 uniform vec3 uHorizon;
@@ -1492,7 +1503,7 @@ class SkyDome {
     };
     this.material = new THREE.ShaderMaterial({
       uniforms: this.uniforms,
-      vertexShader: SKY_VERT,
+      vertexShader: SKY_VERT_FAR,
       fragmentShader: SKY_FRAG,
       side: THREE.BackSide,
       depthWrite: false,
@@ -1509,7 +1520,7 @@ class SkyDome {
       depthWrite: false,
       fog: false,
     });
-    this.mesh.renderOrder = -10;
+    this.mesh.renderOrder = 1000;
     this.mesh.frustumCulled = false;
   }
 }
@@ -1698,6 +1709,44 @@ function rect(x, z, hw, hd, rot = 0) {
   return { x, z, hw, hd, rot, cos: Math.cos(rot), sin: Math.sin(rot) };
 }
 
+/*
+ * Splits a grid mesh whose index lists its cells row by row (two triangles each, as
+ * PlaneGeometry and the terrain do) into tilesX x tilesY tiles. The tiles share the
+ * original vertex buffers and each gets the bounds of its own part for culling.
+ */
+function gridTiles(geometry, cellsX, cellsY, tilesX, tilesY) {
+  const src = geometry.index.array;
+  const pos = geometry.attributes.position;
+  const p = new THREE.Vector3();
+  const out = [];
+  for (let ty = 0; ty < tilesY; ty++) {
+    for (let tx = 0; tx < tilesX; tx++) {
+      const x0 = Math.floor((tx * cellsX) / tilesX);
+      const x1 = Math.floor(((tx + 1) * cellsX) / tilesX);
+      const y0 = Math.floor((ty * cellsY) / tilesY);
+      const y1 = Math.floor(((ty + 1) * cellsY) / tilesY);
+      const index = new Uint32Array((x1 - x0) * (y1 - y0) * 6);
+      let k = 0;
+      for (let y = y0; y < y1; y++) {
+        index.set(src.subarray((y * cellsX + x0) * 6, (y * cellsX + x1) * 6), k);
+        k += (x1 - x0) * 6;
+      }
+      const box = new THREE.Box3();
+      for (let i = 0; i < index.length; i++) box.expandByPoint(p.fromBufferAttribute(pos, index[i]));
+      const g = new THREE.BufferGeometry();
+      for (const name in geometry.attributes) g.setAttribute(name, geometry.attributes[name]);
+      g.setIndex(new THREE.BufferAttribute(index, 1));
+      g.boundingBox = box;
+      g.boundingSphere = box.getBoundingSphere(new THREE.Sphere());
+      out.push(g);
+    }
+  }
+  return out;
+}
+
+const SURFACE_CELL = 16;
+const NO_SURFACES = [];
+
 function rectLocal(r, x, z) {
   const dx = x - r.x;
   const dz = z - r.z;
@@ -1705,8 +1754,9 @@ function rectLocal(r, x, z) {
 }
 
 function rectContains(r, x, z, pad = 0) {
-  const [lx, lz] = rectLocal(r, x, z);
-  return Math.abs(lx) <= r.hw + pad && Math.abs(lz) <= r.hd + pad;
+  const dx = x - r.x;
+  const dz = z - r.z;
+  return Math.abs(dx * r.cos - dz * r.sin) <= r.hw + pad && Math.abs(dx * r.sin + dz * r.cos) <= r.hd + pad;
 }
 
 function rectCorners(r, pad = 0) {
@@ -4788,6 +4838,8 @@ export class World {
     this.quality = quality;
     this.colliders = new Colliders(16);
     this.surfaces = [];
+    this._surfaceCells = null;
+    this._surfaceCount = -1;
     this.interiors = [];
     // Where the kingdom's secrets lie: { x, y, z } to stand near and a glint point to sparkle at.
     this.anchors = {};
@@ -4848,10 +4900,14 @@ export class World {
 
     await progress('Raising the land…');
     this.terrain = new Terrain(TERRAIN_SEGMENTS);
-    const terrainMesh = new THREE.Mesh(this.terrain.geometry, this.mat.terrain);
-    terrainMesh.name = 'terrain';
-    terrainMesh.receiveShadow = true;
-    this.scene.add(terrainMesh);
+    // Drawn as tiles that share one set of vertex buffers, so the land outside the view is skipped.
+    for (const tile of gridTiles(this.terrain.geometry, TERRAIN_SEGMENTS, TERRAIN_SEGMENTS, 4, 4)) {
+      const terrainMesh = new THREE.Mesh(tile, this.mat.terrain);
+      terrainMesh.name = 'terrain';
+      terrainMesh.receiveShadow = true;
+      terrainMesh.matrixAutoUpdate = false;
+      this.scene.add(terrainMesh);
+    }
     this._water();
     this.setTime(this.timeOfDay);
 
@@ -5157,10 +5213,15 @@ export class World {
         );
     };
     material.customProgramCacheKey = () => 'river';
-    this.water = new THREE.Mesh(geometry, material);
-    this.water.name = 'river';
-    this.water.receiveShadow = true;
-    this.scene.add(this.water);
+    // In stretches along its length, so only those in view are drawn.
+    for (const tile of gridTiles(geometry, 516, 58, 6, 1)) {
+      const mesh = new THREE.Mesh(tile, material);
+      mesh.name = 'river';
+      mesh.receiveShadow = true;
+      mesh.matrixAutoUpdate = false;
+      this.scene.add(mesh);
+      this.water = this.water || mesh;
+    }
 
     // The lake: an ellipse a little larger than its shore, drawn just over the river's end.
     // A square grid squeezed into a disc keeps its vertices evenly spaced.
@@ -5522,16 +5583,46 @@ export class World {
   // Height an actor stands at: the terrain, or a walkable structure above it.
   getGroundHeight(x, z) {
     let h = this.terrain.getHeight(x, z);
-    for (const s of this.surfaces) {
-      const [lx, lz] = rectLocal(s, x, z);
-      if (Math.abs(lx) <= s.hw && Math.abs(lz) <= s.hd) h = Math.max(h, s.height(lx, lz));
+    const list = this._surfacesNear(x, z);
+    for (let i = 0; i < list.length; i++) {
+      const s = list[i];
+      const dx = x - s.x;
+      const dz = z - s.z;
+      const lx = dx * s.cos - dz * s.sin;
+      if (Math.abs(lx) > s.hw) continue;
+      const lz = dx * s.sin + dz * s.cos;
+      if (Math.abs(lz) <= s.hd) h = Math.max(h, s.height(lx, lz));
     }
     return h;
   }
 
   _onSurface(x, z) {
-    for (const s of this.surfaces) if (rectContains(s, x, z)) return true;
+    const list = this._surfacesNear(x, z);
+    for (let i = 0; i < list.length; i++) if (rectContains(list[i], x, z)) return true;
     return false;
+  }
+
+  // The walkable surfaces that may cover (x, z): a grid of cells, rebuilt whenever
+  // surfaces have been added, so a height query checks a handful instead of all of them.
+  _surfacesNear(x, z) {
+    if (this._surfaceCount !== this.surfaces.length) {
+      const cells = new Map();
+      for (const r of this.surfaces) {
+        const ex = Math.abs(r.hw * r.cos) + Math.abs(r.hd * r.sin);
+        const ez = Math.abs(r.hw * r.sin) + Math.abs(r.hd * r.cos);
+        for (let ix = Math.floor((r.x - ex) / SURFACE_CELL); ix <= Math.floor((r.x + ex) / SURFACE_CELL); ix++) {
+          for (let iz = Math.floor((r.z - ez) / SURFACE_CELL); iz <= Math.floor((r.z + ez) / SURFACE_CELL); iz++) {
+            const key = (ix + 4096) * 8192 + iz + 4096;
+            const cell = cells.get(key);
+            if (cell) cell.push(r);
+            else cells.set(key, [r]);
+          }
+        }
+      }
+      this._surfaceCells = cells;
+      this._surfaceCount = this.surfaces.length;
+    }
+    return this._surfaceCells.get((Math.floor(x / SURFACE_CELL) + 4096) * 8192 + Math.floor(z / SURFACE_CELL) + 4096) || NO_SURFACES;
   }
 
   waterDepth(x, z) {
@@ -5892,6 +5983,7 @@ function makeInstanced(scene, list, geometry, material, shadow, name, near = nul
     mesh.castShadow = shadow;
     mesh.receiveShadow = true;
     mesh.name = name;
+    mesh.matrixAutoUpdate = false;
     scene.add(mesh);
     if (near) {
       const [cx, cz] = key.split(',').map((v) => (Number(v) + 0.5) * chunk);

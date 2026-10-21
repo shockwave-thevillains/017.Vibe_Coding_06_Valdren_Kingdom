@@ -336,6 +336,8 @@ class NPC {
     const dist = Math.hypot(dx, dz);
     const root = this.figure.root;
     root.visible = dist < range || this.talking;
+    // A hidden figure's bones and gear need no matrices until it is shown again.
+    root.matrixWorldAutoUpdate = root.visible;
     if (!root.visible) {
       // Out of sight, people keep to their routine without being animated.
       this._walk(dt, dist, dx, dz);

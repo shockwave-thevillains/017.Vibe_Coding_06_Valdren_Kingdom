@@ -384,11 +384,25 @@ left mouse button and drag to look around.
   shadow map and adds or removes lantern lights in place; the lit materials
   recompile once for the new light setup. Each animal species, balloon and
   boat costs one or two draw calls. In town at street level, High draws about
-  350 to 410 calls and 2.2 to 2.4 M triangles a frame (shadow pass and bloom
-  included), Medium about 290 to 390 calls and 1.8 to 2.2 M, and Low (no shadow
-  pass) about 240 to 380 calls and 1.5 to 1.9 M, depending on how many people,
-  houses and boats are in view; out in the village it is a fraction of that. (Measured with a software renderer, which counts the work but cannot
-  time it.)
+  340 to 400 calls and 1.8 to 2.1 M triangles a frame (shadow pass and bloom
+  included), Medium about 310 to 375 calls and 1.6 to 1.9 M, and Low (no shadow
+  pass) about 235 to 270 calls and 1.1 to 1.3 M, depending on how many people,
+  houses and boats are in view; at the harbour it is 0.3 to 0.7 M. (Measured
+  with a software renderer, which counts the work but cannot time it.)
+- **Work that cannot be seen is skipped,** without changing what you see:
+  - the terrain is drawn as 16 tiles and the river as 6 stretches, all sharing
+    one set of vertex buffers, so the parts outside the view are culled;
+  - each frame the animal instances hold only the animals in view, or close
+    enough to cast a shadow into it, so a flock on a far meadow costs nothing
+    until you look at it;
+  - the sky is drawn last, on the far plane, so its clouds and stars are only
+    worked out where no building, hill or tree covers them;
+  - walkable surfaces (floors, piers, the bridge) are kept in a grid, so a
+    height query, which every person, animal and step check makes, looks at a
+    handful of them rather than all;
+  - hidden people and static scenery skip their per-frame matrix updates.
+  Together this cut about 12 % of the triangles in town, a third to a half at
+  the harbour, and two thirds of the animals' CPU time.
 - **The same world on every preset:** tree shapes and crop density depend on
   the preset, so where things stand is drawn from separate random streams; the
   forest, the rubble and every collider are identical on Low, Medium and High.
