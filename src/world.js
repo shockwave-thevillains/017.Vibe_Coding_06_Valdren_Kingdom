@@ -32,18 +32,22 @@ const TAU = Math.PI * 2;
 export const SITES = {
   castle: { x: 0, z: -190, r: 40, y: 32 },
   hall: { x: 0, z: -200, w: 16, d: 28 },
-  town: { x: 0, z: 10, r: 78, y: 6 },
+  town: { x: 18, z: 8, rx: 126, rz: 84, y: 6 }, // the wall is an ellipse with these radii
   market: { x: 0, z: 12, w: 40, d: 32 },
   tavern: { x: 12, z: -13 },
-  chapel: { x: -22, z: -26 },
+  townHall: { x: -22, z: -26 },
   smithy: { x: -17, z: 35 },
   graveyard: { x: -40, z: -28 },
+  fountain: { x: 84, z: 40 },
+  bakery: { x: 88.5, z: 59 },
+  stables: { x: -72, z: 30 },
+  balloonField: { x: 214, z: 22 },
   farmland: { x: 40, z: 222, hw: 105, hd: 55, y: 3.2 },
   farmhouse: { x: -24, z: 199 },
   windmill: { x: 72, z: 194 },
   ruins: { x: -240, z: -40 },
   hermitCamp: { x: -226, z: -27 },
-  spawn: { x: 1, z: 100, heading: Math.PI },
+  spawn: { x: 0.5, z: 104, heading: Math.PI },
 };
 
 // ============================================================ math helpers
@@ -152,14 +156,29 @@ function townY(z) {
   return SITES.town.y + (SITES.town.z - z) * 0.025;
 }
 
-// Town wall: 12 corners; gates in the middle of segments 2 (south), 5 (west) and 8 (north).
-const TOWN_WALL = Array.from({ length: 12 }, (_, k) => {
-  const a = (15 + 30 * k) * DEG;
-  const r = [2, 3, 5, 6, 8, 9].includes(k) ? 72 : 70 + hash2(k, 99) * 4;
-  return [SITES.town.x + Math.cos(a) * r, SITES.town.z + Math.sin(a) * r];
-});
-const TOWN_GATES = new Map([[2, 'south'], [5, 'west'], [8, 'north']]);
-const TOWN_INNER = 72 * Math.cos(15 * DEG); // distance from the centre to the gate midpoints
+// Town wall: 16 corners on an ellipse. The gates (east, south, west, north) sit in the
+// middle of segments 0, 4, 8 and 12, where the main streets leave the town.
+const TOWN_WALL = [351, 9, 35.7, 62.4, 89.2, 107.2, 128.5, 149.8, 171, 189, 210.3, 231.5, 252.8, 270.8, 297.5, 324.3].map((t) => [
+  SITES.town.x + Math.cos(t * DEG) * SITES.town.rx,
+  SITES.town.z + Math.sin(t * DEG) * SITES.town.rz,
+]);
+const TOWN_GATES = new Map([[0, 'east'], [4, 'south'], [8, 'west'], [12, 'north']]);
+const GATE = {};
+for (const [k, name] of TOWN_GATES) {
+  const a = TOWN_WALL[k];
+  const b = TOWN_WALL[(k + 1) % TOWN_WALL.length];
+  GATE[name] = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+}
+
+// Signed distance from the town wall's ellipse (negative inside), along the ray from the centre.
+function townEdge(x, z) {
+  const t = SITES.town;
+  const dx = x - t.x;
+  const dz = z - t.z;
+  const e = Math.hypot(dx / t.rx, dz / t.rz);
+  const d = Math.hypot(dx, dz);
+  return e > 1e-6 ? d - d / e : -Math.min(t.rx, t.rz);
+}
 
 // Castle curtain wall: 8 corners, gatehouse in the middle of segment 1 (south).
 const CASTLE_WALL = Array.from({ length: 8 }, (_, k) => {
@@ -170,6 +189,13 @@ const CASTLE_GATES = new Map([[1, 'castle']]);
 const CASTLE_GATE_Z = SITES.castle.z + 34 * Math.cos(22.5 * DEG);
 
 const MARKET = { x0: -20, x1: 20, z0: -4, z1: 28 };
+const FOUNTAIN_SQ = { x0: 69, x1: 99, z0: 28, z1: 52 };
+const SQUARES = [MARKET, FOUNTAIN_SQ];
+
+// Paved squares, where kerbs and lamp posts stay out of the way.
+function inSquare(x, z, pad = 0) {
+  return SQUARES.some((q) => x > q.x0 - pad && x < q.x1 + pad && z > q.z0 - pad && z < q.z1 + pad);
+}
 
 // Fields south of the river: centre, size, rotation and crop.
 const FIELDS = [
@@ -187,11 +213,15 @@ export const BRIDGE = { x: 0, zN: RIVER_MID - 17, zS: RIVER_MID + 17, halfWidth:
 export const PLACES = [
   { name: 'Castle Valdren', x: 0, z: -168, size: 2 },
   { name: 'Throne Hall', x: 0, z: -200, size: 0 },
-  { name: 'Valdren', x: 34, z: 36, size: 2 },
+  { name: 'Valdren', x: 40, z: -40, size: 2 },
   { name: 'Market', x: 0, z: 18, size: 0 },
   { name: 'The Broken Oar', x: 12, z: -13, size: 0 },
-  { name: 'Chapel', x: -22, z: -26, size: 0 },
+  { name: 'Town Hall', x: -22, z: -26, size: 0 },
+  { name: 'Burial Ground', x: -40, z: -38, size: 0 },
   { name: 'Forge', x: -17, z: 35, size: 0 },
+  { name: 'Fountain Square', x: 84, z: 40, size: 0 },
+  { name: 'Stables', x: -72, z: 30, size: 0 },
+  { name: 'Balloon Meadow', x: 214, z: 22, size: 1 },
   { name: 'Old Bridge', x: 14, z: RIVER_MID, size: 1 },
   { name: 'Farmstead', x: -24, z: 208, size: 1 },
   { name: 'Windmill', x: 72, z: 186, size: 0 },
@@ -200,19 +230,28 @@ export const PLACES = [
 ];
 
 const ROAD_DEFS = [
-  // Town streets.
-  { kind: 'cobble', town: true, w: 6, pts: [[0, TOWN_INNER + 10], [4, 64], [-3, 46], [0, 27]] },
-  { kind: 'cobble', town: true, w: 5.5, pts: [[0, -3], [-6, -22], [5, -42], [0, 10 - TOWN_INNER]] },
-  { kind: 'cobble', town: true, w: 4.5, pts: [[-19, 10], [-38, 4], [-56, 12], [-TOWN_INNER, 10]] },
+  // Town streets: the old core around the market...
+  { kind: 'cobble', town: true, w: 6, pts: [[GATE.south[0], GATE.south[1] + 10], [GATE.south[0], 80], [4, 64], [-3, 46], [0, 27]] },
+  { kind: 'cobble', town: true, w: 5.5, pts: [[0, -3], [-6, -22], [5, -42], [1, -60], [GATE.north[0], GATE.north[1] - 10]] },
+  { kind: 'cobble', town: true, w: 4.5, pts: [[-19, 10], [-38, 4], [-56, 12], [-78, 6], [-96, 9], [GATE.west[0] - 10, GATE.west[1]]] },
   { kind: 'cobble', town: true, w: 4.5, pts: [[19, 10], [38, 18], [52, 4], [46, -18], [26, -30], [5, -42]] },
   { kind: 'cobble', town: true, w: 4, pts: [[-3, 46], [-22, 52], [-40, 38], [-56, 12]] },
+  // ...and the new quarters east and west of it.
+  { kind: 'cobble', town: true, w: 5, pts: [[52, 4], [74, 8], [98, 6], [120, 8], [GATE.east[0] + 10, GATE.east[1]]] },
+  { kind: 'cobble', town: true, w: 4, pts: [[74, 8], [76, 20], [78, 28.5]] },
+  { kind: 'cobble', town: true, w: 4, pts: [[84, 51.5], [70, 66], [44, 70], [18, 66], [4, 64]] },
+  { kind: 'cobble', town: true, w: 4, pts: [[98.5, 40], [114, 30], [120, 8]] },
+  { kind: 'cobble', town: true, w: 4, pts: [[98, 6], [100, -18], [84, -40], [56, -54], [30, -50], [26, -30]] },
+  { kind: 'cobble', town: true, w: 4, pts: [[-78, 6], [-80, -16], [-66, -40], [-44, -52], [-20, -52], [1, -60]] },
+  { kind: 'cobble', town: true, w: 4, pts: [[-96, 9], [-92, 30], [-74, 52], [-56, 54], [-40, 38]] },
   // The royal road up the castle hill.
-  { kind: 'cobble', w: 5, pts: [[0, 10 - TOWN_INNER], [-4, -74], [-22, -90], [-20, -110], [8, -124], [20, -140], [8, -152], [0, CASTLE_GATE_Z - 5]] },
+  { kind: 'cobble', w: 5, pts: [[GATE.north[0], GATE.north[1] - 10], [-14, -96], [-20, -112], [8, -126], [20, -140], [8, -152], [0, CASTLE_GATE_Z - 5]] },
   // Country roads.
-  { kind: 'dirt', w: 5, pts: [[0, TOWN_INNER + 10], [1, 98], [0, BRIDGE.zN + 0.3]] },
+  { kind: 'dirt', w: 5, pts: [[GATE.south[0], GATE.south[1] + 10], [1, 108], [0, BRIDGE.zN + 0.3]] },
   { kind: 'dirt', w: 4.5, pts: [[0, BRIDGE.zS - 0.3], [2, 170], [6, 190], [12, 205], [40, 205], [66, 199]] },
   { kind: 'dirt', w: 3.5, pts: [[6, 190], [-8, 196], [-19.5, 199]] },
-  { kind: 'dirt', w: 3.2, pts: [[-TOWN_INNER, 10], [-100, 4], [-140, -8], [-180, -22], [-212, -34], [-233, -38]] },
+  { kind: 'dirt', w: 3.2, pts: [[GATE.west[0] - 10, GATE.west[1]], [-140, -6], [-180, -22], [-212, -34], [-233, -38]] },
+  { kind: 'dirt', w: 3.6, pts: [[GATE.east[0] + 10, GATE.east[1]], [180, 6], [202, 16]] },
 ];
 
 // ============================================================ height field
@@ -233,8 +272,7 @@ function baseHeight(x, z) {
   h += (1 - smoothstep(8, 55, Math.hypot(x - r.x, z - r.z))) * 13;
 
   // Town shelf, tilting gently down towards the river.
-  const t = SITES.town;
-  const town = 1 - smoothstep(t.r, t.r + 18, Math.hypot(x - t.x, z - t.z));
+  const town = 1 - smoothstep(6, 24, townEdge(x, z));
   h = lerp(h, townY(z), town);
 
   // Farmland south of the river, with a mound for the windmill.
@@ -1678,7 +1716,11 @@ function storeyDetails(F, o) {
     }
 
     for (const op of openings) {
-      if (op.door) {
+      if (op.door && o.open) {
+        // A walk-in doorway: just the frame (openRoom builds the door and the step).
+        place(op.at, y + DOOR_TOP + 0.08, 0.08, DOOR_HALF * 2 + 0.3, 0.16, 0.16, frameKey, frameTint);
+        for (const e of [-1, 1]) place(op.at + e * (DOOR_HALF + 0.07), y + DOOR_TOP / 2, 0.08, 0.16, DOOR_TOP + 0.05, 0.16, frameKey, frameTint);
+      } else if (op.door) {
         place(op.at, y + 1.08, 0.04, 1.1, 2.16, 0.08, 'planks', TINT.door);
         place(op.at, y + 2.25, 0.08, 1.45, 0.16, 0.16, frameKey, frameTint);
         place(op.at - 0.65, y + 1.1, 0.08, 0.16, 2.2, 0.16, frameKey, frameTint);
@@ -1695,6 +1737,12 @@ function storeyDetails(F, o) {
         if (o.shutter) {
           place(op.at - 0.78, wy, 0.04, 0.46, 1.0, 0.05, 'planks', o.shutter);
           place(op.at + 0.78, wy, 0.04, 0.46, 1.0, 0.05, 'planks', o.shutter);
+        }
+        if (o.inner) {
+          // Seen from inside a walk-in room: the pane, a sill and a head board.
+          place(op.at, wy, -o.inner - 0.012, 0.78, 0.98, 0.03, 'pane', WHITE);
+          place(op.at, wy - 0.53, -o.inner - 0.07, 0.96, 0.06, 0.14, 'timber', TINT.beam);
+          place(op.at, wy + 0.53, -o.inner - 0.03, 0.96, 0.08, 0.06, 'timber', TINT.beam);
         }
       }
     }
@@ -1798,7 +1846,8 @@ function gableGeometry(d, rise) {
 /*
  * A house on a stone plinth. o: x, z, rot, w (frontage), d (depth), floors,
  * style ('timber' | 'plaster' | 'stone' | 'planks'), roof ('tile' | 'slate' |
- * 'thatch'), plus optional tints, jetty, chimney, heights.
+ * 'thatch'), plus optional tints, jetty, chimney, heights. With o.room (a
+ * furnishing function) the ground floor is a room you can walk into; see openRoom.
  */
 function buildHouse(ctx, o) {
   const F = new Frame(ctx, o.x, o.z, o.rot);
@@ -1817,7 +1866,8 @@ function buildHouse(ctx, o) {
 
   const style = o.style;
   const wallKey = style === 'stone' ? 'stone' : style === 'planks' ? 'planks' : 'plaster';
-  const heights = o.heights || [2.9, 2.6];
+  const heights = o.heights || (o.room ? [3.3, 2.6] : [2.9, 2.6]);
+  const room = o.room ? openRoom(ctx, F, o, base, heights[0], bottom) : null;
   let y = base;
   let sw = o.w;
   let sd = o.d;
@@ -1830,7 +1880,9 @@ function buildHouse(ctx, o) {
       sz = 0.25;
       F.box('timber', 0, y - 0.1, o.d / 2 + 0.25, sw, 0.22, 0.5, TINT.beam);
     }
-    F.box(wallKey, 0, y + h / 2, sz, sw, h, sd, o.wallTint || WHITE);
+    const walkIn = s === 0 && room;
+    if (walkIn) room.walls(wallKey, o.wallTint || WHITE);
+    else F.box(wallKey, 0, y + h / 2, sz, sw, h, sd, o.wallTint || WHITE);
     storeyDetails(F, {
       w: sw,
       d: sd,
@@ -1843,6 +1895,8 @@ function buildHouse(ctx, o) {
       door: o.door !== false,
       doorAt: o.doorAt,
       shutter: o.shutter,
+      open: !!walkIn,
+      inner: walkIn ? ROOM_WALL : 0,
     });
     y += h;
   }
@@ -1862,17 +1916,423 @@ function buildHouse(ctx, o) {
     gableTimber: style === 'timber',
   });
 
-  if (o.chimney) {
-    const cx = sw / 2 - 1.1;
-    const cz = sz - sd / 4;
+  if (room) room.finish(ridgeY);
+  else F.collideBox(0, 0, hw + 0.15, hd + 0.15, bottom, ridgeY + 1);
+
+  // The chimney stands over the room's hearth or oven, if it has one.
+  if (o.chimney || (room && room.chimney)) {
+    const [cx, cz] = room && room.chimney ? room.chimney : [sw / 2 - 1.1, sz - sd / 4];
     const top = ridgeY + 0.9;
     F.box('stone', cx, (y - 0.5 + top) / 2, cz, 0.85, top - y + 0.5, 0.85, TINT.darkStone);
     F.box('stone', cx, top + 0.08, cz, 1.0, 0.16, 1.0, TINT.plinth);
   }
 
-  F.collideBox(0, 0, hw + 0.15, hd + 0.15, bottom, ridgeY + 1);
   ctx.occupy(rect(o.x, o.z, hw + 0.3, hd + 0.3, o.rot));
-  return { F, base, ridgeY };
+  return { F, base, ridgeY, room };
+}
+
+// ============================================================== interiors
+
+const ROOM_WALL = 0.3;  // wall thickness of the rooms you can walk into
+const FLOOR_TINT = C(0xe6cfa6);
+const DOOR_HALF = 0.7;  // half the width of their doorways
+const DOOR_TOP = 2.3;   // height of their doorways
+
+/*
+ * The walk-in ground floor of a house: a shell of walls with a doorway in the
+ * front, a plank floor, a beamed ceiling, an open door, a step up to the
+ * threshold, and whatever o.room(room) furnishes it with. The floor is a
+ * walkable surface and the room an interior, so the camera stays under its
+ * ceiling; the lights the furniture adds to room.lights light it while the
+ * player is inside. Furniture is placed in the room's own frame (room.F, the
+ * house's frame: +Z towards the front wall) with room.y as the floor height.
+ */
+function openRoom(ctx, F, o, base, h, bottom) {
+  const T = ROOM_WALL;
+  const hw = o.w / 2;
+  const hd = o.d / 2;
+  const door = o.doorAt || 0;
+  const l1 = door - DOOR_HALF;
+  const r0 = door + DOOR_HALF;
+  const room = {
+    ctx,
+    F,
+    y: base + 0.05,
+    ceiling: base + h - 0.12,
+    hw: hw - T,
+    hd: hd - T,
+    door,
+    lights: [],
+    name: o.name || 'house',
+    rng: ctx.rng,
+  };
+  room.walls = (key, tint) => {
+    const yc = base + h / 2;
+    F.box(key, 0, yc, -hd + T / 2, o.w, h, T, tint);
+    for (const sx of [-1, 1]) F.box(key, sx * (hw - T / 2), yc, 0, T, h, o.d - T * 2, tint);
+    F.box(key, (l1 - hw) / 2, yc, hd - T / 2, l1 + hw, h, T, tint);
+    F.box(key, (r0 + hw) / 2, yc, hd - T / 2, hw - r0, h, T, tint);
+    F.box(key, door, base + (DOOR_TOP + h) / 2, hd - T / 2, DOOR_HALF * 2, h - DOOR_TOP, T, tint);
+  };
+  room.finish = (ridgeY) => {
+    const y = room.y;
+    F.box('planks', 0, base + 0.025, 0, o.w - T * 2, 0.05, o.d - T * 2, FLOOR_TINT);
+    F.box('planks', 0, base + h - 0.06, 0, o.w - T * 2, 0.12, o.d - T * 2, FLOOR_TINT);
+    const beams = Math.max(2, Math.round(o.w / 2.2));
+    for (let k = 1; k < beams; k++) F.box('timber', -hw + (k * o.w) / beams, base + h - 0.22, 0, 0.18, 0.2, o.d - T * 2, TINT.beam);
+    // The door stands open against the inside of the front wall.
+    F.box('planks', l1 + 0.05, y + 1.1, hd - T - 0.56, 0.07, 2.15, 1.08, TINT.door);
+
+    // A step up to the threshold, if the street is lower than the floor.
+    const g = F.ground(door, hd + 1.2);
+    if (y - g > 0.12) {
+      const stepY = g + (y - g) / 2;
+      F.box('stone', door, (g - 0.3 + stepY) / 2, hd + 0.45, 1.7, stepY - g + 0.3, 0.9, TINT.darkStone);
+      const [sx, sz] = F.world(door, hd + 0.45);
+      ctx.world.surfaces.push({ ...rect(sx, sz, 0.85, 0.45, F.rot), height: () => stepY });
+    }
+    ctx.world.surfaces.push({ ...rect(F.x, F.z, hw, hd, F.rot), height: () => y });
+
+    // Walls (with the doorway), the lintel over it (for the camera) and the loft above the ceiling.
+    const top = ridgeY + 1;
+    F.collideBox(0, -hd + T / 2, hw, T / 2, bottom, top);
+    for (const s of [-1, 1]) F.collideBox(s * (hw - T / 2), 0, T / 2, hd, bottom, top);
+    F.collideBox((l1 - hw) / 2, hd - T / 2, (l1 + hw) / 2, T / 2, bottom, top);
+    F.collideBox((r0 + hw) / 2, hd - T / 2, (hw - r0) / 2, T / 2, bottom, top);
+    F.collideBox(door, hd - T / 2, DOOR_HALF, T / 2, base + DOOR_TOP, top);
+    F.collideBox(0, 0, hw, hd, base + h - 0.1, top);
+
+    if (o.room) o.room(room);
+    ctx.world.interiors.push({ ...rect(F.x, F.z, hw - T, hd - T, F.rot), ceiling: base + h - 0.3, top, floor: y, lights: room.lights, name: room.name });
+  };
+  return room;
+}
+
+// A frame for one piece of furniture: (x, z) on the room's floor, turned by rot.
+function piece(room, x, z, rot = 0) {
+  const [wx, wz] = room.F.world(x, z);
+  return new Frame(room.ctx, wx, wz, room.F.rot + rot);
+}
+
+const SEAT_GEO = new THREE.CylinderGeometry(0.17, 0.17, 0.05, 12);
+const LOG_GEO = new THREE.CylinderGeometry(0.07, 0.08, 0.7, 7).rotateZ(Math.PI / 2);
+const FLAME_GEO = new THREE.ConeGeometry(0.22, 0.55, 7);
+const CANDLE_GEO = new THREE.CylinderGeometry(0.025, 0.025, 0.16, 8);
+const WICK_GEO = new THREE.ConeGeometry(0.02, 0.06, 6);
+const JAR_GEO = new THREE.CylinderGeometry(0.07, 0.09, 0.22, 10);
+const MUG_GEO = new THREE.CylinderGeometry(0.045, 0.05, 0.12, 10);
+const PLATE_GEO = new THREE.CylinderGeometry(0.12, 0.1, 0.02, 14);
+const BOTTLE_GEO = new THREE.CylinderGeometry(0.04, 0.045, 0.26, 8);
+const LOAF_GEO = new THREE.SphereGeometry(0.13, 10, 6);
+const RING_GEO = new THREE.TorusGeometry(0.75, 0.035, 6, 24);
+const OVEN_GEO = new THREE.SphereGeometry(1, 16, 10, 0, TAU, 0, Math.PI / 2);
+const WOOD_DARK = C(0x6a4a32);
+const POTTERY = [C(0xb5653d), C(0x8f5a3a), C(0xc9a46a), C(0x6e7a5a), C(0xd8cdb4)];
+const BLANKETS = [C(0x9a3a30), C(0x3f5f8a), C(0x6a7a3a), C(0xb08a3a), C(0x7a4a6a), C(0x4a6a6a)];
+const BOOKS = [C(0x7a2a24), C(0x2e4a6e), C(0x3e5a2e), C(0x6a4a24), C(0x5a2e5a), C(0x8a6a3a)];
+
+function table(room, x, z, w, d, rot = 0) {
+  const R = piece(room, x, z, rot);
+  const y = room.y;
+  R.box('planks', 0, y + 0.75, 0, w, 0.06, d, TINT.door);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) R.box('timber', sx * (w / 2 - 0.1), y + 0.36, sz * (d / 2 - 0.1), 0.09, 0.72, 0.09, TINT.beam);
+  R.collideBox(0, 0, w / 2, d / 2, y - 1, y + 0.8);
+  return R;
+}
+
+function bench(room, x, z, len, rot = 0) {
+  const R = piece(room, x, z, rot);
+  const y = room.y;
+  R.box('planks', 0, y + 0.44, 0, len, 0.05, 0.32, TINT.door);
+  for (const sx of [-1, 1]) R.box('planks', sx * (len / 2 - 0.15), y + 0.21, 0, 0.05, 0.42, 0.28, TINT.door);
+  R.collideBox(0, 0, len / 2, 0.16, y - 1, y + 0.46);
+}
+
+function stool(room, x, z) {
+  const R = piece(room, x, z);
+  const y = room.y;
+  R.geo('planks', SEAT_GEO, 0, y + 0.45, 0, 0, 0, 0, 1, 1, 1, TINT.door);
+  for (let k = 0; k < 3; k++) {
+    const a = (k / 3) * TAU;
+    R.box('timber', Math.sin(a) * 0.1, y + 0.22, Math.cos(a) * 0.1, 0.04, 0.46, 0.04, TINT.beam, Math.cos(a) * 0.15, 0, -Math.sin(a) * 0.15);
+  }
+}
+
+// A chair facing +Z of its frame.
+function chair(room, x, z, rot = 0, tint = TINT.door) {
+  const R = piece(room, x, z, rot);
+  const y = room.y;
+  R.box('planks', 0, y + 0.46, 0, 0.44, 0.05, 0.42, tint);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) R.box('timber', sx * 0.18, y + 0.23, sz * 0.17, 0.05, 0.46, 0.05, TINT.beam);
+  R.box('planks', 0, y + 0.8, -0.19, 0.44, 0.62, 0.05, tint);
+  R.collideCircle(0, 0, 0.24, y - 1, y + 0.5);
+}
+
+// A bed with its head against the wall behind it (-Z of its frame).
+function bed(room, x, z, rot, blanket, w = 1.0) {
+  const R = piece(room, x, z, rot);
+  const y = room.y;
+  R.box('timber', 0, y + 0.2, 0, w, 0.24, 2.0, TINT.beam);
+  R.box('timber', 0, y + 0.5, -0.97, w + 0.04, 0.95, 0.08, TINT.beam);
+  R.box('timber', 0, y + 0.35, 0.97, w + 0.04, 0.5, 0.06, TINT.beam);
+  R.box('plainCloth', 0, y + 0.4, 0.02, w - 0.08, 0.16, 1.86, C(0xe8dfc8));
+  R.box('plainCloth', 0, y + 0.5, 0.33, w - 0.04, 0.06, 1.2, blanket);
+  R.box('plainCloth', 0, y + 0.52, -0.7, w * 0.6, 0.1, 0.32, C(0xf2ecdc));
+  R.collideBox(0, 0, w / 2 + 0.02, 1.0, y - 1, y + 0.6);
+}
+
+function chest(room, x, z, rot) {
+  const R = piece(room, x, z, rot);
+  const y = room.y;
+  R.box('planks', 0, y + 0.25, 0, 0.9, 0.48, 0.5, WOOD_DARK);
+  R.box('planks', 0, y + 0.51, 0, 0.94, 0.06, 0.54, WOOD_DARK);
+  for (const sx of [-0.3, 0.3]) R.box('metal', sx, y + 0.27, 0, 0.05, 0.54, 0.54);
+  R.collideBox(0, 0, 0.47, 0.27, y - 1, y + 0.55);
+}
+
+// Shelves with their back to the wall behind them; fill(R, level y, width) puts things on each board.
+function shelves(room, x, z, rot, w, h, fill) {
+  const R = piece(room, x, z, rot);
+  const y = room.y;
+  for (const sx of [-1, 1]) R.box('planks', sx * (w / 2 - 0.03), y + h / 2, 0, 0.05, h, 0.36, WOOD_DARK);
+  R.box('planks', 0, y + h / 2, -0.16, w, h, 0.03, WOOD_DARK);
+  const levels = Math.max(2, Math.round(h / 0.45));
+  for (let k = 0; k < levels; k++) {
+    const ly = y + 0.1 + (k * (h - 0.2)) / (levels - 1);
+    R.box('planks', 0, ly, 0, w - 0.06, 0.04, 0.34, WOOD_DARK);
+    if (fill && k < levels - 1) fill(R, ly + 0.02, w - 0.2);
+  }
+  R.collideBox(0, 0, w / 2, 0.19, y - 1, y + h);
+}
+
+function pots(R, ly, w, rng) {
+  for (let a = -w / 2 + 0.12; a < w / 2 - 0.1; a += 0.2 + rng() * 0.12) {
+    if (rng() < 0.2) continue;
+    const s = 0.7 + rng() * 0.5;
+    R.geo('plaster', JAR_GEO, a, ly + 0.11 * s, -0.02, 0, 0, 0, s, s, s, POTTERY[Math.floor(rng() * POTTERY.length)]);
+  }
+}
+
+function books(R, ly, w, rng) {
+  for (let a = -w / 2 + 0.04; a < w / 2 - 0.04; a += 0.05) {
+    const h = 0.2 + rng() * 0.1;
+    R.box('plainCloth', a, ly + h / 2, 0, 0.04, h, 0.24, BOOKS[Math.floor(rng() * BOOKS.length)], 0, 0, rng() < 0.1 ? 0.25 : 0);
+  }
+}
+
+// A hearth against the wall behind it, with its chimney breast up to the ceiling.
+function hearth(room, x, z, rot) {
+  const R = piece(room, x, z, rot);
+  const y = room.y;
+  if (!room.chimney) room.chimney = [x, z];
+  R.box('stone', 0, y + 0.08, 0.08, 1.8, 0.16, 0.95, TINT.darkStone);
+  for (const sx of [-1, 1]) R.box('stone', sx * 0.72, y + 0.68, -0.08, 0.36, 1.3, 0.72, TINT.stone);
+  R.box('stone', 0, y + 1.45, -0.06, 1.86, 0.3, 0.8, TINT.stone);
+  R.box('timber', 0, y + 1.63, 0.06, 1.95, 0.08, 0.5, TINT.beam);
+  R.box('stone', 0, y + 0.7, -0.38, 1.1, 1.3, 0.12, C(0x3a3430));
+  R.box('stone', 0, (y + 1.6 + room.ceiling) / 2, -0.2, 1.3, room.ceiling - y - 1.6, 0.48, TINT.stone);
+  for (const s of [-1, 1]) R.geo('timber', LOG_GEO, 0, y + 0.25, -0.08 + s * 0.08, 0, s * 0.35, 0, 1, 1, 1, TINT.beam);
+  R.geo('fire', FLAME_GEO, 0, y + 0.52, -0.08);
+  R.geo('fire', FLAME_GEO, 0.18, y + 0.45, -0.05, 0, 0, 0, 0.6, 0.7, 0.6);
+  R.geo('fire', FLAME_GEO, -0.16, y + 0.44, -0.1, 0, 0, 0, 0.55, 0.6, 0.55);
+  R.geo('plaster', JAR_GEO, 0.6, y + 1.78, 0.05, 0, 0, 0, 0.8, 0.8, 0.8, POTTERY[1]);
+  candle(R, -0.55, y + 1.67, 0.05);
+  R.collideBox(0, -0.05, 0.92, 0.45, y - 1, y + 1.5);
+  const [lx, lz] = R.world(0, 0.6);
+  room.lights.push(new THREE.Vector3(lx, y + 0.8, lz));
+}
+
+function candle(R, x, top, z) {
+  R.geo('plaster', CANDLE_GEO, x, top + 0.08, z, 0, 0, 0, 1, 1, 1, C(0xf0e6c8));
+  R.geo('fire', WICK_GEO, x, top + 0.19, z);
+}
+
+function rug(room, x, z, w, d, rot, tint) {
+  const R = piece(room, x, z, rot);
+  R.box('plainCloth', 0, room.y + 0.008, 0, w, 0.012, d, tint);
+  R.box('plainCloth', 0, room.y + 0.01, 0, w - 0.2, 0.012, d - 0.2, tint.clone().multiplyScalar(0.7));
+}
+
+// Things on a table top: plates, mugs, a jug, a candle.
+function tableware(R, top, w, d, rng, opts = {}) {
+  const n = opts.mugs ?? 2;
+  for (let k = 0; k < n; k++) {
+    const mx = (rng() - 0.5) * (w - 0.3);
+    const mz = (rng() - 0.5) * (d - 0.25);
+    R.geo('timber', MUG_GEO, mx, top + 0.06, mz, 0, 0, 0, 1, 1, 1, C(0x8a6a44));
+  }
+  if (opts.plates !== false) {
+    for (const s of [-1, 1]) R.geo('plaster', PLATE_GEO, s * w * 0.25, top + 0.01, 0, 0, 0, 0, 1, 1, 1, C(0xd8cdb4));
+  }
+  if (opts.candle !== false) candle(R, 0, top, 0);
+}
+
+function crate(room, x, z, rot = 0) {
+  const R = piece(room, x, z, rot);
+  R.inst('crate', 0, room.y, 0, 0, 0, 0, 1, 1, 1);
+  R.collideCircle(0, 0, 0.42, room.y - 1, room.y + 0.8);
+}
+
+function barrel(room, x, z) {
+  const R = piece(room, x, z, room.rng() * TAU);
+  R.inst('barrel', 0, room.y, 0, 0, 0, 0, 1, 1, 1);
+  R.collideCircle(0, 0, 0.4, room.y - 1, room.y + 1);
+}
+
+// An iron ring of candles hanging from the ceiling.
+function chandelier(room, x, z) {
+  const R = piece(room, x, z);
+  const cy = room.ceiling - 0.9;
+  R.geo('metal', RING_GEO, 0, cy, 0, Math.PI / 2, 0, 0);
+  R.box('metal', 0, (cy + room.ceiling) / 2, 0, 0.04, room.ceiling - cy, 0.04);
+  for (let k = 0; k < 6; k++) {
+    const a = (k / 6) * TAU;
+    candle(R, Math.sin(a) * 0.75, cy, Math.cos(a) * 0.75);
+  }
+  const [lx, lz] = R.world(0, 0);
+  room.lights.push(new THREE.Vector3(lx, cy + 0.1, lz));
+}
+
+/*
+ * A home: a hearth against the right wall, a bed and a chest in the far
+ * corner, shelves on the back wall, a table with stools, a rug and a few
+ * stores, all clear of the doorway.
+ */
+function furnishHome(room) {
+  const { hw, hd, door, rng } = room;
+  const left = door > 0;          // the side away from the door gets the bed
+  const side = left ? -1 : 1;
+  hearth(room, hw - 0.42, -hd / 2 + 0.3, -Math.PI / 2);
+  rug(room, hw - 1.6, -hd / 2 + 0.3, 1.2, 1.7, 0, BLANKETS[Math.floor(rng() * BLANKETS.length)]);
+  bed(room, -hw + 0.62, -hd + 1.08, 0, BLANKETS[Math.floor(rng() * BLANKETS.length)]);
+  chest(room, -hw + 0.62, -hd + 2.62, Math.PI / 2);
+  shelves(room, -0.2, -hd + 0.2, 0, 1.4, 1.8, (R, ly, w) => pots(R, ly, w, rng));
+  const tx = side * Math.min(1.1, hw - 1.6) * 0.5;
+  const T = table(room, tx, 0.7, 1.3, 0.8);
+  tableware(T, room.y + 0.78, 1.3, 0.8, rng);
+  stool(room, tx - 0.85, 0.7);
+  stool(room, tx + 0.85, 0.7);
+  stool(room, tx, 1.45);
+  // Stores in the front corner away from the door.
+  const cx = side * (hw - 0.45);
+  if (Math.abs(cx - door) > 1.4) {
+    barrel(room, cx, hd - 0.45);
+    if (rng() < 0.6) crate(room, cx, hd - 1.35, rng());
+  }
+}
+
+/*
+ * The Broken Oar: a bar counter along the back wall with bottles and casks
+ * behind it, three tables with benches, a hearth and a chandelier. Seats and the
+ * keeper's place are fixed, so data/npcs.json can sit people on them.
+ */
+function furnishTavern(room) {
+  const { hw, hd, rng } = room;
+  const y = room.y;
+  // Counter: a long run along the back with a hinged flap at its right end.
+  const cz = -hd + 1.65;
+  const C0 = piece(room, -1.6, cz);
+  C0.box('planks', 0, y + 1.05, 0, 6.8, 0.07, 0.62, WOOD_DARK);
+  C0.box('timber', 0, y + 0.51, 0.08, 6.6, 1.02, 0.44, TINT.beam);
+  for (let k = -3; k <= 3; k++) C0.box('timber', k * 0.95, y + 0.51, 0.31, 0.08, 1.02, 0.04, WOOD_DARK);
+  C0.collideBox(0, 0, 3.4, 0.31, y - 1, y + 1.1);
+  for (let k = 0; k < 5; k++) C0.geo('timber', MUG_GEO, -2.6 + k * 1.1 + rng() * 0.3, y + 1.15, 0.05, 0, 0, 0, 1, 1, 1, C(0x8a6a44));
+  C0.geo('plaster', JAR_GEO, 2.4, y + 1.2, 0, 0, 0, 0, 1.2, 1.3, 1.2, POTTERY[0]);
+  // Bottles and casks behind it.
+  shelves(room, -2.6, -hd + 0.2, 0, 3.2, 2.0, (R, ly, w) => {
+    for (let a = -w / 2 + 0.08; a < w / 2 - 0.05; a += 0.13) {
+      if (rng() < 0.15) continue;
+      R.geo('plaster', BOTTLE_GEO, a, ly + 0.13, -0.02, 0, 0, 0, 1, 0.8 + rng() * 0.4, 1, [C(0x3a6a3a), C(0x6a4a2a), C(0x2a4a6a)][Math.floor(rng() * 3)]);
+    }
+  });
+  for (const bx of [-hw + 0.5, -hw + 1.35]) {
+    const R = piece(room, bx, -hd + 0.5);
+    R.inst('barrel', 0, y + 0.55, 0, Math.PI / 2, 0, 0, 1, 1, 1);
+    R.box('timber', 0, y + 0.2, -0.3, 0.7, 0.4, 0.08, TINT.beam);
+    R.box('timber', 0, y + 0.2, 0.3, 0.7, 0.4, 0.08, TINT.beam);
+  }
+  room.keeper = room.F.world(-2.4, -hd + 0.95);
+
+  // Tables with a bench either side.
+  for (const [tx, tz] of TAVERN_TABLES) {
+    const T = table(room, tx, tz, 1.9, 0.85);
+    tableware(T, y + 0.78, 1.9, 0.85, rng, { mugs: 3 });
+    bench(room, tx, tz - 0.72, 1.8);
+    bench(room, tx, tz + 0.72, 1.8);
+  }
+  hearth(room, hw - 0.42, -hd / 2 + 0.6, -Math.PI / 2);
+  rug(room, hw - 1.6, -hd / 2 + 0.6, 1.3, 2.0, 0, C(0x8e3a2a));
+  chandelier(room, -0.5, 1.2);
+  barrel(room, hw - 0.5, hd - 0.5);
+  barrel(room, hw - 1.3, hd - 0.45);
+  crate(room, -hw + 0.5, hd - 0.5);
+}
+
+// Table centres in the tavern's frame (x across, z towards the door).
+const TAVERN_TABLES = [[-4.6, 1.5], [0.7, 1.7], [4.3, 0.8]];
+
+/*
+ * The Town Hall: a long council table with chairs, the arms of Valdren on the
+ * walls, shelves of ledgers and rolls, a hearth and two chandeliers.
+ */
+function furnishHall(room) {
+  const { hw, hd, rng } = room;
+  const y = room.y;
+  const len = Math.min(6.4, hd * 2 - 4);
+  const T = table(room, 0, -0.6, 1.3, len);
+  for (let k = 0; k < 4; k++) {
+    const z = -0.6 - len / 2 + 0.8 + (k * (len - 1.6)) / 3;
+    chair(room, -1.0, z, Math.PI / 2, C(0x8a5a3a));
+    chair(room, 1.0, z, -Math.PI / 2, C(0x8a5a3a));
+    T.geo('parchment', PAGE_GEO, -0.3, y + 0.785, z - (-0.6), -Math.PI / 2, 0, 0.2 * (rng() - 0.5), 0.22, 0.3, 1, WHITE, true);
+  }
+  chair(room, 0, -0.6 - len / 2 - 0.6, 0, C(0x6a2a2a));
+  candle(T, 0, y + 0.78, -len / 4);
+  candle(T, 0, y + 0.78, len / 4);
+  for (const s of [-1, 1]) {
+    shelves(room, s * (hw - 0.22), -hd / 2, s * -Math.PI / 2, 2.4, 2.4, (R, ly, w) => books(R, ly, w, rng));
+    const B = piece(room, s * (hw - 0.02), hd / 2 - 0.4, s * -Math.PI / 2);
+    B.geo('banner', BANNER_GEO, 0, y + 2.6, 0.02, 0, 0, 0, 0.8, 0.8, 0.8, WHITE, true);
+  }
+  const W = piece(room, 0, -hd + 0.02);
+  W.geo('banner', BANNER_GEO, -1.4, y + 2.5, 0.02, 0, 0, 0, 0.9, 0.9, 0.9, WHITE, true);
+  W.geo('banner', BANNER_GEO, 1.4, y + 2.5, 0.02, 0, 0, 0, 0.9, 0.9, 0.9, WHITE, true);
+  W.geo('parchment', PAGE_GEO, 0, y + 2.1, 0.03, 0, 0, 0, 0.9, 1.2, 1, WHITE, true);
+  chandelier(room, 0, -0.6 - len / 4);
+  chandelier(room, 0, -0.6 + len / 4);
+  rug(room, 0, hd - 1.6, 1.6, 2.2, 0, TINT.carpet);
+}
+
+// The bakery: a domed bread oven, a counter of loaves, sacks of flour and racks of bread.
+function furnishBakery(room) {
+  const { hw, hd, rng } = room;
+  const y = room.y;
+  const O = piece(room, hw - 1.2, -hd + 1.2);
+  O.box('stone', 0, y + 0.45, 0, 2.0, 0.9, 2.0, TINT.darkStone);
+  O.geo('stone', OVEN_GEO, 0, y + 0.9, 0, 0, 0, 0, 0.95, 0.85, 0.95, TINT.stone);
+  O.box('stone', -0.62, y + 1.15, 0.62, 0.5, 0.42, 0.12, C(0x2e2824), 0, Math.PI / 4, 0);
+  O.geo('fire', FLAME_GEO, -0.5, y + 1.1, 0.5, 0, 0, 0, 0.6, 0.5, 0.6);
+  O.box('stone', 0.4, (y + 1.6 + room.ceiling) / 2, -0.4, 0.5, room.ceiling - y - 1.6, 0.5, TINT.stone);
+  O.collideBox(0, 0, 1.0, 1.0, y - 1, y + 1.8);
+  room.chimney = [hw - 0.8, -hd + 0.8];
+  const [lx, lz] = O.world(-0.6, 0.8);
+  room.lights.push(new THREE.Vector3(lx, y + 1.0, lz));
+  const Cn = piece(room, -0.6, -0.2);
+  Cn.box('planks', 0, y + 0.95, 0, 3.0, 0.07, 0.7, WOOD_DARK);
+  Cn.box('timber', 0, y + 0.46, 0, 2.9, 0.92, 0.6, TINT.beam);
+  Cn.collideBox(0, 0, 1.5, 0.35, y - 1, y + 1.0);
+  for (let k = 0; k < 9; k++) {
+    Cn.geo('plaster', LOAF_GEO, -1.3 + k * 0.32, y + 1.04, (rng() - 0.5) * 0.3, 0, rng() * TAU, 0, 1.2, 0.6, 0.8, C(0xc08a48).multiplyScalar(0.85 + rng() * 0.3));
+  }
+  shelves(room, -hw + 0.22, -hd / 2, Math.PI / 2, 2.0, 1.8, (R, ly, w) => {
+    for (let a = -w / 2 + 0.15; a < w / 2 - 0.1; a += 0.3) R.geo('plaster', LOAF_GEO, a, ly + 0.07, 0, 0, rng(), 0, 1.1, 0.55, 0.75, C(0xb87a40));
+  });
+  for (let k = 0; k < 3; k++) {
+    const R = piece(room, -hw + 0.5 + k * 0.6, hd - 0.5, rng());
+    R.box('plainCloth', 0, y + 0.35, 0, 0.5, 0.7, 0.4, C(0xe2d8c0));
+    R.collideCircle(0, 0, 0.3, y - 1, y + 0.7);
+  }
+  room.keeper = room.F.world(-0.6, -1.0);
 }
 
 // ========================================================= walls & towers
@@ -2130,6 +2590,7 @@ function buildTavern(ctx) {
   const { F, base } = buildHouse(ctx, {
     x, z, rot: 0, w: 14, d: 9, floors: 2, style: 'timber', roof: 'tile', jetty: true, chimney: true,
     wallTint: TINT.plaster[1], roofTint: TINT.roof[2], shutter: TINT.shutter[1], doorAt: -2.5,
+    heights: [3.4, 2.6], room: furnishTavern, name: 'The Broken Oar',
   });
   // Hanging sign, benches and tables out front.
   F.box('metal', 5.6, base + 3.3, 5.6, 0.06, 0.06, 1.6);
@@ -2199,57 +2660,56 @@ function buildSmithy(ctx) {
   ctx.occupy(rect(...F.world(0, 6), 5, 2.4, rot));
 }
 
-function buildChapel(ctx) {
-  const { x, z } = SITES.chapel;
-  const F = new Frame(ctx, x, z, 0);
-  const w = 10;
-  const d = 18;
-  let g = Infinity;
-  let gMax = -Infinity;
-  for (const [lx, lz] of [[-5, -9], [5, -9], [-5, 9], [5, 9], [0, 12]]) {
-    g = Math.min(g, F.ground(lx, lz));
-    gMax = Math.max(gMax, F.ground(lx, lz));
-  }
-  const base = gMax + 0.4;
-  const H = 7.5;
-  F.box('stone', 0, (g - 1 + base) / 2, 1.2, w + 0.6, base - g + 1, d + 3.2, TINT.plinth);
-  // Nave walls with tall pointed windows.
-  const holes = [-6, -2, 2, 6].map((a) => ({ x: a, w: 1.3, y0: 2.2, spring: 5.0 }));
-  const side = extrude(archShape(d, H, holes), 0.9, 10);
-  side.rotateY(Math.PI / 2);
-  for (const s of [-1, 1]) {
-    F.geo('stone', side, s * (w / 2 - 0.45), base, 0, 0, 0, 0, 1, 1, 1, TINT.stone);
-    for (const a of [-6, -2, 2, 6]) F.box('glass', s * (w / 2 - 0.45), base + 4.1, a, 0.06, 3.9, 1.25, ctx.pick(STAINED));
-    for (const a of [-8, -4, 0, 4, 8]) F.box('stone', s * (w / 2 + 0.2), base + 2.6, a, 0.6, 5.2, 0.7, TINT.darkStone);
-  }
-  F.box('stone', 0, base + H / 2, -d / 2 + 0.45, w, H, 0.9, TINT.stone);
-  F.geo('glass', new THREE.CircleGeometry(1.1, 16), 0, base + 5, -d / 2 - 0.02, 0, Math.PI, 0, 1, 1, 1, STAINED[0]);
-  F.box('stone', 0, base + H / 2, d / 2 - 0.45, w, H, 0.9, TINT.stone);
-  gableRoof(ctx, new Frame(ctx, x, z, Math.PI / 2), {
-    w: d, d: w, z: 0, y: base + H, pitch: 52 * DEG, over: 0.5, kind: 'slate', tint: TINT.slate,
-    gableKey: 'stone', gableTint: TINT.stone, gableTimber: false,
+/*
+ * The Town Hall: a stone hall you can walk into, facing the north street, with
+ * a clock tower at its south-east corner.
+ */
+function buildTownHall(ctx) {
+  const { x, z } = SITES.townHall;
+  const rot = Math.PI / 2;
+  const { F, base, ridgeY } = buildHouse(ctx, {
+    x, z, rot, w: 12, d: 16, floors: 1, style: 'stone', roof: 'slate', pitch: 40,
+    wallTint: TINT.stone, shutter: null, doorAt: 0, heights: [4.6], room: furnishHall, name: 'Town Hall',
   });
-  // Bell tower over the door, open belfry, pyramid spire.
-  const tz = d / 2 + 1.5;
-  F.box('stone', 0, base + 4, tz, 4.4, 8, 4.4, TINT.stone);
-  const belfry = extrude(archShape(4.4, 3.4, [{ x: 0, w: 1.6, y0: 0.6, spring: 2.2 }]), 0.6, 10);
+  // Steps and a porch roof over the door.
+  F.box('timber', 0, base + 3.0, 8.9, 3.4, 0.12, 1.8, TINT.beam, -0.18, 0, 0);
+  for (const sx of [-1.5, 1.5]) {
+    F.box('timber', sx, base + 1.4, 9.6, 0.2, 2.9, 0.2, TINT.beam);
+    F.collideCircle(sx, 9.6, 0.15, base - 1, base + 3);
+  }
+  // Clock tower.
+  const tx = -7.8;
+  const tz = 6.2;
+  const g = F.ground(tx, tz);
+  const H = 13;
+  F.box('stone', tx, (g - 1 + g + H) / 2, tz, 3.6, H + 1, 3.6, TINT.stone);
+  F.box('stone', tx, g + H + 0.2, tz, 4.1, 0.4, 4.1, TINT.darkStone);
   for (let k = 0; k < 4; k++) {
     const a = (k * Math.PI) / 2;
-    F.geo('stone', belfry, Math.sin(a) * 1.9, base + 8, tz + Math.cos(a) * 1.9, 0, a, 0, 1, 1, 1, TINT.stone);
+    const T = new Frame(ctx, ...F.world(tx + Math.sin(a) * 1.82, tz + Math.cos(a) * 1.82), rot + a);
+    T.geo('plaster', CLOCK_GEO, 0, g + H - 1.6, 0.02, 0, 0, 0, 1, 1, 1, C(0xf2ead6));
+    T.geo('gold', CLOCK_RIM, 0, g + H - 1.6, 0.03);
+    for (let h = 0; h < 12; h++) {
+      const b = (h / 12) * TAU;
+      T.box('metal', Math.sin(b) * 0.92, g + H - 1.6 + Math.cos(b) * 0.92, 0.05, 0.06, 0.16, 0.02, WHITE, 0, 0, -b);
+    }
+    T.box('metal', 0.18, g + H - 1.6 + 0.3, 0.07, 0.07, 0.7, 0.02, WHITE, 0, 0, -0.55);
+    T.box('metal', -0.3, g + H - 1.6 + 0.08, 0.08, 0.07, 0.5, 0.02, WHITE, 0, 0, 1.9);
+    T.box('glass', 0, g + H - 5, 0.01, 0.5, 1.4, 0.06);
   }
-  F.box('stone', 0, base + 11.6, tz, 4.8, 0.4, 4.8, TINT.darkStone);
-  F.geo('shingle', new THREE.ConeGeometry(3.3, 6, 4, 1, true), 0, base + 14.8, tz, 0, Math.PI / 4, 0, 1, 1, 1, TINT.slate);
-  F.geo('gold', new THREE.CylinderGeometry(0.06, 0.06, 1.6, 6), 0, base + 18.4, tz);
-  F.box('gold', 0, base + 18.7, tz, 0.7, 0.08, 0.08);
-  F.geo('gold', new THREE.SphereGeometry(0.45, 12, 8, 0, TAU, 0, Math.PI / 2), 0, base + 9.2, tz, Math.PI, 0, 0);
-  // Arched door.
-  F.box('stone', 0, base + 1.6, tz + 2.21, 2.2, 3.4, 0.1, TINT.darkStone);
-  F.box('planks', 0, base + 1.4, tz + 2.26, 1.4, 2.8, 0.08, TINT.door);
-  F.box('stone', 0, base - 0.15, tz + 3.0, 2.6, 0.3, 1.4, TINT.darkStone);
-  F.collideBox(0, 0, w / 2 + 0.3, d / 2 + 0.3, g - 1, base + 14);
-  F.collideBox(0, tz, 2.3, 2.3, g - 1, base + 18);
-  ctx.occupy(rect(x, z + 1.5, w / 2 + 0.6, d / 2 + 4));
+  F.geo('shingle', new THREE.ConeGeometry(3.0, 4.2, 4, 1, true), tx, g + H + 2.5, tz, 0, Math.PI / 4, 0, 1, 1, 1, TINT.slate);
+  F.box('metal', tx, g + H + 5.0, tz, 0.05, 1.2, 0.05);
+  F.box('metal', tx, g + H + 5.3, tz, 0.9, 0.05, 0.05);
+  F.geo('metal', new THREE.ConeGeometry(0.12, 0.3, 4), tx + 0.5, g + H + 5.3, tz, 0, 0, -Math.PI / 2);
+  F.collideBox(tx, tz, 1.8, 1.8, g - 1, g + H + 6);
+  ctx.occupy(rect(...F.world(tx, tz), 2.2, 2.2, rot));
+  ctx.lamps.push([...F.world(-2.6, 9.8), rot]);
+  ctx.lamps.push([...F.world(2.6, 9.8), rot]);
+  return ridgeY;
 }
+
+const CLOCK_GEO = new THREE.CircleGeometry(1.1, 32);
+const CLOCK_RIM = new THREE.RingGeometry(1.08, 1.2, 32);
 
 const STAINED = [C(0x3a64c8), C(0xc83a3a), C(0xd8b040), C(0x3aa060), C(0x8a4ac0)];
 
@@ -2276,7 +2736,7 @@ function buildGraveyard(ctx) {
       const tz = -5.5 + r * 4 + (ctx.rng() - 0.5) * 0.5;
       if (r === 0 && c === 0) continue;
       const tilt = (ctx.rng() - 0.5) * 0.18;
-      F.inst(ctx.rng() < 0.25 ? 'cross' : 'tomb', tx, F.ground(tx, tz) - 0.05, tz, tilt, Math.PI / 2 + (ctx.rng() - 0.5) * 0.15, 0, 1, 1, 1, ctx.vary(TINT.mossy, 0.1));
+      F.inst('tomb', tx, F.ground(tx, tz) - 0.05, tz, tilt, Math.PI / 2 + (ctx.rng() - 0.5) * 0.15, 0, 1, 1, 1, ctx.vary(TINT.mossy, 0.1));
       F.collideCircle(tx, tz, 0.35, g - 1, g + 1.2);
     }
   }
@@ -2298,11 +2758,251 @@ function buildGraveyard(ctx) {
   ctx.trees.push({ x: x - 5.8, z: z - 8, kind: 'pine', s: 0.75 });
 }
 
+// ============================================================ new quarters
+
+const BASIN_OUT = new THREE.CylinderGeometry(3.45, 3.55, 0.75, 32, 1, true);
+const BASIN_IN = insideOut(new THREE.CylinderGeometry(3.1, 3.1, 0.75, 32, 1, true));
+const BASIN_RIM = new THREE.RingGeometry(3.05, 3.6, 32).rotateX(-Math.PI / 2);
+const POOL_DISC = new THREE.CircleGeometry(3.12, 32).rotateX(-Math.PI / 2);
+const BOWL_GEO = new THREE.CylinderGeometry(1.25, 0.35, 0.45, 20, 1, true);
+const BOWL_POOL = new THREE.CircleGeometry(1.18, 20).rotateX(-Math.PI / 2);
+const FLOWER_GEO = new THREE.IcosahedronGeometry(0.09, 0);
+const FLOWERS = [C(0xd8344a), C(0xe8b030), C(0xf2eef0), C(0x9a4ac8), C(0xe86a9a), C(0x4a78d8)];
+
+// The same surface seen from the other side: winding reversed, normals flipped.
+function insideOut(geometry) {
+  const g = geometry.index ? geometry.toNonIndexed() : geometry;
+  for (const name of ['position', 'normal', 'uv']) {
+    const a = g.attributes[name];
+    if (!a) continue;
+    for (let i = 0; i < a.count; i += 3) {
+      for (let c = 0; c < a.itemSize; c++) {
+        const t = a.array[(i + 1) * a.itemSize + c];
+        a.array[(i + 1) * a.itemSize + c] = a.array[(i + 2) * a.itemSize + c];
+        a.array[(i + 2) * a.itemSize + c] = t;
+      }
+    }
+  }
+  const n = g.attributes.normal;
+  for (let i = 0; i < n.array.length; i++) n.array[i] = -n.array[i];
+  return g;
+}
+
+// A water arc from (x0, y0) out to (x1, y1) in the frame's XY plane, as a thin tube.
+function jetGeometry(x0, y0, x1, y1, lift) {
+  const curve = new THREE.QuadraticBezierCurve3(
+    new THREE.Vector3(x0, y0, 0),
+    new THREE.Vector3((x0 + x1) / 2, Math.max(y0, y1) + lift, 0),
+    new THREE.Vector3(x1, y1, 0),
+  );
+  return new THREE.TubeGeometry(curve, 12, 0.035, 5, false);
+}
+
+// A bench facing +Z of its frame, with a collider.
+function streetBench(ctx, x, z, rot) {
+  const F = new Frame(ctx, x, z, rot);
+  const g = ctx.ground(x, z);
+  F.box('planks', 0, g + 0.46, 0, 1.8, 0.06, 0.4, TINT.door);
+  F.box('planks', 0, g + 0.82, -0.2, 1.8, 0.3, 0.05, TINT.door, -0.15, 0, 0);
+  for (const sx of [-0.75, 0.75]) F.box('stone', sx, g + 0.22, 0, 0.18, 0.46, 0.42, TINT.darkStone);
+  F.collideBox(0, 0, 0.9, 0.22, g - 1, g + 0.5);
+  ctx.occupy(rect(x, z, 1.0, 0.4, rot));
+}
+
+// A wooden tub of flowers.
+function flowerTub(ctx, x, z, rng) {
+  const F = new Frame(ctx, x, z, rng() * TAU);
+  const g = ctx.ground(x, z);
+  F.box('planks', 0, g + 0.3, 0, 0.9, 0.6, 0.9, TINT.door);
+  F.box('plainCloth', 0, g + 0.6, 0, 0.8, 0.04, 0.8, C(0x4a3a2a));
+  for (let k = 0; k < 14; k++) {
+    const fx = (rng() - 0.5) * 0.7;
+    const fz = (rng() - 0.5) * 0.7;
+    F.geo('plainCloth', FLOWER_GEO, fx, g + 0.68 + rng() * 0.12, fz, 0, 0, 0, 1, 1, 1, FLOWERS[Math.floor(rng() * FLOWERS.length)]);
+    F.box('plainCloth', fx, g + 0.63, fz, 0.03, 0.12, 0.03, C(0x3e6a2e));
+  }
+  F.collideBox(0, 0, 0.45, 0.45, g - 1, g + 0.7);
+  ctx.occupy(rect(x, z, 0.6, 0.6));
+}
+
+/*
+ * Fountain Square in the east quarter: a round fountain with a two-tier
+ * column and arcs of water, benches facing it, four trees, flower tubs, a row
+ * of stalls along the north side and the bakery across the south side.
+ */
+function buildFountainSquare(ctx) {
+  const q = FOUNTAIN_SQ;
+  const { rng } = ctx;
+  const { x, z } = SITES.fountain;
+  const F = new Frame(ctx, x, z, 0);
+  const g = ctx.ground(x, z);
+  F.geo('stone', BASIN_OUT, 0, g + 0.3, 0, 0, 0, 0, 1, 1, 1, TINT.stone);
+  F.geo('stone', BASIN_IN, 0, g + 0.3, 0, 0, 0, 0, 1, 1, 1, TINT.darkStone);
+  F.geo('stone', BASIN_RIM, 0, g + 0.675, 0, 0, 0, 0, 1, 1, 1, TINT.stone);
+  F.geo('pool', POOL_DISC, 0, g + 0.45, 0);
+  F.geo('stone', new THREE.CylinderGeometry(0.35, 0.5, 2.4, 12), 0, g + 1.5, 0, 0, 0, 0, 1, 1, 1, TINT.stone);
+  F.geo('stone', BOWL_GEO, 0, g + 2.7, 0, 0, 0, 0, 1, 1, 1, TINT.stone);
+  F.geo('pool', BOWL_POOL, 0, g + 2.88, 0);
+  F.geo('stone', new THREE.CylinderGeometry(0.16, 0.22, 0.9, 10), 0, g + 3.3, 0, 0, 0, 0, 1, 1, 1, TINT.stone);
+  F.geo('stone', new THREE.SphereGeometry(0.28, 12, 8), 0, g + 3.85, 0, 0, 0, 0, 1, 1, 1, TINT.stone);
+  for (let k = 0; k < 6; k++) {
+    const a = (k / 6) * TAU;
+    const jet = jetGeometry(1.15, 2.85, 2.6, 0.5, 0.35);
+    F.geo('pool', jet, 0, g, 0, 0, a, 0);
+    const jet2 = jetGeometry(0.2, 3.95, 1.0, 2.95, 0.3);
+    F.geo('pool', jet2, 0, g, 0, 0, a + Math.PI / 6, 0);
+  }
+  ctx.colliders.addCircle(x, z, 3.6, g - 1, g + 4.2);
+  ctx.world.fountain = new THREE.Vector3(x, g, z);
+
+  // Benches in a ring facing the fountain, between trees and flower tubs.
+  for (let k = 0; k < 8; k++) {
+    const a = (k / 8) * TAU + TAU / 16;
+    const bx = x + Math.sin(a) * 7.4;
+    const bz = z + Math.cos(a) * 7.4;
+    if (k % 2) streetBench(ctx, bx, bz, a + Math.PI);
+    else flowerTub(ctx, bx, bz, rng);
+  }
+  for (const [tx, tz] of [[-10.5, -7.5], [10.5, -7.5], [-10.5, 7.5], [10.5, 7.5]]) {
+    ctx.trees.push({ x: x + tx, z: z + tz, kind: 'oakB', s: 0.62 });
+    ctx.occupy(rect(x + tx, z + tz, 1.2, 1.2));
+  }
+
+  // Stalls along the north edge, facing the fountain.
+  for (const sx of [-9, -3, 3, 9]) {
+    const S = new Frame(ctx, x + sx, q.z0 + 2.2, 0);
+    const sg = ctx.ground(x + sx, q.z0 + 2.2);
+    S.inst('stallWood', 0, sg, 0);
+    S.inst('stallAwning', 0, sg, 0, 0, 0, 0, 1, 1, 1, ctx.pick(TINT.awning));
+    S.inst('stallGoods', 0, sg, 0, 0, 0, 0, 1, 1, 1, ctx.pick(GOODS_TINTS));
+    S.collideBox(0, 0, 1.5, 1.2, sg - 1, sg + 3);
+    S.inst(rng() < 0.5 ? 'barrel' : 'crate', 1.2, sg, -1.9, 0, rng() * TAU, 0, 1, 1, 1);
+  }
+  for (const [lx, lz] of [[q.x0 + 1, q.z0 + 1], [q.x1 - 1, q.z0 + 1], [q.x0 + 1, q.z1 - 1], [q.x1 - 1, q.z1 - 1]]) {
+    ctx.lamps.push([lx, lz, Math.atan2(x - lx, z - lz)]);
+  }
+  ctx.occupy(rect((q.x0 + q.x1) / 2, (q.z0 + q.z1) / 2, (q.x1 - q.x0) / 2, (q.z1 - q.z0) / 2));
+}
+
+// The bakery on the south side of Fountain Square, its door facing the fountain.
+function buildBakery(ctx) {
+  const { x, z } = SITES.bakery;
+  const { F, base } = buildHouse(ctx, {
+    x, z, rot: Math.PI, w: 8, d: 7, floors: 2, style: 'timber', roof: 'tile', jetty: true,
+    wallTint: TINT.plaster[3], roofTint: TINT.roof[3], shutter: TINT.shutter[2], doorAt: 1.5,
+    room: furnishBakery, name: 'Bakery',
+  });
+  // A hanging sign with a golden loaf.
+  F.box('metal', 3.2, base + 3.3, 4.3, 0.05, 0.05, 1.4);
+  F.box('planks', 3.2, base + 2.85, 4.75, 0.06, 0.6, 0.8, TINT.door);
+  for (const s of [-1, 1]) F.geo('gold', LOAF_GEO, 3.2 + s * 0.05, base + 2.85, 4.75, 0, 0, 0, 0.3, 1.3, 2.0);
+}
+
+/*
+ * The stables in the west quarter: an open-fronted timber shed with four stalls
+ * and hay racks, and a fenced paddock beside it with a water trough.
+ */
+function buildStables(ctx) {
+  const { x, z } = SITES.stables;
+  const { rng } = ctx;
+  const sx = x - 9;
+  const F = new Frame(ctx, sx, z, Math.PI / 2);
+  const g = F.ground(0, 0);
+  const W = 12;
+  const D = 5;
+  F.box('stone', 0, g - 0.2, 0, W + 0.4, 0.6, D + 0.4, TINT.plinth);
+  F.box('planks', 0, g + 1.5, -D / 2, W, 3.0, 0.2, TINT.boards);
+  for (const s of [-1, 1]) F.box('planks', s * W / 2, g + 1.5, 0, 0.2, 3.0, D, TINT.boards);
+  for (let k = 0; k <= 4; k++) {
+    const px = -W / 2 + (k * W) / 4;
+    F.box('timber', px, g + 1.6, D / 2, 0.24, 3.2, 0.24, TINT.beam);
+    F.collideCircle(px, D / 2, 0.2, g - 1, g + 3.2);
+    if (k > 0 && k < 4) F.box('planks', px, g + 0.75, 0, 0.1, 1.5, D - 0.4, TINT.door);
+  }
+  F.box('timber', 0, g + 3.2, D / 2, W + 0.3, 0.24, 0.3, TINT.beam);
+  F.box('thatch', 0, g + 3.55, 0.1, W + 1.2, 0.4, D + 1.6, WHITE, -0.22, 0, 0);
+  for (let k = 0; k < 4; k++) {
+    const px = -W / 2 + (k + 0.5) * (W / 4);
+    F.box('timber', px, g + 1.3, -D / 2 + 0.35, 1.8, 0.5, 0.4, TINT.beam);
+    F.box('thatch', px, g + 1.6, -D / 2 + 0.35, 1.6, 0.25, 0.32, WHITE);
+  }
+  F.collideBox(0, -D / 2, W / 2, 0.15, g - 1, g + 4);
+  for (const s of [-1, 1]) F.collideBox(s * W / 2, 0, 0.15, D / 2, g - 1, g + 4);
+  ctx.occupy(rect(sx, z, D / 2 + 0.8, W / 2 + 0.6));
+
+  // Paddock with a gate on the lane side, a trough and hay.
+  const paddock = { x: x + 3, z, w: 13, d: 12, rot: 0 };
+  fenceAround(ctx, paddock, 'south');
+  const P = new Frame(ctx, paddock.x, paddock.z, 0);
+  const tg = P.ground(4, -5);
+  P.box('planks', 4, tg + 0.35, -5, 2.4, 0.5, 0.7, TINT.door);
+  P.box('pool', 4, tg + 0.58, -5, 2.2, 0.02, 0.5);
+  P.collideBox(4, -5, 1.2, 0.35, tg - 1, tg + 0.6);
+  for (let k = 0; k < 3; k++) {
+    const hx = -4 + k * 1.3;
+    const hg = P.ground(hx, 5);
+    P.box('thatch', hx, hg + 0.45, 5, 1.2, 0.9, 0.8, WHITE, 0, rng() * 0.3, 0);
+    P.collideBox(hx, 5, 0.6, 0.4, hg - 1, hg + 0.9);
+  }
+  ctx.world.pens.paddock = { ...rect(paddock.x, paddock.z, paddock.w / 2 + 0.6, paddock.d / 2 + 0.6), species: 'horse' };
+  ctx.occupy(rect(paddock.x, paddock.z, paddock.w / 2 + 1.6, paddock.d / 2 + 1.6));
+}
+
+// Bunting strung across a street between two points, at about 5 m.
+function bunting(ctx, a, b, rng) {
+  const ga = ctx.ground(a[0], a[1]) + 5.2;
+  const gb = ctx.ground(b[0], b[1]) + 5.2;
+  const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  const rot = Math.atan2(b[0] - a[0], b[1] - a[1]);
+  const n = Math.max(4, Math.round(len / 0.6));
+  const F = new Frame(ctx, a[0], a[1], rot);
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    const sag = Math.sin(Math.PI * t) * 0.9;
+    const y = lerp(ga, gb, t) - sag;
+    if (i < n) {
+      const t2 = (i + 1) / n;
+      const y2 = lerp(ga, gb, t2) - Math.sin(Math.PI * t2) * 0.9;
+      F.box('metal', 0, (y + y2) / 2, (t + t2) * len / 2, 0.015, 0.015, len / n + 0.02, WHITE, Math.atan2(y - y2, len / n), 0, 0);
+      F.geo('plainCloth', PENNANT_GEO, 0, y - 0.02, t * len + len / n / 2, 0, Math.PI / 2, 0, 1, 1, 1, FLOWERS[Math.floor(rng() * FLOWERS.length)]);
+    }
+  }
+}
+
+// A two-sided triangular pennant hanging from its top edge.
+const PENNANT_GEO = (() => {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute([-0.16, 0, 0, 0, -0.32, 0, 0.16, 0, 0, 0.16, 0, 0, 0, -0.32, 0, -0.16, 0, 0], 3));
+  g.computeVertexNormals();
+  return g;
+})();
+
+// Festive bunting along the busiest streets, between the house fronts.
+function streetBunting(ctx) {
+  const { rng } = ctx;
+  for (const road of ROADS.filter((r) => r.town && r.w >= 5)) {
+    const pts = road.pts;
+    for (let i = 3; i < pts.length - 3; i += 7) {
+      const p = pts[i];
+      const q = pts[i + 1];
+      const len = Math.hypot(q.x - p.x, q.z - p.z) || 1;
+      const nx = -(q.z - p.z) / len;
+      const nz = (q.x - p.x) / len;
+      const off = road.w / 2 + 1.4;
+      const a = [p.x + nx * off, p.z + nz * off];
+      const b = [p.x - nx * off, p.z - nz * off];
+      if (!ctx.occupied(a[0], a[1], 0.8) || !ctx.occupied(b[0], b[1], 0.8)) continue;
+      if (inSquare(p.x, p.z, 2)) continue;
+      bunting(ctx, a, b, rng);
+    }
+  }
+}
+
 // Houses lining the streets, wherever they fit.
 function placeTownHouses(ctx) {
   const { rng } = ctx;
   const streets = ROADS.filter((r) => r.town);
-  const gates = [[0, 10 + TOWN_INNER], [0, 10 - TOWN_INNER], [-TOWN_INNER, 10]];
+  const gates = Object.values(GATE);
   let count = 0;
   for (const road of streets) {
     const pts = road.pts;
@@ -2340,6 +3040,8 @@ function placeTownHouses(ctx) {
         if (ok) {
           const floors = rng() < 0.6 ? 2 : 1;
           const style = rng() < 0.75 ? 'timber' : 'plaster';
+          // Every third roomy house can be walked into.
+          const walkIn = w >= 7 && d >= 7.4 && rng() < 0.34;
           buildHouse(ctx, {
             x: hx, z: hz, rot, w, d, floors, style,
             roof: rng() < 0.85 ? 'tile' : 'slate',
@@ -2348,9 +3050,12 @@ function placeTownHouses(ctx) {
             wallTint: ctx.pick(TINT.plaster),
             roofTint: ctx.pick(TINT.roof),
             shutter: rng() < 0.7 ? ctx.pick(TINT.shutter) : null,
-            doorAt: (rng() - 0.5) * (w - 3),
+            doorAt: walkIn ? (rng() - 0.5) * (w - 3.4) : (rng() - 0.5) * (w - 3),
+            room: walkIn ? furnishHome : null,
+            name: 'house',
           });
           count++;
+          if (walkIn) ctx.world.stats.rooms++;
           s += w + 1 + rng() * 2;
         } else {
           s += 2;
@@ -2382,7 +3087,7 @@ function streetLamps(ctx, filter, spacing) {
       const z = b.z + nz * (road.w / 2 + 0.5);
       if (ctx.occupied(x, z, 0.3)) continue;
       if (roadClearance(x, z, (r) => r !== road) < 0.3) continue;
-      if (x > MARKET.x0 - 1 && x < MARKET.x1 + 1 && z > MARKET.z0 - 1 && z < MARKET.z1 + 1) continue;
+      if (inSquare(x, z, 1)) continue;
       ctx.lamps.push([x, z, Math.atan2(-nx, -nz)]);
       ctx.occupy(rect(x, z, 0.4, 0.4));
     }
@@ -2638,7 +3343,7 @@ function buildThroneHall(ctx, F0) {
     F.collideBox(s * (w / 4 + 0.9), d / 2 - T / 2, w / 4 - 0.9, T / 2, F0 - 1, F0 + H + 6);
   }
   F.collideBox(0, d / 2 - T / 2, 1.8, T / 2, F0 + 5.6, F0 + H + 6);
-  ctx.world.interiors.push({ ...rect(x, z, w / 2 - T, d / 2 - T), ceiling: beamY - 0.3 });
+  ctx.world.interiors.push({ ...rect(x, z, w / 2 - T, d / 2 - T), ceiling: beamY - 0.3, top: ridgeY + 1, floor: F0, lights: [], name: 'Throne Hall' });
   ctx.world.hallLight = { x, y: F0 + 6.5, z: z + 1 };
   ctx.occupy(rect(x, z, w / 2 + 0.5, d / 2 + 0.5));
 }
@@ -3095,7 +3800,7 @@ function buildRoads(ctx) {
         const mx = (a.x + b.x) / 2 + Math.cos(rot) * side * (hw + 0.12);
         const mz = (a.z + b.z) / 2 - Math.sin(rot) * side * (hw + 0.12);
         if (roadClearance(mx, mz, (r) => r !== road && r.kind === 'cobble') < 0.5) continue;
-        if (mx > MARKET.x0 - 1 && mx < MARKET.x1 + 1 && mz > MARKET.z0 - 1 && mz < MARKET.z1 + 1) continue;
+        if (inSquare(mx, mz, 1)) continue;
         if (Math.hypot(mx - SITES.castle.x, mz - SITES.castle.z) < 31) continue;
         const F = new Frame(ctx, mx, mz, rot);
         const y0 = F.ground(0, -len / 2);
@@ -3104,7 +3809,9 @@ function buildRoads(ctx) {
       }
     }
   });
-  groundPatch(ctx, 'cobbleRoad', rect(0, (MARKET.z0 + MARKET.z1) / 2, (MARKET.x1 - MARKET.x0) / 2, (MARKET.z1 - MARKET.z0) / 2), 2, 0.09, (lx, lz, x, z) => [x / 2.4, z / 2.4]);
+  for (const q of SQUARES) {
+    groundPatch(ctx, 'cobbleRoad', rect((q.x0 + q.x1) / 2, (q.z0 + q.z1) / 2, (q.x1 - q.x0) / 2, (q.z1 - q.z0) / 2), 2, 0.09, (lx, lz, x, z) => [x / 2.4, z / 2.4]);
+  }
   const c = SITES.castle;
   const hall = rect(SITES.hall.x, SITES.hall.z, SITES.hall.w / 2, SITES.hall.d / 2);
   groundPatch(ctx, 'cobbleRoad', rect(c.x, c.z, 31, 31), 2, 0.09, (lx, lz, x, z) => [x / 2.4, z / 2.4], (x, z) => Math.hypot(x - c.x, z - c.z) < 31.5 && !rectContains(hall, x, z, -1.0));
@@ -3418,8 +4125,8 @@ function upNormals(material, key) {
 const _ax = new THREE.Vector3();
 const _ay = new THREE.Vector3();
 const _centre = new THREE.Vector3();
-const UV_SCALES = { stone: 3.3, stoneFloor: 3.6, plaster: 3, timber: 1.5, planks: 2, shingle: 2.4, thatch: 2.5, cloth: 1.2, plainCloth: 2, metal: 1, gold: 1, glass: 1, stained: 1, lamp: 1, fire: 1 };
-const NO_SHADOW = new Set(['glass', 'stained', 'lamp', 'fire']);
+const UV_SCALES = { stone: 3.3, stoneFloor: 3.6, plaster: 3, timber: 1.5, planks: 2, shingle: 2.4, thatch: 2.5, cloth: 1.2, plainCloth: 2, metal: 1, gold: 1, glass: 1, pane: 1, pool: 1.5, stained: 1, lamp: 1, fire: 1 };
+const NO_SHADOW = new Set(['glass', 'pane', 'pool', 'stained', 'lamp', 'fire']);
 
 export class World {
   constructor(scene, renderer, quality) {
@@ -3439,7 +4146,9 @@ export class World {
     this.uTime = { value: 0 };
     this.timeOfDay = 9.5;
     this.night = 0;
-    this.stats = { houses: 0, trees: 0, meshes: 0 };
+    this.stats = { houses: 0, rooms: 0, trees: 0, meshes: 0 };
+    // Fenced places where animals are kept: { ...rect, species }.
+    this.pens = {};
     ANISOTROPY = quality.anisotropy;
 
     this.sky = new SkyDome();
@@ -3495,8 +4204,11 @@ export class World {
     buildMarket(ctx);
     buildTavern(ctx);
     buildSmithy(ctx);
-    buildChapel(ctx);
+    buildTownHall(ctx);
     buildGraveyard(ctx);
+    buildFountainSquare(ctx);
+    buildBakery(ctx);
+    buildStables(ctx);
     wallRing(ctx, TOWN_WALL, TOWN_GATES, {
       cx: SITES.town.x, cz: SITES.town.z, H: 6.5, T: 2.2, towerR: 3.3, towerH: 9.5,
       gateW: 4.6, gateTowerW: 5, gateH: 11, spring: 2.6,
@@ -3504,6 +4216,7 @@ export class World {
     });
     this.stats.houses = placeTownHouses(ctx);
     streetLamps(ctx, (r) => r.town, 19);
+    streetBunting(ctx);
 
     await progress('Fortifying the castle…');
     buildCastle(ctx);
@@ -3653,6 +4366,10 @@ export class World {
       metal: std({ color: 0x5c5e63, metalness: 0.8, roughness: 0.45, vertexColors: true }),
       gold: std({ color: 0xd8ae52, metalness: 1, roughness: 0.3, vertexColors: true }),
       glass: std({ color: 0x1a2430, roughness: 0.12, metalness: 0.4, emissive: 0xffa040, emissiveIntensity: 0, vertexColors: true }),
+      // Fountain and trough water: a still surface with the river's moving ripples.
+      pool: std({ color: 0x2c6474, roughness: 0.06, metalness: 0.1, normalMap: T.ripples.normal, normalScale: n(0.35), vertexColors: true }),
+      // Window panes seen from inside: bright with daylight, dark blue at night.
+      pane: std({ color: 0x31465c, roughness: 0.2, emissive: 0xd8e8ff, emissiveIntensity: 0.8, vertexColors: true }),
       stained: new THREE.MeshBasicMaterial({ vertexColors: true, color: 0xffffff, side: THREE.DoubleSide }),
       lamp: std({ color: 0xfff1d0, roughness: 0.3, emissive: 0xffb050, emissiveIntensity: 0.2, vertexColors: true }),
       fire: std({ color: 0x000000, emissive: 0xff7a28, emissiveIntensity: 3, roughness: 1, vertexColors: true }),
@@ -3753,7 +4470,6 @@ export class World {
       fencePost: [geos.fencePost, this.mat.timber, true],
       fenceRail: [geos.fenceRail, this.mat.timber, true],
       tomb: [geos.tomb, this.mat.stone, true],
-      cross: [geos.cross, this.mat.stone, true],
       wheat: [geos.wheat, this.mat.crop, false],
       barley: [geos.wheat, this.mat.crop, false],
       cabbage: [geos.cabbage, this.mat.cabbage, false],
@@ -4086,11 +4802,18 @@ export class World {
     return run < 1e-5 || rise / run <= MAX_GRADE;
   }
 
-  // Lowest ceiling above (x, z), for keeping the camera inside roofed rooms.
-  ceilingAt(x, z) {
+  // Lowest ceiling over (x, y, z), for keeping the camera inside roofed rooms.
+  // Above a building's roof (or with no height given, anywhere over it) the ceiling applies only below the roof.
+  ceilingAt(x, z, y = -Infinity) {
     let c = Infinity;
-    for (const r of this.interiors) if (rectContains(r, x, z)) c = Math.min(c, r.ceiling);
+    for (const r of this.interiors) if (y < r.top && rectContains(r, x, z)) c = Math.min(c, r.ceiling);
     return c;
+  }
+
+  // The room (x, y, z) stands in, or null.
+  interiorAt(x, y, z) {
+    for (const r of this.interiors) if (y > r.floor - 0.5 && y < r.ceiling && rectContains(r, x, z)) return r;
+    return null;
   }
 
   cameraBlocked(x, y, z, pad) {
@@ -4099,8 +4822,9 @@ export class World {
 
   // True where nothing is planned: keeps loose props off roads, the river and settlements.
   isOpenGround(x, z) {
-    const { castle, town, farmland, ruins } = SITES;
-    if (Math.hypot(x - town.x, z - town.z) < town.r + 26) return false;
+    const { castle, farmland, ruins, balloonField } = SITES;
+    if (townEdge(x, z) < 26) return false;
+    if (Math.hypot(x - balloonField.x, z - balloonField.z) < 30) return false;
     if (Math.hypot(x - castle.x, z - castle.z) < castle.r + 34) return false;
     if (roadClearance(x, z) < 4) return false;
     if (Math.abs(z - riverZ(x)) < 24) return false;
@@ -4161,6 +4885,7 @@ export class World {
     if (this.mat) {
       this.mat.lamp.emissiveIntensity = 0.2 + this.night * 3.2;
       this.mat.glass.emissiveIntensity = this.night * 0.9;
+      this.mat.pane.emissiveIntensity = (1 - this.night) * 0.85 + 0.03;
       this.mat.stained.color.setScalar(lerp(1.0, 0.25, this.night));
     }
     // Rebuild the sky lighting only when the sky has visibly changed: often at dawn
@@ -4196,21 +4921,30 @@ export class World {
     this._placeSun(focus);
   }
 
-  // Hands the pooled lights to the lanterns nearest the player; they fade in at dusk.
+  // Hands the pooled lights to the lanterns nearest the player after dark, or,
+  // indoors, to the room's hearth and candles, day or night. They fade in.
   _updateLampLights(dt, focus, t) {
     const pool = this.lampLights;
     if (!pool.length) return;
+    const room = this.interiorAt(focus.x, focus.y, focus.z);
+    const indoors = room && room.lights.length ? room.lights : null;
+    if (indoors !== this._lampRoom) {
+      this._lampRoom = indoors;
+      this._lampTimer = 0;
+      for (const slot of pool) slot.indoor = !!indoors;
+    }
     this._lampTimer -= dt;
-    if (this._lampTimer <= 0 && this.night > 0.01) {
+    if (this._lampTimer <= 0 && (indoors || this.night > 0.01)) {
       this._lampTimer = 0.5;
-      const near = this.lampHeads
+      const near = (indoors || this.lampHeads)
         .map((p) => ({ p, d: p.distanceToSquared(focus) }))
         .sort((a, b) => a.d - b.d)
         .slice(0, pool.length);
       pool.forEach((slot, i) => {
         const pick = near[i];
-        if (!pick) return;
-        if (!slot.light.position.equals(pick.p)) {
+        slot.indoor = !!indoors;
+        slot.off = !pick;
+        if (pick && !slot.light.position.equals(pick.p)) {
           slot.light.position.copy(pick.p);
           slot.fade = 0;
         }
@@ -4219,8 +4953,9 @@ export class World {
     for (const slot of pool) {
       const d = slot.light.position.distanceTo(focus);
       slot.fade = Math.min(1, slot.fade + dt * 1.5);
-      const flicker = 1 + Math.sin(t * 9 + slot.light.position.x) * 0.05;
-      slot.light.intensity = this.night * 9 * slot.fade * flicker * (1 - smoothstep(32, 45, d));
+      const flicker = 1 + Math.sin(t * 9 + slot.light.position.x) * (slot.indoor ? 0.1 : 0.05);
+      const strength = slot.off ? 0 : slot.indoor ? 26 : this.night * 9 * (1 - smoothstep(32, 45, d));
+      slot.light.intensity = strength * slot.fade * flicker;
     }
   }
 
@@ -4477,7 +5212,6 @@ function instanceGeometries() {
   tomb.translate(0, -0.15, 0);
   projectUV(tomb, 1.5);
   withColor(tomb);
-  const cross = boxes([[0.16, 1.3, 0.14, 0, 0.5, 0], [0.7, 0.14, 0.14, 0, 0.85, 0]], 1.5);
 
   const cabbageParts = [];
   for (let k = 0; k < 4; k++) {
@@ -4494,5 +5228,5 @@ function instanceGeometries() {
   const cabbage = mergeGeometries(cabbageParts);
   cabbage.computeVertexNormals();
 
-  return { tile, stallWood, stallAwning, stallGoods, barrel, crate, fencePost, fenceRail, tomb, cross, wheat: wheatGeometry(), cabbage };
+  return { tile, stallWood, stallAwning, stallGoods, barrel, crate, fencePost, fenceRail, tomb, wheat: wheatGeometry(), cabbage };
 }

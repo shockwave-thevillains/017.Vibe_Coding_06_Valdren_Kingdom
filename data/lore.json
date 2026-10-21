@@ -70,7 +70,7 @@
       "place": "A lectern in the Throne Hall",
       "text": [
         "The great book lies open at a page marked with a faded ribbon:",
-        "‘In the deep of the Red Winter, brigands out of the western woods fell upon the Greywatch by night and put it to the torch. His Highness Prince Edmund perished in the flames, defending it. The King, in his grief, commanded that the Prince be laid in the chapel yard, and that the stores of the Crown be sealed against thieves.’",
+        "‘In the deep of the Red Winter, brigands out of the western woods fell upon the Greywatch by night and put it to the torch. His Highness Prince Edmund perished in the flames, defending it. The King, in his grief, commanded that the Prince be laid in the old burial ground, and that the stores of the Crown be sealed against thieves.’",
         "The hand is careful. The ink of the word ‘brigands’ is darker than the rest, written over something scraped away."
       ],
       "note": "The official story: brigands burned the tower and the prince died in it. But the word ‘brigands’ was written over something else."
@@ -94,7 +94,7 @@
       "kind": "grave",
       "radius": 2.6,
       "title": "The Prince's Grave",
-      "place": "Beneath the yew in the chapel graveyard",
+      "place": "Beneath the yew in the old burial ground",
       "text": [
         "A plain tomb in the oldest corner of the graveyard: ‘EDMUND, PRINCE OF VALDREN, FIRSTBORN OF HARALD. FELL AT THE GREYWATCH, 271.’",
         "A bunch of wild heather lies on the lid, still fresh, tied with a strip of bark. Heather does not grow in the town. The nearest is on the ridge above the western woods."
@@ -111,7 +111,7 @@
       "text": [
         "A song sheet, folded small and tucked under a tankard, the ink smudged by many thumbs:",
         "♪ The king kept the bread in his tower of stone, / the prince drove the carts down the frost-bitten road; / they burned the grey watch with the prince in its keep, / but the valley remembers, and the valley won't sleep.",
-        "They searched in the ashes and found not a bone, / so the grave in the chapel lies over a stone; / and up on the ridge where the grey heather grows / an old man keeps bees, and the old valley knows. ♪"
+        "They searched in the ashes and found not a bone, / so the tomb by the yew lies over a stone; / and up on the ridge where the grey heather grows / an old man keeps bees, and the old valley knows. ♪"
       ],
       "note": "The verse nobody sings: no bones in the ashes, and an old man keeping bees on the heather ridge. The hermit pays for his bread with honey…"
     },

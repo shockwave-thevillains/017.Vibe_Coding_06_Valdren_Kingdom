@@ -679,11 +679,10 @@ function scalpLine(look, a) {
   return hairlineAt(style === 'long' ? 'long' : look.female ? 'female' : 'short', a);
 }
 
-// Hair on the scalp only: 'short', 'long', 'bun' (swept up), 'tonsure' (shaved crown) or 'bald'.
+// Hair on the scalp only: 'short', 'long', 'bun' (swept up) or 'bald'.
 function scalpField(look, nx, ny, nz, line = scalpLine(look, Math.atan2(nx, nz))) {
   if (line === null) return -1;
-  const f = ny - line;
-  return look.hairStyle === 'tonsure' ? Math.min(f, 0.7 - ny) : f;
+  return ny - line;
 }
 
 function hairField(look, nx, ny, nz, line) {
@@ -986,7 +985,7 @@ function hairMesh(look, S) {
     const isBeard = beard && scalp < f;
     const lump = Math.sin(nx * 23 + nz * 17) * Math.sin(ny * 19 + nx * 11) * 0.012;
     // Thick on the crown, close-cropped at the sides; beards by style.
-    let depth = style === 'tonsure' ? 0.04 : style === 'bun' ? 0.035 + 0.02 * smooth(-0.2, 0.9, ny) : 0.05 + 0.065 * smooth(-0.2, 0.9, ny) + (style === 'long' ? 0.02 : 0);
+    let depth = style === 'bun' ? 0.035 + 0.02 * smooth(-0.2, 0.9, ny) : 0.05 + 0.065 * smooth(-0.2, 0.9, ny) + (style === 'long' ? 0.02 : 0);
     if (isBeard) depth = beard === 'full' ? 0.13 : 0.05;
     const vol = 1.01 + (depth + lump) * smooth(0, 0.28, f);
     const [x, y, z] = sculpt(nx, ny, nz, S);
@@ -1054,8 +1053,8 @@ function hairMesh(look, S) {
  * style:
  *   body     female, belly (0..1), skirt ('tunic' | 'robe'), age (0..1),
  *            scar (null | 'burn'), gloveL (a colour for a gloved left hand)
- *   head     skin, hair, hairStyle ('short' | 'long' | 'bun' | 'tonsure' |
- *            'bald'), beard (null | 'short' | 'full'), stubble, eyes, brows, lips
+ *   head     skin, hair, hairStyle ('short' | 'long' | 'bun' | 'bald'),
+ *            beard (null | 'short' | 'full'), stubble, eyes, brows, lips
  *   clothes  tunic, sleeves, trousers, boots, belt, pouch (null for none), trim,
  *            cloak (null for none), cloakTrim
  *   seed     varies the painted skin
@@ -1201,14 +1200,6 @@ const ACTIONS = {
       upperArmR: [0.42, 0, -0.12], forearmR: [-1.45, -1.45, 0], handR: [0, 0, 0],
     }),
   },
-  // Hands together before the chest, head bowed.
-  pray: {
-    pose: () => ({
-      upperArmL: [-0.32, 0, 0.28], forearmL: [-1.55, 0.75, 0], handL: [0.2, 0, 0],
-      upperArmR: [-0.32, 0, -0.28], forearmR: [-1.55, -0.75, 0], handR: [0.2, 0, 0],
-      neck: [0.1, 0, 0], head: [0.28, 0, 0],
-    }),
-  },
   // Raise the hammer slowly, strike fast, rest; the other hand steadies the work.
   hammer: {
     right: true,
@@ -1251,7 +1242,7 @@ function blendBone(bone, r, w) {
  * Procedural animation on the skeleton: walk, run and idle (pelvis sway and
  * twist, counter-rotating shoulders, bending knees and elbows, heel-to-toe
  * feet, a swaying cloak), with optional layers on top:
- *   action   a pose from ACTIONS ('behind', 'pray', 'hammer', 'wipe', 'staff')
+ *   action   a pose from ACTIONS ('behind', 'hammer', 'wipe', 'staff', ...)
  *   talking  hand gestures and nods while speaking
  *   lookAt   { yaw, pitch } in radians relative to the body, or null
  *   stoop    a permanent forward bend (0..1)
@@ -1511,7 +1502,7 @@ export class FollowCamera {
   // True where the camera may not be: under ground, above a room's ceiling, inside a wall.
   _blocked(x, y, z) {
     const w = this.world;
-    return y < w.getGroundHeight(x, z) + 0.35 || y > w.ceilingAt(x, z) - 0.25 || w.cameraBlocked(x, y, z, 0.25);
+    return y < w.getGroundHeight(x, z) + 0.35 || y > w.ceilingAt(x, z, y) - 0.25 || w.cameraBlocked(x, y, z, 0.25);
   }
 
   update(dt, target, snap = false) {
@@ -1551,7 +1542,7 @@ export class FollowCamera {
     cam.position.set(f.x + dx * this._distance, f.y + dy * this._distance, f.z + dz * this._distance);
     const floor = this.world.getGroundHeight(cam.position.x, cam.position.z) + 0.3;
     if (cam.position.y < floor) cam.position.y = floor;
-    const ceiling = this.world.ceilingAt(cam.position.x, cam.position.z) - 0.25;
+    const ceiling = this.world.ceilingAt(cam.position.x, cam.position.z, cam.position.y) - 0.25;
     if (cam.position.y > ceiling) cam.position.y = ceiling;
     cam.lookAt(f);
   }

@@ -311,7 +311,7 @@
             "leave": "Bow and withdraw."
           },
           "edmund": {
-            "text": "Edmund. My elder brother died in the Greywatch fire, killed by brigands. The chronicles say so. The stone in the chapel yard says so.",
+            "text": "Edmund. My elder brother died in the Greywatch fire, killed by brigands. The chronicles say so. The stone in the old burial ground says so.",
             "choices": [
               {
                 "text": "And what do you say?",
@@ -659,7 +659,7 @@
             ]
           },
           "forging": {
-            "text": "Hinges for the chapel door. The chapel's stood empty since the old priest died, but the old hinges still scream like the damned when the wind gets in.",
+            "text": "Hinges for the Town Hall door. The council meets twice a year, and every time those old hinges scream like a scalded cat.",
             "choices": [
               {
                 "text": "Have you always been the smith here?",
@@ -835,7 +835,7 @@
             ]
           },
           "gossip": {
-            "text": "Let's see. The smith's sweet on the miller's sister, the chapel hinges scream, and the king hasn't smiled since my mother was a girl.",
+            "text": "Let's see. The smith's sweet on the miller's sister, the Town Hall hinges scream, and the king hasn't smiled since my mother was a girl.",
             "choices": [
               {
                 "text": "Why doesn't the king smile?",
@@ -1152,7 +1152,7 @@
         ],
         "nodes": {
           "greet": {
-            "text": "Mind the furrows, they're new. If you're from the castle, the tithe's paid. If you're not, well, hello.",
+            "text": "Mind the furrows, they're new. If you're from the castle, the levy's paid. If you're not, well, hello.",
             "choices": [
               {
                 "text": "I'm not from the castle.",

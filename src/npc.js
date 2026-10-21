@@ -237,20 +237,6 @@ const OUTFIT = {
     kit.add('chest', new THREE.SphereGeometry(1, 16, 10, 0, TAU, 0, Math.PI / 2), color, { jitter: 0.06, matrix: M(0, 1.38, -0.135, -Math.PI / 2, 0, 0, 0.12, 0.05, 0.15) });
   },
 
-  cross(kit, o, look) {
-    const z = frontProfile(look, 1.3).rf + 0.014;
-    kit.add('chest', new THREE.BoxGeometry(0.012, 0.062, 0.006), GOLD, { metal: true, matrix: M(0, 1.3, z) });
-    kit.add('chest', new THREE.BoxGeometry(0.036, 0.012, 0.006), GOLD, { metal: true, matrix: M(0, 1.312, z) });
-    for (const s of [-1, 1]) kit.add('chest', new THREE.CylinderGeometry(0.003, 0.003, 0.17, 4), '#3a2a1a', { matrix: M(s * 0.035, 1.4, z - 0.012, -0.25, 0, s * 0.42) });
-  },
-
-  ropeBelt(kit, o, look) {
-    const z = frontProfile(look, 1.0).rf + 0.01;
-    for (const [x, len] of [[0.03, 0.36], [0.065, 0.3]]) {
-      kit.add('hips', new THREE.CylinderGeometry(0.008, 0.008, len, 6), '#c8b48a', { jitter: 0.06, matrix: M(x, 1.03 - len / 2, z, 0.08, 0, 0) });
-      kit.add('hips', new THREE.SphereGeometry(0.016, 8, 6), '#b8a47a', { matrix: M(x, 1.03 - len, z + 0.01) });
-    }
-  },
 };
 
 function smoothstep(e0, e1, x) {
