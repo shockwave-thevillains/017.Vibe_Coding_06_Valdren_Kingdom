@@ -303,18 +303,40 @@ const SPECIES = {
     flies: true,
     build() {
       const S = new Shape(19);
-      S.blob(0, 0, 0, 0.05, 0.05, 0.13, 0x2a2a30, BODY, [0, 0, 0], 0, 1);
+      S.blob(0, 0, 0, 0.05, 0.05, 0.13, WHITE, BODY, [0, 0, 0], 0, 1);
+      S.add(new THREE.ConeGeometry(0.035, 0.12, 4).rotateX(-Math.PI / 2), M(0, 0, -0.17), WHITE, BODY, [0, 0, 0]);
       for (const s of [-1, 1]) {
         const w = new THREE.BufferGeometry();
         w.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0.06, s * 0.32, 0, -0.02, 0, 0, -0.08, 0, 0, 0.06, 0, 0, -0.08, s * 0.32, 0, -0.02], 3));
         w.computeVertexNormals();
-        S.add(w, new THREE.Matrix4(), 0x2a2a30, s < 0 ? WING_L : WING_R, [0, 0, 0]);
+        S.add(w, new THREE.Matrix4(), 0xe8e8e8, s < 0 ? WING_L : WING_R, [0, 0, 0]);
       }
       return S.build();
     },
-    colors: [0xffffff, 0x8a7a6a, 0x5a5a6a],
+    colors: [0x2a2a30],
+  },
+  // A pigeon: pecks about the squares and flutters up out of the way.
+  pigeon: {
+    walk: 0.45, run: 3.2, turn: 6, radius: 0.12, stride: 0.09, shy: 2.4, legLen: 0.1, grazes: true, peck: true, flutters: true,
+    build() {
+      const S = new Shape(20);
+      const neck = [0, 0.2, 0.05];
+      S.blob(0, 0.16, 0, 0.09, 0.09, 0.14, WHITE, BODY, [0, 0, 0], 0.03, 1);
+      S.add(new THREE.ConeGeometry(0.06, 0.12, 5), M(0, 0.17, -0.16, -1.3), 0xb0b0b8, BODY, [0, 0, 0]);
+      S.blob(0, 0.27, 0.09, 0.05, 0.055, 0.055, 0x7a8a9a, HEAD, neck, 0, 1);
+      S.blob(0, 0.22, 0.07, 0.055, 0.04, 0.05, 0x5a8a7a, HEAD, neck, 0, 1);
+      S.add(new THREE.ConeGeometry(0.012, 0.035, 4), M(0, 0.265, 0.15, Math.PI / 2), 0x3a3030, HEAD, neck);
+      eyes(S, 0.285, 0.12, 0.03, HEAD, neck, 0.008);
+      S.leg(-0.03, 0.1, 0, 0, 0.008, 0xd06a6a, LEG_FL).leg(0.03, 0.1, 0, 0, 0.008, 0xd06a6a, LEG_FR);
+      for (const s of [-1, 1]) S.blob(s * 0.08, 0.18, -0.02, 0.02, 0.06, 0.11, 0xa0a0a8, s < 0 ? WING_L : WING_R, [s * 0.07, 0.22, 0], 0, 1);
+      return S.build();
+    },
+    colors: [0xb8bcc8, 0x9a9ea8, 0xd8d8dc, 0x6a6a72],
   },
 };
+
+// Bird colours for each kind of flock.
+const BIRD_COLORS = { crow: 0x26262c, gull: 0xf4f4f2, swallow: 0x2e3448, raven: 0x18181c, finch: 0x8a6a4a };
 
 // ---------------------------------------------------------------- animals
 
@@ -369,6 +391,7 @@ export class Animals {
     add('sheep', { x: 150, z: -55, r: 24 }, 11);
     add('cow', { x: 60, z: 178, r: 13 }, 6);
     if (pens.pigs) add('pig', pens.pigs, 4);
+    if (pens.pond) add('duck', { x: pens.pond.x, z: pens.pond.z, r: pens.pond.r, pond: pens.pond.pond }, 4);
     add('chicken', { x: -12, z: 212, r: 6 }, 7);
     add('chicken', { x: -86, z: 44, r: 5 }, 5);
     for (const coop of Object.values(pens).filter((p) => p.species === 'chicken')) add('chicken', { x: coop.x, z: coop.z, r: 4 }, 3);
@@ -377,6 +400,14 @@ export class Animals {
     add('dog', { x: -12, z: 205, r: 8 }, 1, ['Rusty']);
     add('cat', { x: 88, z: 51, r: 4 }, 1, ['Tansy']);
     add('cat', { x: -14, z: 22, r: 5 }, 1);
+    // Strays about the streets of the town and the harbour.
+    for (const [x, z] of [[-38, 4], [-56, 12], [38, 18], [52, 4], [46, -18], [26, -30], [4, 64], [-22, 52], [74, 8], [98, 6], [-80, -16], [56, -54], [346, 52], [312, 66]]) {
+      add('cat', { x, z, r: 6 }, 1);
+    }
+    // Pigeons in the squares.
+    add('pigeon', { x: 2, z: 14, r: 9 }, 8);
+    add('pigeon', { x: 84, z: 40, r: 9 }, 7);
+    add('pigeon', { x: 351, z: 46, r: 7 }, 6);
     add('duck', { x: -40, z: 0, r: 26, river: true }, 5);
     add('duck', { x: 42, z: 0, r: 22, river: true }, 4);
 
@@ -410,9 +441,16 @@ export class Animals {
 
     // Birds circling in flocks over the town, the fields and the woods.
     this.flocks = [
-      { x: 30, z: 10, r: 46, y: 42, n: 9, speed: 0.11 },
-      { x: 40, z: 222, r: 52, y: 34, n: 8, speed: -0.09 },
-      { x: -200, z: 60, r: 60, y: 48, n: 9, speed: 0.08 },
+      { x: 30, z: 10, r: 46, y: 42, n: 9, speed: 0.11, kind: 'crow' },
+      { x: 40, z: 222, r: 52, y: 34, n: 8, speed: -0.09, kind: 'finch' },
+      { x: -200, z: 60, r: 60, y: 48, n: 9, speed: 0.08, kind: 'crow' },
+      { x: 480, z: 92, r: 70, y: 30, n: 12, speed: 0.07, kind: 'gull' },
+      { x: 382, z: 50, r: 28, y: 16, n: 9, speed: -0.13, kind: 'gull' },
+      { x: 150, z: 136, r: 40, y: 20, n: 6, speed: 0.1, kind: 'gull' },
+      { x: 0, z: -190, r: 30, y: 46, n: 7, speed: -0.13, kind: 'crow' },
+      { x: 40, z: 362, r: 34, y: 20, n: 9, speed: 0.17, kind: 'swallow' },
+      { x: 300, z: -300, r: 70, y: 55, n: 8, speed: 0.08, kind: 'crow' },
+      { x: -455, z: -440, r: 60, y: 165, n: 6, speed: -0.07, kind: 'raven' },
     ];
     const birds = [];
     this.flocks.forEach((f, fi) => {
@@ -442,7 +480,8 @@ export class Animals {
       mesh.name = `animals:${kind}`;
       members.forEach((m, i) => {
         m.index = i;
-        mesh.setColorAt(i, _c.set(spec.colors[Math.floor(rng() * spec.colors.length)]));
+        const color = m.flock ? BIRD_COLORS[m.flock.kind] : spec.colors[Math.floor(rng() * spec.colors.length)];
+        mesh.setColorAt(i, _c.set(color).multiplyScalar(0.9 + rng() * 0.2));
       });
       if (kind === 'horse') {
         // The named horses: Chestnut is chestnut, Ash is grey.
@@ -492,7 +531,8 @@ export class Animals {
   }
 
   _ground(a, x, z) {
-    return a.spec.swims ? WATER_LEVEL - 0.03 : this.world.getGroundHeight(x, z);
+    if (a.spec.swims) return a.home.pond ?? WATER_LEVEL - 0.03;
+    return this.world.getGroundHeight(x, z);
   }
 
   _free(a, x, z) {
@@ -589,7 +629,10 @@ export class Animals {
       const step = a.speed * dt;
       const nx = a.x + Math.sin(a.heading) * step;
       const nz = a.z + Math.cos(a.heading) * step;
-      const ok = spec.swims ? Math.abs(nz - riverZ(nx)) < 7 : this._free(a, nx, nz) && this._inside(a, nx, nz) && this.world.canStep(a.x, a.z, nx, nz);
+      const h = a.home;
+      const ok = spec.swims
+        ? h.pond !== undefined ? Math.hypot(nx - h.x, nz - h.z) < h.r : Math.abs(nz - riverZ(nx)) < 7
+        : this._free(a, nx, nz) && this._inside(a, nx, nz) && this.world.canStep(a.x, a.z, nx, nz);
       if (ok) {
         a.x = nx;
         a.z = nz;
@@ -608,6 +651,8 @@ export class Animals {
     a.head += (peck - a.head) * Math.min(1, dt * (spec.peck ? 14 : 3));
     const lying = a.state === 'rest' ? 1 : 0;
     a.fold += (lying - a.fold) * Math.min(1, dt * 2);
+    // Pigeons flutter up into the air while they get out of the way.
+    if (spec.flutters) a.air = (a.air || 0) + ((a.state === 'flee' ? 1 : 0) - (a.air || 0)) * Math.min(1, dt * 2.5);
   }
 
   // Keeps animals with a pen or patch inside it (with a little slack while fleeing).
@@ -627,7 +672,7 @@ export class Animals {
     for (const a of members) {
       const s = a.scale;
       const drop = a.fold * (spec.legLen || 0) * 0.75 * s;
-      _m.compose(_v.set(a.x, a.y - drop + (spec.swims ? Math.sin(this._time * 2 + a.phase) * 0.015 : 0), a.z), _q.setFromAxisAngle(UP, a.heading), _s.set(s, s, s));
+      _m.compose(_v.set(a.x, a.y - drop + (a.air || 0) * 2.4 + (spec.swims ? Math.sin(this._time * 2 + a.phase) * 0.015 : 0), a.z), _q.setFromAxisAngle(UP, a.heading), _s.set(s, s, s));
       mesh.setMatrixAt(a.index, _m);
       const stride = a.fold > 0.05 ? -a.fold : Math.min(1.3, a.speed / Math.max(spec.walk, 0.1));
       // Chickens keep their wings folded unless they are running away.
