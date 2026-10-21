@@ -5,10 +5,13 @@ as a 100 % static site (HTML, ES modules and JSON), with no build step, backend 
 API keys, so it can be hosted on GitHub Pages as is. Every model and texture is
 generated in code at load time; the project ships no art assets.
 
-> **Status: complete (all five phases).** The engine core, the whole kingdom,
-> its seven inhabitants with branching dialogue, ten secrets that add up to one
-> mystery, a journal, compass and maps, saved progress, a running day-night
-> cycle, and Low / Medium / High graphics presets.
+> **Status: complete (all five phases), then expanded.** The engine core, the
+> whole kingdom, its people with branching dialogue, ten secrets that add up to
+> one mystery, a journal, compass and maps, saved progress, a running day-night
+> cycle and Low / Medium / High graphics presets; since then a town twice the
+> size with houses, a bar and a town hall you can walk into, townsfolk and
+> children, animals, and hot-air balloons you can ride. The kingdom has no
+> religious buildings or symbols, so it sits comfortably with every faith.
 
 ## The kingdom
 
@@ -18,37 +21,70 @@ generated in code at load time; the project ships no art assets.
   donjon (with a sealed, chained door), and the **Throne Hall**, which you can
   walk into: columns, a long carpet, a two-step dais and throne, stained-glass
   windows, banners, braziers and a chandelier.
-- **The walled town** below: a twelve-sided wall with towers and three gates,
-  winding cobbled streets with kerbs and lamp posts, about thirty half-timbered
-  and stone houses, a market square with stalls, a well and a king's statue, the
-  tavern *The Broken Oar*, the blacksmith's forge, and a chapel with a bell tower
-  and graveyard.
+- **The walled town** below: an oval wall with sixteen towers and four gates,
+  winding cobbled streets with kerbs, lamp posts and bunting, about eighty
+  half-timbered and stone houses with gardens, woodpiles, washing lines and
+  chicken coops behind them, and:
+  - the old **market square** with stalls, a well and a king's statue;
+  - ***The Broken Oar***, a bar you can walk into: a counter with bottles and
+    casks, tables and benches, a hearth and a chandelier;
+  - the **Town Hall** with its clock tower, open to visitors (a council table,
+    shelves of ledgers, the arms of Valdren);
+  - **Fountain Square** in the east quarter, with a two-tier fountain, benches,
+    stalls and the **bakery** (its domed oven glowing);
+  - the **stables** and a paddock in the west quarter, the blacksmith's
+    **forge**, and the old **burial ground** with plain headstones;
+  - about twenty homes you can step into, each with a hearth, a bed, a table
+    and stores. Walk through any open doorway.
 - **Outside the walls:** the royal road winding up the castle hill, a
   three-arched stone bridge over the river, wheat, barley and cabbage fields with
-  fences, a farmstead with a barn and haystacks, a turning windmill, woods to the
-  west, north-east and south-west, and a ruined watchtower on a knoll at the
-  forest edge with a hermit's camp beside it.
+  fences, a farmstead with a barn, haystacks and a pig sty, a turning windmill,
+  woods to the west, north-east and south-west, a ruined watchtower on a knoll at
+  the forest edge with a hermit's camp beside it, and the **Balloon Meadow**
+  beyond the east gate.
 
 ## The people
 
-Seven people live in Valdren. Each has a place, a routine and a story to tell,
-and what one of them lets slip can open up another.
+Seven people are at the heart of the story. Each has a place, a routine and a
+story to tell, and what one of them lets slip can open up another.
 
 | Who | Where | Doing |
 | --- | --- | --- |
 | **King Osric II** | On the dais of the Throne Hall | Pacing before the throne, hands behind his back |
 | **Dame Isolde Varn**, Captain of the Guard | Castle courtyard | Walking her rounds in helmet and breastplate |
 | **Brannoc**, Blacksmith | The forge, north-west of the market | Hammering at the anvil |
-| **Maera**, keeper of *The Broken Oar* | Outside the tavern | Polishing a tankard |
+| **Maera**, keeper of *The Broken Oar* | Behind the bar counter | Polishing a tankard |
 | **Tobias Fenn**, merchant of Saltmere | The east stalls of the market | Strolling between his stalls |
 | **Wynn Hollis**, farmer | The farmstead across the river | Walking out to the ploughed field, hoe in hand |
 | **The Old Hermit** | His camp beside the ruined watchtower | Pottering between the fire and the ruin |
+
+Around them some twenty-four townsfolk go about their day, and all of them will
+chat: guards at the gates, three regulars at the Broken Oar's tables, Hilde
+kneading dough in the bakery, the Town Hall's clerk, a fruit seller and a toy
+seller, a town crier, a stablehand and a carter at the paddock, walkers on the
+streets, Captain Gale the aeronaut on the Balloon Meadow, and six children:
+four playing tag round the fountain, one racing down the main street and one
+watching the horses.
 
 Walk up to someone and a prompt appears (their name also floats above their
 head). Press `E`, or tap **Interact**, to talk. The camera moves over your
 shoulder, the line types itself out (click, tap or press `Space` to show it at
 once), and you pick a reply with the mouse, a tap or the keys `1`–`3`. `Esc`
 ends the conversation.
+
+## Animals and balloons
+
+- **Animals** live all over the kingdom: horses in the paddock (Chestnut likes a
+  scratch; Ash bites), sheep on the meadows, cows by the windmill, pigs in their
+  sty, chickens at the farm and by the coops in town, ducks on the river, birds
+  circling overhead, cats (one asleep by the Broken Oar's fire) and dogs (Biscuit
+  at the market, Patch chasing the children, Rusty at the farm). Chickens, sheep,
+  cats and ducks shy away if you rush at them. Walk up to a dog, cat, horse,
+  sheep, cow or pig and press `E` to pet it.
+- **Hot-air balloons** drift high over the valley. On the Balloon Meadow, beyond
+  the east gate, a tethered balloon waits on the grass: stand by its basket and
+  press `E` (**Ride**) to go up on its rope for a look over the whole kingdom.
+  It comes back down by itself after about a minute.
 
 ## The mystery
 
@@ -85,12 +121,13 @@ offer three presets. Touch devices start on **Medium**, everything else on
 | Shadows | **off** | 1024² map, 34 m around you | 2048² map, 46 m around you |
 | Resolution (device pixel ratio cap) | 1 | 1.5 | 2 |
 | Edge smoothing (MSAA) | off | on | on |
-| Lantern lights at night | none | 2 | 4 |
+| Lantern lights at night, hearth lights indoors | none | 2 | 4 |
+| People drawn within | 40 m | 60 m | 90 m |
 | Grass tufts around you | 2,500 | 6,000 | 18,000 |
 | Full-detail trees within | 40 m | 55 m | 75 m |
 | Textures | 256 px | 256 px | 512 px |
 
-Shadows, resolution, lantern lights, grass and tree distance change at once.
+Shadows, resolution, lights, people, grass and tree distance change at once.
 Texture size, tree and crop detail and edge smoothing are fixed when the world
 is built, so the menu says when those will follow on the next load. If the game
 runs below 24 frames per second for ten seconds, it suggests a lower preset
@@ -121,6 +158,8 @@ maps), on desktop and on phones, with WebGL 2.
 | Zoom        | Mouse wheel                    | n/a                                       |
 | Interact    | `E`                            | **Interact** button                       |
 | Read, examine | `E` by something that glints | **Interact** button                     |
+| Pet an animal | `E` next to it               | **Interact** button                       |
+| Ride the balloon | `E` by its basket on the meadow | **Interact** button                 |
 | Journal     | `J`                            | **Journal** button                        |
 | Map         | `M`, or click the minimap      | Tap the minimap                           |
 | Close a page | `Esc`, `E` / `J` / `M` again  | The × button                              |
@@ -194,10 +233,13 @@ left mouse button and drag to look around.
   ermine collar, nasal helm, breastplate, pauldrons, sword, aprons, hats, a
   cowl, a hammer, a tankard, a staff, a hoe). Accessories are baked
   into the figure's own skinned mesh, so each person costs four or five draw
-  calls; their shadows are dropped beyond 24 m. Poses (hands behind the back,
-  hammering, polishing, leaning on a staff) are layered over the walk
-  cycle, people turn their heads to watch you pass, and they gesture while
-  they speak.
+  calls; their shadows are dropped beyond 24 m, and beyond the preset's range
+  they are hidden (they keep to their routines unseen). Poses (hands behind the
+  back, hammering, polishing, leaning on a staff, sitting, drinking, kneading)
+  are layered over the walk cycle; seated poses lower the hips onto the bench.
+  People turn their heads to watch you pass and gesture while they speak.
+  Children (`"child": true`) are the same figure at about 60 % scale with a
+  larger head.
 - **Dialogue** trees live in the same file. Each node is a line and two or three
   replies; a reply leads to another node or ends the conversation. Nodes and
   replies can require and set flags (`"if": ["heard_edmund", "!met_king"]`,
@@ -212,6 +254,27 @@ left mouse button and drag to look around.
   The props (the founding stone, a lectern, a ledger page, a song sheet, a
   letter, the burnt standard, heather on a grave) are part of the batched world
   geometry; the glints are a single point cloud.
+- **Rooms you can walk into** are houses whose ground floor is a shell: walls
+  with a doorway, a plank floor and a beamed ceiling, an open door and a step up
+  to the threshold. The floor is a walkable surface and the room an interior,
+  so the camera stays under its ceiling; above the ceiling the house is solid
+  to the camera. Furniture (tables, benches, stools, chairs, beds, chests,
+  shelves of pots, books or bottles, hearths with chimney breasts, rugs, a bar
+  counter, a bread oven, chandeliers) is batched with the rest of the town.
+  While you are inside, the pool of point lights moves to the room's hearth and
+  candles, day or night, and the window panes glow with daylight.
+- **Animals** (`src/animals.js`): each species is one `InstancedMesh` built
+  from procedural parts. Every vertex carries a part id and a pivot, and the
+  vertex shader (also used for the shadow pass) swings the legs in a trot,
+  lowers the head to graze or peck, wags tails and flaps wings from four
+  per-instance values; lying down folds the legs. On the CPU each animal
+  wanders inside its pen or patch, grazes, rests, shies away, or trots after
+  someone, checking the same colliders and steps as the player.
+- **Balloons** (`src/balloons.js`): one mesh each (a lathed envelope striped per
+  face, skirt, ropes, wicker basket, sandbags, burner) and a flame that roars
+  in bursts. Four follow wide loops above the land; the tethered one climbs to
+  about 34 m on its rope with the player standing in the basket, sways a
+  little, and lands again.
 - **Day and night:** the clock runs continuously. The sky, fog, sun, moon and
   ambient light follow it every frame, while the image-based lighting is only
   rebuilt when the sky has visibly changed (often at dawn and dusk, never at
@@ -228,16 +291,17 @@ left mouse button and drag to look around.
   every 20 seconds of play, on pause and when the page is hidden. A saved
   position is only restored if it is still standable ground.
 - **Collision:** circles and rotated boxes with a vertical extent, in a uniform
-  spatial grid. Walkable surfaces (the bridge deck, the hall floor and dais) sit
-  above the terrain; steps up to 45 cm can be climbed; deep water and slopes above
+  spatial grid. Walkable surfaces (the bridge deck, the hall floor and dais, room
+  floors and door steps) sit above the terrain; steps up to 45 cm can be climbed; deep water and slopes above
   45° cannot. The camera pulls in rather than pass through walls, and stays under
-  the Throne Hall's ceiling.
+  the ceiling of whatever room the player is in.
 - **Budget:** one shadow-casting light, the device pixel ratio capped at 2, and
   the presets above. Switching presets re-seeds the grass, resizes or drops the
   shadow map and adds or removes lantern lights in place; the lit materials
-  recompile once for the new light setup. In the starting view, High draws about
-  200 calls and 0.9 M triangles a frame (shadow pass included), Low about 165
-  calls and 0.6 M triangles, at a quarter of the pixels on a high-density screen.
+  recompile once for the new light setup. Each animal species and each balloon
+  costs one or two draw calls. In town at street level, High draws about 120 to
+  250 calls and 0.8 to 1.1 M triangles a frame (shadow pass included), depending
+  on how many people are in view.
 
 ### Project layout
 
@@ -254,9 +318,12 @@ src/player.js     skinned human figure (shared with NPCs), its animation and
                   poses, player controller, follow camera
 src/npc.js        the people: figures and accessories from data, patrols,
                   who can be talked to, name labels
+src/animals.js    the animals: instanced species, their shader animation,
+                  wandering, following, petting
+src/balloons.js   the hot-air balloons and the ride on the tethered one
 src/dialogue.js   branching conversations: typewriter, replies, flags
 src/lore.js       discoveries and their glints, the reader, the journal, the save
-data/npcs.json    the seven inhabitants: looks, outfits, routes, dialogue
+data/npcs.json    the inhabitants: looks, outfits, routes, dialogue
 data/lore.json    the ten discoverables, rumours, the truth and the epilogue
 src/input.js      keyboard, mouse / pointer lock, touch joystick and look, buttons
 src/ui.js         start screen, pause menu, graphics choice, toasts, hints,

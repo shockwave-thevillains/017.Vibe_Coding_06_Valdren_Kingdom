@@ -3576,6 +3576,133 @@
       }
     },
     {
+      "id": "gale",
+      "name": "Captain Gale",
+      "role": "Aeronaut of Saltmere",
+      "position": {
+        "x": 212.5,
+        "z": 25.0
+      },
+      "heading": 1.5708,
+      "action": "behind",
+      "look": {
+        "female": true,
+        "skin": "#c49577",
+        "hair": "#b85a2a",
+        "eyes": "#4a3a2a",
+        "tunic": "#24356e",
+        "trousers": "#3a2e24",
+        "boots": "#2e2118",
+        "belt": "#4a3020",
+        "trim": "#d8d0c0",
+        "cloak": "#8a2a2a",
+        "age": 0.4,
+        "skirt": "robe",
+        "hairStyle": "bun",
+        "lips": "#a8484a",
+        "stubble": false,
+        "sleeves": "#e8dcc4"
+      },
+      "outfit": {
+        "hat": "#3a2a1a"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_gale"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Welcome to the meadow! Fancy a look at Valdren from above?",
+            "choices": [
+              {
+                "text": "Can I go up?",
+                "next": "t0"
+              },
+              {
+                "text": "How does a balloon fly?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back for another flight? She's ready when you are.",
+            "choices": [
+              {
+                "text": "Can I go up?",
+                "next": "t0"
+              },
+              {
+                "text": "How does a balloon fly?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Of course! Step up to the basket while she's down and I'll cast off. She's tied fast to the stake, so you'll come straight back down to me.",
+            "choices": [
+              {
+                "text": "How does a balloon fly?",
+                "next": "t1"
+              },
+              {
+                "text": "Who flies the others?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Hot air rises, friend. Fill a silk bag with enough of it and it will lift a basket, a burner and one brave traveller.",
+            "choices": [
+              {
+                "text": "Can I go up?",
+                "next": "t0"
+              },
+              {
+                "text": "Who flies the others?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "My crew from Saltmere. We drift with the wind and land wherever the farmers are friendliest.",
+            "choices": [
+              {
+                "text": "Can I go up?",
+                "next": "t0"
+              },
+              {
+                "text": "How does a balloon fly?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
       "id": "pip",
       "name": "Pip",
       "role": "Child",

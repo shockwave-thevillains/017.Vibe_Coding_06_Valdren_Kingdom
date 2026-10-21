@@ -1481,6 +1481,16 @@ export class Player {
     this._sync();
   }
 
+  // Rides along with something (a balloon's basket): placed at pos each frame, standing still.
+  ride(pos, dt) {
+    this.position.copy(pos);
+    this.velocity.set(0, 0, 0);
+    this.speed = 0;
+    this._visualY = pos.y;
+    this.animator.update(dt, 0);
+    this._sync();
+  }
+
   // Places the player instantly (no smoothing), e.g. when restoring a saved position.
   teleport(x, z, heading = this.heading) {
     this.position.set(x, this.world.getGroundHeight(x, z), z);

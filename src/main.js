@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { World, WATER_LEVEL, WORLD_HALF, PLAY_HALF, PLACES, SITES } from './world.js';
 import { Player, FollowCamera, dampAngle } from './player.js';
 import { NPCManager } from './npc.js';
+import { Animals } from './animals.js';
+import { Balloons } from './balloons.js';
 import { Dialogue } from './dialogue.js';
 import { Lore, Reader, Journal, Progress } from './lore.js';
 import { Input } from './input.js';
@@ -39,17 +41,17 @@ const PRESETS = {
   low: {
     pixelRatio: 1, antialias: false, shadows: false, shadowMap: 1024, shadowExtent: 34,
     textureSize: 256, anisotropy: 2, treeDetail: 0, cropSparse: true,
-    grass: 2500, grassTile: 38, lampLights: 0, lodRadius: 40, people: 45,
+    grass: 2500, grassTile: 38, lampLights: 0, lodRadius: 40, people: 40,
   },
   medium: {
     pixelRatio: 1.5, antialias: true, shadows: true, shadowMap: 1024, shadowExtent: 34,
     textureSize: 256, anisotropy: 4, treeDetail: 0, cropSparse: true,
-    grass: 6000, grassTile: 46, lampLights: 2, lodRadius: 55, people: 75,
+    grass: 6000, grassTile: 46, lampLights: 2, lodRadius: 55, people: 60,
   },
   high: {
     pixelRatio: 2, antialias: true, shadows: true, shadowMap: 2048, shadowExtent: 46,
     textureSize: 512, anisotropy: 8, treeDetail: 1, cropSparse: false,
-    grass: 18000, grassTile: 64, lampLights: 4, lodRadius: 75, people: 120,
+    grass: 18000, grassTile: 64, lampLights: 4, lodRadius: 75, people: 90,
   },
 };
 const LOAD_TIME = ['antialias', 'textureSize', 'anisotropy', 'treeDetail', 'cropSparse'];
@@ -143,6 +145,9 @@ async function boot() {
   const dataError = missing.length ? `Some of Valdren could not be loaded (${missing.join(', ')}).` : null;
   const npcs = new NPCManager(scene, world, people ? people.npcs || [] : []);
   npcs.range = quality.people;
+  const animals = new Animals(scene, world, npcs);
+  const balloons = new Balloons(scene, world);
+  const BOARD_RANGE = 2.4;
   const flags = new Set();
   const lore = new Lore(scene, world, secrets || { entries: [] });
 
@@ -357,6 +362,21 @@ async function boot() {
   ui.onMapClose = closeOverlay;
   ui.onMap = openMap;
 
+  // ------------------------------------------------------------ balloon
+
+  function boardBalloon() {
+    if (!balloons.board()) return;
+    ui.toast('The aeronaut casts off the sandbags, the burner roars, and up you go!', 4000);
+  }
+
+  // Back on the meadow: step out of the basket.
+  function landBalloon() {
+    const b = balloons.basketFloor;
+    player.teleport(b.x - 2.2, b.z + 0.6, -Math.PI / 2);
+    ui.toast('The basket bumps down on the meadow. What a view that was!', 3500);
+    saveNow();
+  }
+
   // --------------------------------------------------------------- pause
 
   function pause() {
@@ -442,6 +462,9 @@ async function boot() {
     if (mode !== 'playing') return;
     if (reachable && reachable.npc) startTalk(reachable.npc);
     else if (reachable && reachable.entry) read(reachable.entry);
+    else if (reachable && reachable.animal) ui.toast(animals.pet(reachable.animal), 3500);
+    else if (reachable && reachable.balloon) boardBalloon();
+    else if (balloons.riding) ui.toast('Hold on to the basket. The meadow is a long way down.');
     else ui.toast('There is nothing here to interact with.');
   });
   input.on('journal', () => {
@@ -532,12 +555,24 @@ async function boot() {
     follow.update(dt, shotFocus);
   }
 
-  // The nearest thing to act on: a person or a discovery, whichever is closer.
+  // The nearest thing to act on: a person, a discovery or an animal to pet, whichever is closest.
   function findReachable() {
     const npc = npcs.nearest(player);
     const spot = lore.nearest(player);
-    if (spot && (!npc || spot.distance < Math.hypot(npc.position.x - player.position.x, npc.position.z - player.position.z))) return { entry: spot.entry };
-    return npc ? { npc } : null;
+    const pet = animals.nearest(player);
+    const p = player.position;
+    const options = [];
+    if (npc) options.push({ d: Math.hypot(npc.position.x - p.x, npc.position.z - p.z), r: { npc } });
+    if (spot) options.push({ d: spot.distance, r: { entry: spot.entry } });
+    if (pet) options.push({ d: pet.distance + 0.5, r: { animal: pet.animal } });
+    if (balloons.boardable) {
+      const b = balloons.basketFloor;
+      const d = Math.hypot(b.x - p.x, b.z - p.z);
+      if (d < BOARD_RANGE) options.push({ d, r: { balloon: true } });
+    }
+    if (!options.length) return null;
+    options.sort((a, b) => a.d - b.d);
+    return options[0].r;
   }
 
   function updateHud(dt) {
@@ -606,15 +641,24 @@ async function boot() {
         follow.distance += (savedView.distance - follow.distance) * k;
       }
       world.advanceTime(dt);
-      player.update(dt, input.getMove(), follow.yaw);
+      if (balloons.update(dt) === 'landed') landBalloon();
+      if (balloons.riding) {
+        player.ride(balloons.basketFloor, dt);
+      } else {
+        player.update(dt, input.getMove(), follow.yaw);
+      }
       npcs.update(dt, player);
-      npcs.separate(player);
+      if (!balloons.riding) npcs.separate(player);
+      animals.update(dt, player, npcs);
+      if (!balloons.riding) animals.separate(player);
       lore.update(dt);
       follow.update(dt, player.position);
       // Hide the player when an obstacle squeezes the camera right up to them.
       player.figure.root.visible = follow.actualDistance > 1.0;
-      reachable = findReachable();
-      if (reachable && reachable.entry) ui.setPrompt(reachable.entry.title, input.touchMode, lore.kindOf(reachable.entry).verb);
+      reachable = balloons.riding ? null : findReachable();
+      if (reachable && reachable.balloon) ui.setPrompt('the balloon', input.touchMode, 'Ride');
+      else if (reachable && reachable.entry) ui.setPrompt(reachable.entry.title, input.touchMode, lore.kindOf(reachable.entry).verb);
+      else if (reachable && reachable.animal) ui.setPrompt(animals.label(reachable.animal), input.touchMode, 'Pet');
       else ui.setPrompt(reachable ? reachable.npc.name : null, input.touchMode);
       world.update(dt, player.position, camera);
       ui.updateLabels(npcs.labels(camera, window.innerWidth, window.innerHeight, reachable && reachable.npc));
@@ -634,6 +678,8 @@ async function boot() {
       }
       player.figure.root.visible = true;
       npcs.update(dt, player, dialogue.typing);
+      animals.update(dt, player, npcs);
+      balloons.update(dt);
       lore.update(dt);
       world.update(dt, player.position, camera);
       renderer.render(scene, camera);
@@ -641,6 +687,8 @@ async function boot() {
       follow.yaw += dt * 0.06;
       player.update(dt, NO_MOVE, follow.yaw);
       npcs.update(dt, player);
+      animals.update(dt, player, npcs);
+      balloons.update(dt);
       lore.update(dt);
       follow.update(dt, player.position);
       world.update(dt, player.position, camera);
@@ -660,7 +708,7 @@ async function boot() {
   ui.setReady(saved ? `Saved journey found: ${lore.found.length} of ${lore.total} discoveries.` : null, progress.available);
 
   // Handy from the browser console while developing.
-  window.valdren = { THREE, renderer, scene, camera, world, player, follow, input, ui, npcs, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
+  window.valdren = { THREE, renderer, scene, camera, world, player, follow, input, ui, npcs, animals, balloons, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
 }
 
 boot().catch((err) => {

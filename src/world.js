@@ -2998,6 +2998,185 @@ function streetBunting(ctx) {
   }
 }
 
+/*
+ * The Balloon Meadow east of the town: the stake the tethered balloon (see
+ * balloons.js) is tied to, a striped tent, spare baskets and sandbags, a
+ * windsock, and a second balloon laid out flat on the grass.
+ */
+function buildBalloonField(ctx) {
+  const { x, z } = SITES.balloonField;
+  const { rng } = ctx;
+  const F = new Frame(ctx, x, z, 0);
+  const g = F.ground(0, 0);
+  F.box('timber', 0, g + 0.4, 0, 0.2, 1.0, 0.2, TINT.beam);
+  F.geo('metal', new THREE.TorusGeometry(0.12, 0.025, 6, 12), 0, g + 0.62, 0.12);
+  ctx.colliders.addCircle(x, z, 0.2, g - 1, g + 1);
+  // Where the balloon's basket rests between rides.
+  ctx.colliders.addCircle(x + 3, z, 0.75, g - 1, g + 1.15);
+
+  // A striped tent with its entrance towards the stake.
+  const T = new Frame(ctx, x - 9, z + 8, 2.2);
+  const tg = T.ground(0, 0);
+  const R = 2.3;
+  for (let k = 1; k < 10; k++) {
+    const a = (k / 10) * TAU;
+    T.box('plainCloth', Math.sin(a) * R, tg + 1.0, Math.cos(a) * R, 2 * R * Math.sin(Math.PI / 10) + 0.06, 2.0, 0.05, k % 2 ? C(0xc8302a) : C(0xf2eee6), 0, a, 0);
+  }
+  T.geo('plainCloth', new THREE.ConeGeometry(R + 0.35, 1.9, 10, 1, true), 0, tg + 2.95, 0, 0, 0, 0, 1, 1, 1, C(0xc8302a));
+  T.box('timber', 0, tg + 2.2, 0, 0.12, 4.4, 0.12, TINT.beam);
+  T.box('plainCloth', 0.3, tg + 4.3, 0, 0.6, 0.35, 0.02, C(0x24356e));
+  ctx.colliders.addCircle(T.x, T.z, R + 0.1, tg - 1, tg + 3);
+
+  // Spare baskets and a heap of sandbags.
+  for (const [bx, bz] of [[6.5, 6], [8.2, 6.4]]) {
+    const bg = F.ground(bx, bz);
+    F.box('planks', bx, bg + 0.55, bz, 1.3, 1.1, 1.3, C(0x9a7444));
+    F.collideBox(bx, bz, 0.65, 0.65, bg - 1, bg + 1.1);
+  }
+  for (let k = 0; k < 9; k++) {
+    const sx = 6 + (rng() - 0.5) * 2;
+    const sz = -5 + (rng() - 0.5) * 2;
+    F.box('plainCloth', sx, F.ground(sx, sz) + 0.13 + (k > 5 ? 0.25 : 0), sz, 0.55, 0.26, 0.32, C(0xc8b48a), 0, rng() * 3, 0);
+  }
+  F.collideBox(6, -5, 1.2, 1.2, g - 1, g + 0.6);
+
+  // Windsock.
+  const wx = -4;
+  const wz = -7;
+  const wg = F.ground(wx, wz);
+  F.box('timber', wx, wg + 2.6, wz, 0.12, 5.2, 0.12, TINT.beam);
+  for (let k = 0; k < 3; k++) {
+    F.geo('plainCloth', new THREE.CylinderGeometry(0.28 - k * 0.07, 0.35 - k * 0.07, 0.6, 10, 1, true), wx + 0.45 + k * 0.6, wg + 5.0 - k * 0.1, wz, 0, 0, Math.PI / 2 + 0.15, 1, 1, 1, k % 2 ? C(0xf2eee6) : C(0xe8742e));
+  }
+  F.collideCircle(wx, wz, 0.12, wg - 1, wg + 5);
+
+  // A second balloon laid out on the grass, gores fanned out, waiting to be filled.
+  const L = new Frame(ctx, x + 12, z - 9, -0.5);
+  for (let k = -3; k <= 3; k++) {
+    const lg = L.ground(0, 6);
+    L.box('plainCloth', k * 0.9, lg + 0.05 + Math.abs(k) * 0.005, 6, 0.95, 0.06, 12 - Math.abs(k) * 1.2, k % 2 ? C(0x2f8a8a) : C(0xf0d040), 0, k * 0.04, 0);
+  }
+  L.box('planks', 0, L.ground(0, -0.8) + 0.55, -0.8, 1.3, 1.1, 1.3, C(0x9a7444));
+  L.collideBox(0, -0.8, 0.65, 0.65, g - 1, g + 1.2);
+  ctx.occupy(rect(x, z, 16, 14));
+}
+
+// ================================================================== yards
+
+const LOG_PILE = new THREE.CylinderGeometry(0.13, 0.13, 1.4, 8).rotateZ(Math.PI / 2);
+const LINEN = [C(0xf2eee6), C(0xe8dcc4), C(0x9ab0c8), C(0xc8a0a0), C(0xd8c890)];
+
+// A kitchen garden: a bed of dark soil with rows of cabbages behind a low fence.
+function garden(ctx, x, z, rng) {
+  const rot = rng() * Math.PI;
+  const r = rect(x, z, 1.7, 2.3, rot);
+  if (ctx.footprints.some((f) => rectsOverlap(f, r, 0.8))) return false;
+  groundPatch(ctx, 'soil', r, 0.8, 0.06, (lx, lz) => [lx / 3, lz / 3]);
+  const F = new Frame(ctx, x, z, rot);
+  for (let lz = -1.8; lz <= 1.8; lz += 0.9) {
+    for (const lx of [-0.8, 0, 0.8]) {
+      const s = 0.6 + rng() * 0.3;
+      F.inst('cabbage', lx, F.ground(lx, lz), lz, 0, rng() * TAU, 0, s, s, s, ctx.vary(WHITE, 0.12));
+    }
+  }
+  for (const [ax, az, bx, bz] of [[-2, -2.6, 2, -2.6], [-2, 2.6, 2, 2.6], [-2, -2.6, -2, 2.6], [2, -2.6, 2, 2.6]]) {
+    const len = Math.hypot(bx - ax, bz - az);
+    const along = bx !== ax;
+    const g = F.ground((ax + bx) / 2, (az + bz) / 2);
+    F.box('timber', (ax + bx) / 2, g + 0.32, (az + bz) / 2, along ? len : 0.06, 0.06, along ? 0.06 : len, TINT.beam);
+    F.collideBox((ax + bx) / 2, (az + bz) / 2, along ? len / 2 : 0.06, along ? 0.06 : len / 2, g - 1, g + 0.4);
+    for (let k = 0; k <= 4; k++) F.box('timber', ax + ((bx - ax) * k) / 4, g + 0.22, az + ((bz - az) * k) / 4, 0.07, 0.45, 0.07, TINT.beam);
+  }
+  ctx.occupy(rect(x, z, 2.2, 2.8, rot));
+  return true;
+}
+
+// Firewood stacked in a pyramid.
+function woodpile(ctx, x, z, rng) {
+  const F = new Frame(ctx, x, z, rng() * Math.PI);
+  const g = F.ground(0, 0);
+  let k = 0;
+  for (let row = 0; row < 3; row++) {
+    for (let i = 0; i < 4 - row; i++) {
+      F.geo('timber', LOG_PILE, 0, g + 0.13 + row * 0.22, (i - (3 - row) / 2) * 0.27, 0, 0, 0, 1, 1, 1, ctx.vary(TINT.beam, 0.15));
+      k++;
+    }
+  }
+  F.geo('timber', new THREE.CylinderGeometry(0.28, 0.3, 0.45, 10), 1.2, g + 0.22, 0.3, 0, 0, 0, 1, 1, 1, TINT.beam);
+  F.collideBox(0, 0, 0.75, 0.6, g - 1, g + 0.8);
+  ctx.occupy(rect(x, z, 1.6, 1.4));
+  return k > 0;
+}
+
+// Washing hung out to dry between two posts.
+function washingLine(ctx, x, z, rng) {
+  const rot = rng() * Math.PI;
+  const F = new Frame(ctx, x, z, rot);
+  const g = F.ground(0, 0);
+  for (const s of [-1.9, 1.9]) {
+    F.box('timber', s, g + 0.95, 0, 0.1, 1.9, 0.1, TINT.beam);
+    F.collideCircle(s, 0, 0.1, g - 1, g + 1.9);
+  }
+  F.box('metal', 0, g + 1.82, 0, 3.8, 0.015, 0.015);
+  for (let a = -1.5; a < 1.5; a += 0.55 + rng() * 0.3) {
+    const h = 0.5 + rng() * 0.4;
+    F.box('plainCloth', a, g + 1.8 - h / 2, 0, 0.42 + rng() * 0.2, h, 0.02, LINEN[Math.floor(rng() * LINEN.length)], 0, 0, (rng() - 0.5) * 0.08);
+  }
+  ctx.occupy(rect(x, z, 2.2, 0.6, rot));
+  return true;
+}
+
+// A small chicken coop with a ramp; its hens scratch about the yard (see animals.js).
+function chickenCoop(ctx, x, z, rng, n) {
+  const rot = rng() * TAU;
+  const F = new Frame(ctx, x, z, rot);
+  const g = F.ground(0, 0);
+  for (const [sx, sz] of [[-0.7, -0.5], [0.7, -0.5], [-0.7, 0.5], [0.7, 0.5]]) F.box('timber', sx, g + 0.25, sz, 0.08, 0.5, 0.08, TINT.beam);
+  F.box('planks', 0, g + 0.85, 0, 1.5, 0.75, 1.1, TINT.boards);
+  F.box('planks', 0, g + 1.32, 0, 1.75, 0.07, 1.4, TINT.door, 0.2, 0, 0);
+  F.box('planks', 0, g + 0.3, 0.85, 0.35, 0.04, 0.8, TINT.door, -0.6, 0, 0);
+  F.box('stone', 0, g + 0.7, 0.56, 0.3, 0.3, 0.02, C(0x2e2824));
+  F.collideBox(0, 0, 0.8, 0.6, g - 1, g + 1.4);
+  ctx.world.pens[`coop${n}`] = { x, z, species: 'chicken' };
+  ctx.occupy(rect(x, z, 1.4, 1.4, rot));
+  return true;
+}
+
+/*
+ * Back yards between the lanes: wherever there is open ground well inside the
+ * wall and off the streets, a fruit tree, a kitchen garden, a woodpile, a
+ * washing line, a cart or a chicken coop.
+ */
+function fillYards(ctx) {
+  const { rng } = ctx;
+  const t = SITES.town;
+  let coops = 0;
+  for (let gx = t.x - t.rx; gx <= t.x + t.rx; gx += 7) {
+    for (let gz = t.z - t.rz; gz <= t.z + t.rz; gz += 7) {
+      const x = gx + (rng() - 0.5) * 3;
+      const z = gz + (rng() - 0.5) * 3;
+      if (townEdge(x, z) > -9 || inSquare(x, z, 3)) continue;
+      if (roadClearance(x, z) < 2.6 || ctx.occupied(x, z, 2.4)) continue;
+      const r = rng();
+      if (r < 0.3) {
+        ctx.trees.push({ x, z, kind: 'oakB', s: 0.42 + rng() * 0.2 });
+        ctx.occupy(rect(x, z, 1.3, 1.3));
+      } else if (r < 0.5) {
+        garden(ctx, x, z, rng);
+      } else if (r < 0.6) {
+        woodpile(ctx, x, z, rng);
+      } else if (r < 0.7) {
+        washingLine(ctx, x, z, rng);
+      } else if (r < 0.77 && coops < 6) {
+        chickenCoop(ctx, x, z, rng, coops++);
+      } else if (r < 0.82) {
+        buildCart(ctx, x, z, rng() * TAU);
+        ctx.occupy(rect(x, z, 1.9, 1.9));
+      }
+    }
+  }
+}
+
 // Houses lining the streets, wherever they fit.
 function placeTownHouses(ctx) {
   const { rng } = ctx;
@@ -3571,6 +3750,21 @@ function buildFarm(ctx, q) {
     x: -30, z: 216, rot: Math.PI, w: 14, d: 9, floors: 1, style: 'planks', roof: 'thatch', door: true,
     wallTint: TINT.natural, heights: [4.4], pitch: 48,
   });
+  // A pig sty beside the farmhouse: a fenced yard with a lean-to and a trough.
+  {
+    const sty = { x: -42, z: 201, w: 7, d: 6, rot: 0 };
+    fenceAround(ctx, sty, null);
+    const F = new Frame(ctx, sty.x, sty.z, 0);
+    const g = F.ground(0, -3.4);
+    for (const sx of [-2.6, 2.6]) F.box('timber', sx, g + 0.7, -2.2, 0.16, 1.4, 0.16, TINT.beam);
+    F.box('planks', 0, g + 1.45, -3.0, 6.0, 0.08, 2.2, TINT.boards, 0.25, 0, 0);
+    F.box('planks', 0, g + 0.6, -4.1, 6.0, 1.2, 0.1, TINT.boards);
+    const tg = F.ground(2, 2.5);
+    F.box('planks', 2, tg + 0.18, 2.5, 1.6, 0.36, 0.5, TINT.door);
+    F.collideBox(2, 2.5, 0.8, 0.25, tg - 1, tg + 0.4);
+    ctx.world.pens.pigs = { ...rect(sty.x, sty.z, sty.w / 2 + 0.6, sty.d / 2 + 0.6), species: 'pig' };
+    ctx.occupy(rect(sty.x, sty.z, sty.w / 2 + 1.6, sty.d / 2 + 1.6));
+  }
   for (const [hx, hz] of [[-18, 211], [-16, 215.5], [-19, 219.5]]) {
     const F = new Frame(ctx, hx, hz, rng() * TAU);
     const g = ctx.ground(hx, hz);
@@ -4209,6 +4403,7 @@ export class World {
     buildFountainSquare(ctx);
     buildBakery(ctx);
     buildStables(ctx);
+    buildBalloonField(ctx);
     wallRing(ctx, TOWN_WALL, TOWN_GATES, {
       cx: SITES.town.x, cz: SITES.town.z, H: 6.5, T: 2.2, towerR: 3.3, towerH: 9.5,
       gateW: 4.6, gateTowerW: 5, gateH: 11, spring: 2.6,
@@ -4217,6 +4412,7 @@ export class World {
     this.stats.houses = placeTownHouses(ctx);
     streetLamps(ctx, (r) => r.town, 19);
     streetBunting(ctx);
+    fillYards(ctx);
 
     await progress('Fortifying the castle…');
     buildCastle(ctx);
