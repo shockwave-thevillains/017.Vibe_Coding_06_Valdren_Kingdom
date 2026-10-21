@@ -365,10 +365,16 @@ left mouse button and drag to look around.
 - **Budget:** one shadow-casting light, the device pixel ratio capped at 2, and
   the presets above. Switching presets re-seeds the grass, resizes or drops the
   shadow map and adds or removes lantern lights in place; the lit materials
-  recompile once for the new light setup. Each animal species and each balloon
-  costs one or two draw calls. In town at street level, High draws about 120 to
-  250 calls and 0.8 to 1.1 M triangles a frame (shadow pass included), depending
-  on how many people are in view.
+  recompile once for the new light setup. Each animal species, balloon and
+  boat costs one or two draw calls. In town at street level, High draws about
+  350 to 410 calls and 2.2 to 2.4 M triangles a frame (shadow pass and bloom
+  included), Medium about 290 to 390 calls and 1.8 to 2.2 M, and Low (no shadow
+  pass) about 240 to 380 calls and 1.5 to 1.9 M, depending on how many people,
+  houses and boats are in view; out in the village it is a fraction of that. (Measured with a software renderer, which counts the work but cannot
+  time it.)
+- **The same world on every preset:** tree shapes and crop density depend on
+  the preset, so where things stand is drawn from separate random streams; the
+  forest, the rubble and every collider are identical on Low, Medium and High.
 
 ### Project layout
 

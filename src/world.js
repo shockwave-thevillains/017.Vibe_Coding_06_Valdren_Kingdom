@@ -4160,6 +4160,9 @@ function fenceAround(ctx, f, gapSide) {
 
 function buildFarm(ctx, q) {
   const { rng } = ctx;
+  // Wheat and barley are denser on High, so their jitter has its own stream and
+  // everything built after the fields comes out the same on every preset.
+  const jitter = mulberry32(4057);
   for (const f of FIELDS) {
     groundPatch(ctx, f.crop === 'cabbage' || f.crop === 'plowed' ? 'soil' : 'soilCrop', rect(f.x, f.z, f.w / 2, f.d / 2, f.rot), 2, 0.05, (lx, lz) => [lx / 3, lz / 3]);
     ctx.occupy(rect(f.x, f.z, f.w / 2 + 1.5, f.d / 2 + 1.5, f.rot));
@@ -4169,10 +4172,10 @@ function buildFarm(ctx, q) {
       const sp = q.cropSparse ? 1.15 : 0.82;
       for (let lz = -f.d / 2 + 0.5; lz <= f.d / 2 - 0.5; lz += sp) {
         for (let lx = -f.w / 2 + 0.5; lx <= f.w / 2 - 0.5; lx += sp) {
-          const jx = lx + (rng() - 0.5) * sp * 0.5;
-          const jz = lz + (rng() - 0.5) * sp * 0.4;
-          const s = (f.crop === 'barley' ? 0.72 : 1) * (0.85 + rng() * 0.3);
-          F.inst(f.crop, jx, F.ground(jx, jz) + 0.03, jz, 0, rng() * TAU, 0, s * (q.cropSparse ? 1.25 : 1), s, s * (q.cropSparse ? 1.25 : 1), ctx.vary(f.crop === 'barley' ? C(0xb8c070) : C(0xffe2a0), 0.08));
+          const jx = lx + (jitter() - 0.5) * sp * 0.5;
+          const jz = lz + (jitter() - 0.5) * sp * 0.4;
+          const s = (f.crop === 'barley' ? 0.72 : 1) * (0.85 + jitter() * 0.3);
+          F.inst(f.crop, jx, F.ground(jx, jz) + 0.03, jz, 0, jitter() * TAU, 0, s * (q.cropSparse ? 1.25 : 1), s, s * (q.cropSparse ? 1.25 : 1), (f.crop === 'barley' ? C(0xb8c070) : C(0xffe2a0)).multiplyScalar(0.92 + jitter() * 0.16));
         }
       }
     } else if (f.crop === 'cabbage') {
@@ -5299,23 +5302,26 @@ export class World {
     };
     const bushGeo = canopyGeometry(vrng, 3, 0, 0.9, C(0x5e8a38), C(0x22381a));
     bushGeo.translate(0, 0.55, 0);
+    // Placement draws from its own stream: the tree shapes above take more or fewer numbers
+    // depending on the preset, and the forest (and its colliders) must not move with them.
+    const prng = mulberry32(778);
     const lists = { oakA: [], oakB: [], pine: [], bush: [], log: [], stump: [] };
     const place = (kind, x, z, s, rot) => {
       const h = this.terrain.getHeight(x, z);
-      const m = new THREE.Matrix4().compose(_p.set(x, h - 0.15, z), _q.setFromAxisAngle(UP, rot), _s.set(s, s * (0.9 + vrng() * 0.25), s));
+      const m = new THREE.Matrix4().compose(_p.set(x, h - 0.15, z), _q.setFromAxisAngle(UP, rot), _s.set(s, s * (0.9 + prng() * 0.25), s));
       lists[kind].push({ m, c: ctx.vary(WHITE, 0.12) });
       if (Math.max(Math.abs(x), Math.abs(z)) < PLAY_HALF + 3 && kind !== 'bush') {
         this.colliders.addCircle(x, z, (kind === 'pine' ? 0.3 : 0.42) * s, h - 1, h + 3.5);
       }
     };
 
-    for (const t of ctx.trees) place(t.kind, t.x, t.z, t.s, vrng() * TAU);
+    for (const t of ctx.trees) place(t.kind, t.x, t.z, t.s, prng() * TAU);
     const step = 7.5;
     const span = WORLD_HALF - 5;
     for (let gx = -span; gx < span; gx += step) {
       for (let gz = -span; gz < span; gz += step) {
-        const x = gx + vrng() * step;
-        const z = gz + vrng() * step;
+        const x = gx + prng() * step;
+        const z = gz + prng() * step;
         const edge = Math.max(Math.abs(x), Math.abs(z));
         const forest = forestDensity(x, z);
         const h = this.terrain.getHeight(x, z);
@@ -5328,25 +5334,25 @@ export class World {
         if (edge < MOUNTAIN_EDGE) p = Math.max(p, 0.014);
         p = Math.max(p, mountain * 0.5);
         if (lakeWeight(x, z) > 0.02 || h < WATER_LEVEL + 0.4) continue;
-        if (vrng() > p) continue;
+        if (prng() > p) continue;
         if (!this._canPlant(ctx, x, z, 2.5)) continue;
         const pineChance = mountain > 0.3 ? 0.9 : forest > 0.5 ? 0.4 : 0.12;
-        const kind = vrng() < pineChance ? 'pine' : vrng() < 0.5 ? 'oakA' : 'oakB';
-        place(kind, x, z, 0.8 + vrng() * 0.5, vrng() * TAU);
-        if (forest > 0.25 && vrng() < 0.45) {
-          const bx = x + (vrng() - 0.5) * 6;
-          const bz = z + (vrng() - 0.5) * 6;
-          if (this._canPlant(ctx, bx, bz, 1.5)) place('bush', bx, bz, 0.8 + vrng() * 0.8, vrng() * TAU);
+        const kind = prng() < pineChance ? 'pine' : prng() < 0.5 ? 'oakA' : 'oakB';
+        place(kind, x, z, 0.8 + prng() * 0.5, prng() * TAU);
+        if (forest > 0.25 && prng() < 0.45) {
+          const bx = x + (prng() - 0.5) * 6;
+          const bz = z + (prng() - 0.5) * 6;
+          if (this._canPlant(ctx, bx, bz, 1.5)) place('bush', bx, bz, 0.8 + prng() * 0.8, prng() * TAU);
         }
-        if (forest > 0.6 && vrng() < 0.04) {
+        if (forest > 0.6 && prng() < 0.04) {
           const lx = x + 3;
           const lz = z + 1;
           if (this._canPlant(ctx, lx, lz, 2)) {
             const hh = this.terrain.getHeight(lx, lz);
-            lists.log.push({ m: new THREE.Matrix4().compose(_p.set(lx, hh + 0.2, lz), _q.setFromEuler(_e.set(0, vrng() * TAU, Math.PI / 2, 'YXZ')), _s.set(1, 1, 1)), c: null });
+            lists.log.push({ m: new THREE.Matrix4().compose(_p.set(lx, hh + 0.2, lz), _q.setFromEuler(_e.set(0, prng() * TAU, Math.PI / 2, 'YXZ')), _s.set(1, 1, 1)), c: null });
             this.colliders.addCircle(lx, lz, 1.2, hh - 1, hh + 0.8);
           }
-        } else if (forest > 0.4 && vrng() < 0.05) {
+        } else if (forest > 0.4 && prng() < 0.05) {
           const hh = this.terrain.getHeight(x + 2, z + 2);
           lists.stump.push({ m: new THREE.Matrix4().makeTranslation(x + 2, hh + 0.2, z + 2), c: null });
         }
