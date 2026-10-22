@@ -11,6 +11,7 @@ import { Lantern } from './lantern.js';
 import { Sword } from './gear.js';
 import { Combat, MAX_HEALTH } from './combat.js';
 import { Rasengan } from './rasengan.js';
+import { Chidori } from './chidori.js';
 import { Dungeons, DUNGEONS } from './dungeon.js';
 import { Quests, CASES, SHOPS } from './quests.js';
 import { Music } from './music.js';
@@ -195,6 +196,7 @@ async function boot() {
   const sword = new Sword(scene);
   const combat = new Combat(player, npcs, sword);
   const rasengan = new Rasengan(scene);
+  const chidori = new Chidori(scene);
   // Its sounds play through the music's audio context (once Begin has started it).
   rasengan.audio = () => (music.ctx && music.noise ? { ctx: music.ctx, noise: music.noise } : null);
   // The Gloomhollow Mine: built the first time the traveller goes down.
@@ -202,6 +204,8 @@ async function boot() {
   dungeon.audio = rasengan.audio;
   combat.foes = dungeon;
   rasengan.foes = dungeon;
+  chidori.foes = dungeon;
+  chidori.audio = rasengan.audio;
   const music = new Music();
   music.volume = typeof settings.music === 'number' ? Math.min(1, Math.max(0, settings.music)) : 0.6;
   const follow = new FollowCamera(camera, world);
@@ -328,8 +332,9 @@ async function boot() {
       ui.setPrompt(null);
       ui.updateLabels([]);
       ui.updateWaypoint(null);
-      if (rasengan.busy) {
+      if (rasengan.busy || chidori.busy) {
         rasengan.cancel();
+        chidori.cancel();
         endOrb();
       }
     }
@@ -661,14 +666,16 @@ async function boot() {
     if (mode !== 'playing' || balloons.riding) return;
     setFlying(!player.flying);
   });
+  // A technique in hand (the Rasengan or the Chidori) keeps the hands busy.
+  const techniqueBusy = () => rasengan.busy || chidori.busy;
   input.on('sword', () => {
-    if (mode !== 'playing' || balloons.riding || rasengan.busy) return;
+    if (mode !== 'playing' || balloons.riding || techniqueBusy()) return;
     sword.drawn = !sword.drawn;
     holdGear();
     ui.toast(sword.drawn ? `You draw your ${sword.steel ? 'steel ' : ''}sword.` : 'You sheathe your sword.', 1600);
   });
   input.on('attack', () => {
-    if (mode !== 'playing' || balloons.riding || rasengan.busy) return;
+    if (mode !== 'playing' || balloons.riding || techniqueBusy()) return;
     combat.attack(follow.yaw + Math.PI);
   });
 
@@ -679,7 +686,7 @@ async function boot() {
   let orbUsed = false;
   let orbNagged = 0;
   input.on('rasengan', () => {
-    if (mode !== 'playing' || balloons.riding || rasengan.busy) return;
+    if (mode !== 'playing' || balloons.riding || techniqueBusy()) return;
     if (!rasengan.begin()) {
       if (performance.now() - orbNagged > 1500) {
         orbNagged = performance.now();
@@ -694,7 +701,31 @@ async function boot() {
     ui.setSword(false);
     if (!orbUsed) {
       orbUsed = true;
-      ui.toast('Rasengan! A sphere of wind gathers in your palm. In a moment you lunge and drive it into whoever is in front of you.', 4500);
+      ui.toast(`Rasengan! A sphere of wind gathers in your palm. In a moment you lunge and drive it into whoever is in front of you. While it gathers strength again, use the Chidori (${input.touchMode ? 'the lightning button' : 'X'}).`, 5000);
+    }
+  });
+
+  // The Chidori: lightning in the right hand, then a dash through whoever is in front.
+  // Its cooldown is its own, so it is ready while the Rasengan is not.
+  let chidoriUsed = false;
+  let chidoriNagged = 0;
+  input.on('chidori', () => {
+    if (mode !== 'playing' || balloons.riding || techniqueBusy()) return;
+    if (!chidori.begin()) {
+      if (performance.now() - chidoriNagged > 1500) {
+        chidoriNagged = performance.now();
+        ui.toast('The lightning is still gathering…', 1400);
+      }
+      return;
+    }
+    orbSword = sword.drawn;
+    sword.drawn = false;
+    lantern.hand = 'handL';
+    player.animator.action = 'orb';
+    ui.setSword(false);
+    if (!chidoriUsed) {
+      chidoriUsed = true;
+      ui.toast('Chidori! Lightning chirps in your hand like a thousand birds. In a moment you dash through whoever is in front of you, and it leaps on to those nearby.', 5000);
     }
   });
   // Back to sword and lantern as they were.
@@ -709,6 +740,11 @@ async function boot() {
     shake = 0.32 * strength;
     ui.flashBurst();
   };
+  chidori.onImpact = (npc, result, wasCalm) => combat.onLanded(npc, result, wasCalm);
+  chidori.onBurst = (strength) => {
+    shake = Math.max(shake, 0.22 * strength);
+    ui.flashBurst('lightning');
+  };
 
   // The hand lantern: held out in front while lit, and the traveller turns to shine it
   // wherever the camera looks when standing still.
@@ -721,8 +757,8 @@ async function boot() {
 
   // What the hands hold: a drawn sword in the right, so the lantern moves to the left.
   function holdGear() {
-    // While a Rasengan is in hand the hands stay as they are; endOrb() calls this after.
-    if (rasengan.busy) return;
+    // While a technique is in hand the hands stay as they are; endOrb() calls this after.
+    if (techniqueBusy()) return;
     lantern.hand = sword.drawn ? 'handL' : 'handR';
     if (lantern.on) player.animator.action = sword.drawn ? 'lanternL' : 'lantern';
     else player.animator.action = sword.drawn ? 'sword' : null;
@@ -793,7 +829,7 @@ async function boot() {
 
   // What the traveller carries between the world and the mine: themselves and their gear.
   const travellers = () => [player.figure.root, lantern.prop, lantern.light, lantern.light.target, lantern.shaft,
-    sword.blade, sword.scabbard, rasengan.orb, rasengan.shock, rasengan.groundRing, rasengan.sparks];
+    sword.blade, sword.scabbard, rasengan.orb, rasengan.shock, rasengan.groundRing, rasengan.sparks, ...chidori.meshes];
   function carryTo(target) {
     for (const o of travellers()) target.add(o);
     post.setScene(target);
@@ -1096,6 +1132,7 @@ async function boot() {
     ui.updateCompass(THREE.MathUtils.radToDeg(-follow.yaw), world.timeOfDay);
     ui.setHealth(combat.health / MAX_HEALTH);
     ui.setOrb(rasengan.ready);
+    ui.setChidori(chidori.ready);
     minimapTimer -= dt;
     if (minimapTimer > 0) return;
     minimapTimer = 1 / 30;
@@ -1240,6 +1277,10 @@ async function boot() {
       // The left hand lets go of the sphere as the lunge begins; the gear returns after.
       if (rasengan.state === 'lunge' && player.animator.action === 'orb') player.animator.action = lantern.on ? 'lanternL' : null;
       if (orbBusy && !rasengan.busy) endOrb();
+      const boltBusy = chidori.busy;
+      chidori.update(dt, player, npcs, follow.yaw + Math.PI);
+      if (chidori.state === 'dash' && player.animator.action === 'orb') player.animator.action = lantern.on ? 'lanternL' : null;
+      if (boltBusy && !chidori.busy) endOrb();
       npcs.update(dt, player);
       if (!underground) quests.update(dt, player, standable);
       animals.update(dt, player, npcs);
@@ -1339,7 +1380,7 @@ async function boot() {
   ui.setReady(saved ? `Saved journey found: ${lore.found.length} of ${lore.total} discoveries.` : null, progress.available);
 
   // Handy from the browser console while developing.
-  window.valdren = { THREE, renderer, post, scene, camera, world, player, lantern, setLantern, sword, combat, rasengan, dungeon, enterMine, enterDungeon, leaveMine, quests, setFlying, music, sleep, follow, input, ui, npcs, animals, balloons, boats, dragon, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
+  window.valdren = { THREE, renderer, post, scene, camera, world, player, lantern, setLantern, sword, combat, rasengan, chidori, dungeon, enterMine, enterDungeon, leaveMine, quests, setFlying, music, sleep, follow, input, ui, npcs, animals, balloons, boats, dragon, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
 }
 
 boot().catch((err) => {

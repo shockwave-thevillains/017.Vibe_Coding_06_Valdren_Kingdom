@@ -32,6 +32,7 @@
       <div id="health" role="meter" aria-label="Health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><i></i></div>
       <div id="purse" title="Crowns in your purse"><span class="coin" aria-hidden="true"></span><b id="purse-count">0</b></div>
       <div id="skill" class="desktop-only" title="Rasengan: V or right-click"><span class="orb-icon" aria-hidden="true"></span><kbd>V</kbd></div>
+      <div id="skill2" class="desktop-only" title="Chidori: X or middle-click"><span class="bolt-icon" aria-hidden="true"></span><kbd>X</kbd></div>
     </div>
     <div id="waypoint" class="hidden" aria-hidden="true"><span class="wp-arrow"></span><span class="wp-pin"></span><span class="wp-dist"></span></div>
     <div id="prompt" class="hidden"></div>
@@ -61,6 +62,7 @@
     <button type="button" class="tbtn" id="btn-sword" data-action="sword" aria-label="Draw or sheathe the sword" aria-pressed="false">Sword</button>
     <button type="button" class="tbtn" id="btn-fly" data-action="fly" aria-label="Fly" aria-pressed="false">Fly</button>
     <button type="button" class="tbtn" id="btn-orb" data-action="rasengan" aria-label="Rasengan"><span class="orb-icon" aria-hidden="true"></span></button>
+    <button type="button" class="tbtn" id="btn-bolt" data-action="chidori" aria-label="Chidori"><span class="bolt-icon" aria-hidden="true"></span></button>
     <button type="button" class="tbtn" id="btn-pause" data-action="pause" aria-label="Pause"><span class="bars"></span></button>
   </div>
 
@@ -202,6 +204,7 @@
         <dt><kbd>Click</kbd> <kbd>Q</kbd></dt><dd>Punch, or swing your sword</dd>
         <dt><kbd>R</kbd></dt><dd>Draw / sheathe your sword</dd>
         <dt><kbd>V</kbd> <kbd>Right click</kbd></dt><dd>Rasengan</dd>
+        <dt><kbd>X</kbd> <kbd>Middle click</kbd></dt><dd>Chidori (ready while the Rasengan recovers)</dd>
         <dt><kbd>Esc</kbd></dt><dd>Pause</dd>
       </dl>
     </div>
@@ -217,6 +220,7 @@
         <dt>Attack</dt><dd>Punch, or swing your sword</dd>
         <dt>Sword</dt><dd>Draw it or put it away</dd>
         <dt><span class="orb-icon inline"></span></dt><dd>Rasengan</dd>
+        <dt><span class="bolt-icon inline"></span></dt><dd>Chidori (ready while the Rasengan recovers)</dd>
         <dt>Jump · Fly</dt><dd>Jump, or take to the air (Up / Down, Land)</dd>
         <dt><span class="bars inline"></span></dt><dd>Pause</dd>
       </dl>

@@ -382,6 +382,86 @@ body.touch #health {
   height: 30px;
 }
 
+/* The Chidori: a white bolt on crackling blue-violet, shaded round while it recovers. */
+.bolt-icon {
+  position: relative;
+  display: inline-block;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, #e8f2ff 0 12%, #8aa8ff 30%, #4a4ad8 62%, #24186a 100%);
+  box-shadow: 0 0 10px rgba(150, 160, 255, 0.9);
+}
+
+.bolt-icon::before {
+  content: '';
+  position: absolute;
+  inset: 3px 6px;
+  background: #ffffff;
+  clip-path: polygon(58% 0, 20% 56%, 46% 56%, 34% 100%, 82% 40%, 54% 40%, 70% 0);
+  filter: drop-shadow(0 0 2px #cfe0ff);
+}
+
+.bolt-icon.inline {
+  width: 16px;
+  height: 16px;
+  vertical-align: -3px;
+}
+
+.bolt-icon.inline::before {
+  inset: 2px 4px;
+}
+
+#skill2,
+#btn-bolt {
+  --ready: 1;
+}
+
+#skill2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: max-content;
+  padding: 3px 8px 3px 4px;
+  border-radius: 16px;
+  background: rgba(20, 15, 10, 0.45);
+  color: var(--parchment);
+}
+
+#skill2 kbd {
+  font-size: 12px;
+}
+
+#skill2.cooling .bolt-icon,
+#btn-bolt.cooling .bolt-icon {
+  filter: grayscale(0.7) brightness(0.75);
+}
+
+#skill2 .bolt-icon::after,
+#btn-bolt .bolt-icon::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  background: conic-gradient(rgba(10, 8, 6, 0) calc(var(--ready) * 360deg), rgba(10, 8, 6, 0.6) 0);
+}
+
+#btn-bolt {
+  right: calc(146px + var(--safe-right));
+  bottom: calc(272px + var(--safe-bottom));
+  width: 52px;
+  height: 52px;
+}
+
+#btn-bolt .bolt-icon {
+  width: 30px;
+  height: 30px;
+}
+
+#btn-bolt .bolt-icon::before {
+  inset: 4px 7px;
+}
+
 /* A blue-white flash as a Rasengan bursts. */
 #burst {
   position: fixed;
@@ -394,6 +474,10 @@ body.touch #health {
 
 #burst.on {
   animation: hurt-flash 0.45s ease-out;
+}
+
+#burst.lightning {
+  background: radial-gradient(ellipse at center, rgba(235, 240, 255, 0.6) 0%, rgba(150, 150, 255, 0.28) 40%, rgba(110, 90, 255, 0) 75%);
 }
 
 /* A red pulse round the edges when the traveller is struck. */

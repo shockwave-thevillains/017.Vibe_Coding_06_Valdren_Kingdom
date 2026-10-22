@@ -47,6 +47,8 @@ export class UI {
     this.burstEl = $('burst');
     this.orbEls = [$('btn-orb'), $('skill')];
     this._orb = -1;
+    this.boltEls = [$('btn-bolt'), $('skill2')];
+    this._bolt = -1;
     this._health = -1;
     this._purse = -1;
     this.newBtn = $('btn-new');
@@ -250,6 +252,17 @@ export class UI {
     }
   }
 
+  // How ready the Chidori is (0..1), the same way.
+  setChidori(ready) {
+    const v = Math.round(ready * 40) / 40;
+    if (v === this._bolt) return;
+    this._bolt = v;
+    for (const el of this.boltEls) {
+      el.style.setProperty('--ready', String(v));
+      el.classList.toggle('cooling', v < 1);
+    }
+  }
+
   // The health of the monster in charge (the cave troll) at the top of the screen; null hides it.
   setBoss(boss) {
     const key = boss ? `${boss.name}:${Math.round(boss.fraction * 100)}` : '';
@@ -262,12 +275,13 @@ export class UI {
     this.bossBar.style.width = `${Math.round(boss.fraction * 100)}%`;
   }
 
-  // A blue-white flash as a Rasengan bursts.
-  flashBurst() {
+  // A blue-white flash as a Rasengan bursts (or a Chidori strikes: kind 'lightning').
+  flashBurst(kind = null) {
     const el = this.burstEl;
-    el.classList.remove('on');
+    el.classList.remove('on', 'lightning');
     void el.offsetWidth;
     el.classList.add('on');
+    if (kind) el.classList.add(kind);
   }
 
   // A red pulse round the screen edge when the traveller is struck.
