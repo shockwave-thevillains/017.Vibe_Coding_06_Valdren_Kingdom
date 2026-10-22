@@ -195,9 +195,9 @@ ends the conversation.
   bar). Ask a shopkeeper what they have for sale. What you buy goes into the
   **Bag** page of the journal, where you eat or use it. Food heals.
 - **Where to eat and shop:** every seller is marked with a little icon on the
-  map and the minimap, and the full map (`M`) lists them all under **Food &
-  shops**; pick one and it becomes your mark, with the red pointer leading you
-  there.
+  map and the minimap, and the full map (`M`) lists them all under **Where to
+  go** (with the Gloomhollow Mine and the Wardens' Guild at the top); pick one
+  and it becomes your mark, with the red pointer leading you there.
 
   | Where | Who | Sells |
   | --- | --- | --- |
@@ -225,7 +225,9 @@ ends the conversation.
 ## The Gloomhollow Mine
 
 An old silver mine in the hills north-west of the town (on the map, a short
-walk west of the castle road) that monsters have taken over. Its way in is a
+walk west of the castle road, about 230 m north-west of where the journey
+begins) that monsters have taken over. To find it, open the map (`M`) and pick
+**Gloomhollow Mine** at the top of the list: the red pointer leads you there. Its way in is a
 timber-framed tunnel in a pile of rock, with torches either side, rails and an
 old ore cart; stand at it and press `E` (**Enter**).
 

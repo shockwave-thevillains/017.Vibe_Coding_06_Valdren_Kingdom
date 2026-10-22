@@ -694,7 +694,7 @@ export class UI {
   // Beside the map: every place to eat or shop; picking one marks it.
   _placesList(view) {
     const items = [];
-    const sorted = [...(view.shops || [])].sort((a, b) => (b.food - a.food) || a.where.localeCompare(b.where));
+    const sorted = [...(view.shops || [])].sort((a, b) => (!!b.place - !!a.place) || (!!b.food - !!a.food) || a.where.localeCompare(b.where));
     for (const shop of sorted) {
       const li = document.createElement('li');
       const btn = document.createElement('button');

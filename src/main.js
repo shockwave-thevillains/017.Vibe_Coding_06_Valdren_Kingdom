@@ -449,9 +449,11 @@ async function boot() {
     enter('journal');
   }
 
-  // Where to eat and shop: each seller's own spot.
+  // Where to go: the mine and the guild, then every seller's own spot.
   function shopPlaces() {
     const out = [];
+    if (world.mine) out.push({ id: 'mine', x: world.mine.door[0], z: world.mine.door[1], icon: '⛏️', name: world.mine.name, where: 'North-west hills, west of the castle road', sells: 'Dungeon: monsters that drop crowns', place: true });
+    if (world.guild) out.push({ id: 'guild', x: world.guild.board[0], z: world.guild.board[1], icon: '🛡️', name: world.guild.name, where: 'West of the market', sells: 'Bounties for catching wrongdoers', place: true });
     for (const [id, shop] of Object.entries(SHOPS)) {
       const npc = npcs.byId.get(id);
       if (npc) out.push({ id, x: npc.home.x, z: npc.home.z, icon: shop.icon, name: shop.title, where: shop.where, sells: shop.sells, food: shop.kind === 'food' });
