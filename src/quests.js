@@ -53,6 +53,8 @@ export const ITEMS = {
   seastew: { name: 'Lakeside stew', icon: '🥘', price: 7, heal: 48, verb: 'Eat', about: 'Lucia’s fish stew with tomatoes, garlic and a lot of bread for dipping.' },
   wine: { name: 'Cup of wine', icon: '🍷', price: 3, heal: 10, verb: 'Drink', about: 'Red, rough and cheerful.' },
   lemoncake: { name: 'Lemon cake', icon: '🍋', price: 4, heal: 22, verb: 'Eat', about: 'Sticky, sharp and sunny. Sofia brings the lemons.' },
+  venison: { name: 'Venison pie', icon: '🥧', price: 12, heal: 70, verb: 'Eat', about: 'From the King’s own table: venison, red wine and a crust like a crown.' },
+  pastry: { name: 'Royal pastry', icon: '🥐', price: 6, heal: 28, verb: 'Eat', about: 'Butter, honey and almonds, folded a hundred times by Mistress Bramble.' },
   gruel: { name: 'Bowl of gruel', icon: '🥣', price: 1, heal: 10, verb: 'Eat', about: 'Hot, grey and filling. Old Nan’s gruel has fed half of Mudwick.' },
   ribbon: { name: 'Silk ribbon', icon: '🎀', price: 6, keepsake: 'You tie the ribbon round your wrist. It flutters prettily.', about: 'Bright silk, dyed in Saltmere.' },
   horse: { name: 'Wooden horse', icon: '🐴', price: 8, keepsake: 'You trot the little horse along your palm. Mila’s father has a gift.', about: 'Carved and painted by Mila’s father.' },
@@ -80,6 +82,7 @@ export const SHOPS = {
   tariq: { title: 'The Caravanserai', greeting: 'Bread, lamb and sherbet for the road.', items: ['flatbread', 'wrap', 'dates', 'sherbet'], icon: '🥙', kind: 'food', where: 'Saffron Bazaar', sells: 'Caravanserai: flatbread, lamb wraps, dates, sherbet' },
   lucia: { title: 'The Blue Shutter', greeting: 'Sit by the window and eat like family.', items: ['olives', 'seastew', 'lemoncake', 'wine'], icon: '🥘', kind: 'food', where: 'Costa Mirra', sells: 'Taverna: olives, fish stew, lemon cake, wine' },
   nan: { title: 'The Leaky Bucket', greeting: 'It’s hot and it’s cheap. Don’t ask what else.', items: ['gruel', 'bread', 'ale'], icon: '🥣', kind: 'food', where: 'Mudwick', sells: 'Alehouse: gruel, bread, ale' },
+  cook: { title: 'The Royal Kitchen', greeting: 'The King’s leftovers: the finest food in Valdren, a day old.', items: ['venison', 'pastry', 'cake', 'wine'], icon: '🥐', kind: 'food', where: 'Royal Palace', sells: 'Royal kitchen: venison pie, pastries, honey cake, wine' },
   smith: { title: 'Brannoc’s Forge', greeting: 'Good steel isn’t cheap. Cheap steel isn’t good.', items: ['steel', 'horseshoe'], icon: '⚒️', kind: 'goods', where: 'North-west of the market', sells: 'Forge: the steel sword' },
 };
 

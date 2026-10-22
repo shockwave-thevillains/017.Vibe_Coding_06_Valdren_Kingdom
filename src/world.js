@@ -51,6 +51,8 @@ export const SITES = {
   millbrook: { x: 40, z: 362 },
   dragonPeak: { x: -455, z: -440 },
   garden: { x: 58, z: -196 },
+  // The royal palace in its own ward north of the old castle; the hill's crown runs on to it.
+  palace: { x: 0, z: -262, hw: 42, hd: 46, reach: 92 },
   farmland: { x: 40, z: 222, hw: 105, hd: 55, y: 3.2 },
   farmhouse: { x: -24, z: 199 },
   windmill: { x: 72, z: 194 },
@@ -198,11 +200,13 @@ function townEdge(x, z) {
   return e > 1e-6 ? d - d / e : -Math.min(t.rx, t.rz);
 }
 
-// Castle curtain wall: 8 corners, gatehouse in the middle of segment 1 (south).
-const CASTLE_WALL = Array.from({ length: 8 }, (_, k) => {
+// Castle curtain wall: the old octagon's southern half (gatehouse in the middle of
+// segment 1, facing the town), then on round the palace ward to the north.
+const OCTAGON = Array.from({ length: 8 }, (_, k) => {
   const a = (22.5 + 45 * k) * DEG;
   return [SITES.castle.x + Math.cos(a) * 34, SITES.castle.z + Math.sin(a) * 34];
 });
+const CASTLE_WALL = [...OCTAGON.slice(0, 5), [-44, -236], [-44, -292], [-26, -312], [26, -312], [44, -292], [44, -236], OCTAGON[7]];
 const CASTLE_GATES = new Map([[1, 'castle']]);
 const CASTLE_GATE_Z = SITES.castle.z + 34 * Math.cos(22.5 * DEG);
 
@@ -232,6 +236,12 @@ export const BRIDGE = { x: 0, zN: RIVER_MID - 17, zS: RIVER_MID + 17, halfWidth:
 export const PLACES = [
   { name: 'Castle Valdren', x: 0, z: -168, size: 2 },
   { name: 'Throne Hall', x: 0, z: -200, size: 0 },
+  { name: 'Royal Palace', x: 0, z: -318, size: 1 },
+  { name: 'Banquet Hall', x: 0, z: -284, size: 0 },
+  { name: 'King’s Bedchamber', x: -36, z: -262, size: 0 },
+  { name: 'Royal Kitchen', x: 36, z: -262, size: 0 },
+  { name: 'Royal Library', x: -36, z: -240, size: 0 },
+  { name: 'Council Chamber', x: 36, z: -240, size: 0 },
   { name: 'Valdren', x: 40, z: -40, size: 2 },
   { name: 'Market', x: 0, z: 18, size: 0 },
   { name: 'The Broken Oar', x: 12, z: -13, size: 0 },
@@ -308,9 +318,10 @@ function baseHeight(x, z, terraces = true) {
   // Rolling meadows with small bumps.
   let h = 3 + fbm(x * 0.005, z * 0.005, 4) * 13 + (fbm(x * 0.03 + 50, z * 0.03 - 20, 2) - 0.5) * 1.6;
 
-  // Castle hill: a flat crown rising out of the meadows north of the town.
+  // Castle hill: a flat crown rising out of the meadows north of the town, running
+  // on north to carry the palace ward.
   const c = SITES.castle;
-  const hill = 1 - smoothstep(c.r, c.r + 72, Math.hypot(x - c.x, z - c.z));
+  const hill = 1 - smoothstep(c.r, c.r + 72, segDistance(x, z, c.x, c.z, c.x, c.z - SITES.palace.reach));
   h = lerp(h, c.y, hill) + (fbm(x * 0.05, z * 0.05, 2) - 0.5) * 6 * hill * (1 - hill);
 
   // Knoll carrying the ruined watchtower at the forest edge.
@@ -4344,6 +4355,260 @@ function buildThroneHall(ctx, F0) {
   ctx.occupy(rect(x, z, w / 2 + 0.5, d / 2 + 0.5));
 }
 
+// ============================================================== the palace
+
+const ROYAL_RED = C(0x8e1f22);
+const ROYAL_BLUE = C(0x24356e);
+const DARK_OAK = C(0x4a3020);
+const FOODS = [C(0xc08a48), C(0xd8b040), C(0xb83a2a), C(0x6a9a38), C(0xe8d8a0), C(0x8a4a2a)];
+
+// A dish of food on a table: a roast, a loaf, a wheel of cheese or a bowl of fruit.
+function dish(R, x, top, z, rng) {
+  const k = Math.floor(rng() * 4);
+  R.geo('plaster', PLATE_GEO, x, top + 0.01, z, 0, 0, 0, 1.8, 1, 1.8, C(0xe8e0d0));
+  if (k === 0) R.geo('plaster', LOAF_GEO, x, top + 0.1, z, 0, rng() * 3, 0, 1.6, 1.0, 1.1, C(0x8a4a2a));
+  else if (k === 1) R.geo('plaster', LOAF_GEO, x, top + 0.07, z, 0, rng() * 3, 0, 1.1, 0.6, 0.8, C(0xc08a48));
+  else if (k === 2) R.geo('plaster', SEAT_GEO, x, top + 0.06, z, 0, 0, 0, 0.9, 1.6, 0.9, C(0xe8c860));
+  else for (let i = 0; i < 4; i++) R.geo('plaster', LOAF_GEO, x + (i % 2 - 0.5) * 0.12, top + 0.06, z + (i > 1 ? 0.06 : -0.06), 0, 0, 0, 0.45, 0.45, 0.45, FOODS[(i + 2) % FOODS.length]);
+}
+
+// The Banquet Hall: long tables laid for a feast, the high table across the far end,
+// a great hearth, three chandeliers, the royal banners.
+function furnishBanquet(room) {
+  const { hw, hd, rng } = room;
+  const y = room.y;
+  rug(room, 0, 0.6, 2.2, hd * 2 - 3, 0, ROYAL_RED);
+  for (const s of [-1, 1]) {
+    for (let k = 0; k < 4; k++) {
+      const tx = -hw + 4.2 + k * ((hw * 2 - 8.4) / 3);
+      const tz = 0.8 + s * 2.4;
+      const T = table(room, tx, tz, 4.0, 1.1);
+      for (let i = 0; i < 3; i++) dish(T, -1.3 + i * 1.3, y + 0.78, 0, rng);
+      T.geo('timber', MUG_GEO, 0.6, y + 0.84, 0.35, 0, 0, 0, 1, 1, 1, C(0xd8ae52));
+      candle(T, -0.6, y + 0.78, -0.3);
+      for (const cx of [-1.4, 0, 1.4]) {
+        chair(room, tx + cx, tz - 0.85, 0, ROYAL_RED);
+        chair(room, tx + cx, tz + 0.85, Math.PI, ROYAL_RED);
+      }
+    }
+  }
+  // The high table and the royal chairs behind it.
+  const H = table(room, 0, -hd + 1.6, 6.4, 1.1);
+  for (let i = 0; i < 4; i++) dish(H, -2.4 + i * 1.6, y + 0.78, 0, rng);
+  candle(H, -0.8, y + 0.78, 0.2);
+  candle(H, 0.8, y + 0.78, 0.2);
+  for (const [cx, big] of [[0, true], [-1.6, false], [1.6, false]]) {
+    const R = piece(room, cx, -hd + 0.7);
+    R.box('timber', 0, y + 0.25, 0, big ? 0.9 : 0.6, 0.5, 0.7, DARK_OAK);
+    R.box('plainCloth', 0, y + 0.52, 0.03, big ? 0.8 : 0.5, 0.06, 0.6, ROYAL_RED);
+    R.box('timber', 0, y + (big ? 1.25 : 1.0), -0.3, big ? 0.95 : 0.65, big ? 1.6 : 1.1, 0.1, DARK_OAK);
+    R.box('gold', 0, y + (big ? 2.1 : 1.6), -0.3, big ? 0.5 : 0.3, 0.12, 0.12);
+    R.collideBox(0, 0, 0.45, 0.35, y - 1, y + 0.6);
+  }
+  hearth(room, -hw + 0.42, 0, Math.PI / 2);
+  shelves(room, hw - 0.22, -hd / 2, -Math.PI / 2, 2.4, 1.8, (R, ly, w) => {
+    for (let a = -w / 2 + 0.2; a < w / 2 - 0.1; a += 0.35) R.geo('gold', PLATE_GEO, a, ly + 0.12, -0.05, Math.PI / 2, 0, 0, 1, 1, 1);
+  });
+  for (const cx of [-hw / 2, 0, hw / 2]) chandelier(room, cx, 0.8);
+  for (const s of [-1, 1]) {
+    const B = piece(room, s * 3.2, -hd + 0.02);
+    B.geo('banner', BANNER_GEO, 0, y + 3.2, 0.02, 0, 0, 0, 1.1, 1.1, 1.1, WHITE, true);
+  }
+  room.keeper = room.F.world(hw - 2.2, -hd + 1.0);
+}
+
+// The King's Bedchamber: a great four-poster bed hung with red, wardrobes and chests,
+// a writing desk, the crown on its cushion, a hearth and a chandelier.
+function furnishBedchamber(room) {
+  const { hw, hd, rng } = room;
+  const y = room.y;
+  rug(room, 0, 0.5, 4.2, 3.2, 0, ROYAL_BLUE);
+  bed(room, 0, -hd + 1.25, 0, ROYAL_RED, 2.1);
+  const P = piece(room, 0, -hd + 1.25);
+  for (const sx of [-1, 1]) {
+    for (const sz of [-1, 1]) P.box('timber', sx * 1.12, y + 1.25, sz * 1.02, 0.14, 2.5, 0.14, DARK_OAK);
+    P.box('plainCloth', sx * 1.14, y + 1.5, 0.3, 0.04, 2.0, 1.1, ROYAL_RED);
+  }
+  P.box('plainCloth', 0, y + 2.52, 0, 2.4, 0.08, 2.2, ROYAL_RED);
+  P.box('gold', 0, y + 2.58, 1.06, 2.4, 0.1, 0.06);
+  for (const s of [-1, 1]) {
+    const W = piece(room, s * (hw - 0.45), -hd / 2, s > 0 ? -Math.PI / 2 : Math.PI / 2);
+    W.box('planks', 0, y + 1.1, 0, 1.6, 2.2, 0.8, DARK_OAK);
+    W.box('gold', -0.05, y + 1.1, 0.41, 0.06, 0.18, 0.02);
+    W.box('gold', 0.05, y + 1.1, 0.41, 0.06, 0.18, 0.02);
+    W.collideBox(0, 0, 0.8, 0.4, y - 1, y + 2.2);
+    chest(room, s * 1.9, -hd + 0.5, 0);
+  }
+  // The writing desk with a letter and a candle.
+  const D = table(room, -hw + 1.5, hd - 2.0, 1.4, 0.8, Math.PI / 2);
+  D.geo('parchment', PAGE_GEO, 0, y + 0.785, 0, -Math.PI / 2, 0, 0.3, 0.25, 0.32, 1, WHITE, true);
+  candle(D, 0.4, y + 0.78, 0.2);
+  chair(room, -hw + 2.35, hd - 2.0, -Math.PI / 2, ROYAL_RED);
+  // The crown on a red cushion on a stand.
+  const Cr = piece(room, hw - 1.6, hd - 2.2);
+  Cr.geo('stone', SEAT_GEO, 0, y + 0.5, 0, 0, 0, 0, 2.2, 20, 2.2, TINT.stone);
+  Cr.box('plainCloth', 0, y + 1.05, 0, 0.5, 0.12, 0.5, ROYAL_RED);
+  Cr.geo('gold', new THREE.CylinderGeometry(0.16, 0.15, 0.14, 12, 1, true), 0, y + 1.19, 0);
+  for (let k = 0; k < 6; k++) {
+    const a = (k / 6) * TAU;
+    Cr.geo('gold', WICK_GEO, Math.sin(a) * 0.15, y + 1.3, Math.cos(a) * 0.15, 0, 0, 0, 1.5, 1.5, 1.5);
+  }
+  Cr.collideCircle(0, 0, 0.35, y - 1, y + 1.3);
+  hearth(room, hw - 0.42, -hd / 2 + 2.2, -Math.PI / 2);
+  chandelier(room, 0, 0.6);
+  void rng;
+}
+
+// The Royal Kitchen: the great hearth with a cauldron, a bread oven, work tables
+// heaped with food, shelves of pots, sacks and casks.
+function furnishKitchen(room) {
+  const { hw, hd, rng } = room;
+  const y = room.y;
+  hearth(room, 0, -hd + 0.42, 0);
+  const P = piece(room, 0, -hd + 0.75);
+  P.geo('metal', OVEN_GEO, 0, y + 0.95, 0, Math.PI, 0, 0, 0.42, 0.4, 0.42, C(0x2a2624));
+  P.box('metal', 0, y + 1.5, 0, 0.04, 0.6, 0.04);
+  const O = piece(room, hw - 1.2, -hd + 1.2);
+  O.box('stone', 0, y + 0.45, 0, 2.0, 0.9, 2.0, TINT.darkStone);
+  O.geo('stone', OVEN_GEO, 0, y + 0.9, 0, 0, 0, 0, 0.95, 0.85, 0.95, TINT.stone);
+  O.geo('fire', FLAME_GEO, -0.5, y + 1.1, 0.5, 0, 0, 0, 0.6, 0.5, 0.6);
+  O.collideBox(0, 0, 1.0, 1.0, y - 1, y + 1.8);
+  const [lx, lz] = O.world(-0.6, 0.8);
+  room.lights.push(new THREE.Vector3(lx, y + 1.0, lz));
+  for (const tz of [-0.4, 1.8]) {
+    const T = table(room, -0.6, tz, 4.2, 1.0);
+    for (let i = 0; i < 4; i++) dish(T, -1.5 + i * 1.0, y + 0.78, (rng() - 0.5) * 0.3, rng);
+  }
+  shelves(room, -hw + 0.22, -hd / 2 + 0.5, Math.PI / 2, 2.6, 2.0, (R, ly, w) => pots(R, ly, w, rng));
+  for (let k = 0; k < 4; k++) {
+    const R = piece(room, -hw + 0.5 + k * 0.6, hd - 0.5, rng());
+    R.box('plainCloth', 0, y + 0.35, 0, 0.5, 0.7, 0.4, C(0xe2d8c0));
+    R.collideCircle(0, 0, 0.3, y - 1, y + 0.7);
+  }
+  barrel(room, hw - 0.5, hd - 0.5);
+  barrel(room, hw - 1.3, hd - 0.5);
+  room.keeper = room.F.world(-0.6, -1.25);
+}
+
+// The Royal Library: shelves of books on every wall, a reading table with an open
+// book and candles, a globe of the known world, a chandelier.
+function furnishLibrary(room) {
+  const { hw, hd, rng } = room;
+  const y = room.y;
+  for (const lx of [-hw / 2, hw / 2]) shelves(room, lx, -hd + 0.2, 0, hw - 1.0, 2.6, (R, ly, w) => books(R, ly, w, rng));
+  for (const s of [-1, 1]) shelves(room, s * (hw - 0.22), -0.6, s > 0 ? -Math.PI / 2 : Math.PI / 2, hd * 2 - 3.4, 2.6, (R, ly, w) => books(R, ly, w, rng));
+  const T = table(room, 0, 0.4, 2.2, 1.1);
+  for (const side of [-1, 1]) T.geo('parchment', PAGE_GEO, side * 0.15, y + 0.79, 0, -Math.PI / 2, 0, side * 0.08, 0.28, 0.36, 1, WHITE, true);
+  candle(T, -0.8, y + 0.78, 0.3);
+  candle(T, 0.8, y + 0.78, -0.3);
+  chair(room, 0, -0.45, 0, ROYAL_BLUE);
+  chair(room, 0, 1.25, Math.PI, ROYAL_BLUE);
+  const G = piece(room, hw - 1.4, hd - 1.6);
+  G.box('timber', 0, y + 0.45, 0, 0.1, 0.9, 0.1, DARK_OAK);
+  G.geo('plainCloth', new THREE.SphereGeometry(0.32, 16, 12), 0, y + 1.2, 0, 0, 0, 0.4, 1, 1, 1, C(0x3a6aa0));
+  G.geo('gold', new THREE.TorusGeometry(0.36, 0.015, 6, 24), 0, y + 1.2, 0, 0, Math.PI / 2, 0.4);
+  G.collideCircle(0, 0, 0.4, y - 1, y + 1.6);
+  rug(room, 0, 0.4, 3.0, 2.4, 0, ROYAL_BLUE);
+  chandelier(room, 0, 0.4);
+  room.keeper = room.F.world(-hw + 1.6, hd - 1.8);
+}
+
+// The Council Chamber: a round table with the map of Valdren on it, chairs round it,
+// the banners of the realm, a rack of spears.
+function furnishCouncil(room) {
+  const { hw, hd } = room;
+  const y = room.y;
+  const T = piece(room, 0, 0);
+  T.geo('planks', SEAT_GEO, 0, y + 0.76, 0, 0, 0, 0, 16, 1.4, 16, DARK_OAK);
+  T.box('timber', 0, y + 0.37, 0, 0.4, 0.74, 0.4, DARK_OAK);
+  T.geo('parchment', PAGE_GEO, 0, y + 0.8, 0, -Math.PI / 2, 0, 0, 1.6, 1.2, 1, WHITE, true);
+  T.collideCircle(0, 0, 1.4, y - 1, y + 0.8);
+  for (let k = 0; k < 8; k++) {
+    const a = (k / 8) * TAU;
+    chair(room, Math.sin(a) * 1.9, Math.cos(a) * 1.9, a + Math.PI, k === 4 ? ROYAL_RED : ROYAL_BLUE);
+  }
+  for (const s of [-1, 1]) {
+    const B = piece(room, s * (hw - 0.02), 0, s * -Math.PI / 2);
+    B.geo('banner', BANNER_GEO, 0, y + 2.4, 0.02, 0, 0, 0, 0.9, 0.9, 0.9, WHITE, true);
+  }
+  const R = piece(room, 0, -hd + 0.3);
+  R.box('timber', 0, y + 0.9, 0, 2.0, 0.08, 0.1, DARK_OAK);
+  for (let k = 0; k < 6; k++) {
+    R.box('timber', -0.8 + k * 0.32, y + 1.2, 0.08, 0.04, 2.4, 0.04, C(0x8a6a44));
+    R.geo('metal', WICK_GEO, -0.8 + k * 0.32, y + 2.45, 0.08, 0, 0, 0, 2.2, 3, 2.2);
+  }
+  R.collideBox(0, 0, 1.0, 0.2, y - 1, y + 2.4);
+  hearth(room, hw - 0.42, -hd / 2 + 1.0, -Math.PI / 2);
+  chandelier(room, 0, 0);
+}
+
+/*
+ * The royal palace in its ward north of the castle, through the old castle's
+ * courtyard: the Banquet Hall across the far end of a paved court, the King's
+ * Bedchamber and the Royal Library down its west side, the Royal Kitchen and the
+ * Council Chamber down its east side, every one of them a room you can walk into.
+ * Round towers flank the hall; in the court, a fountain, clipped hedges and lamps.
+ */
+function buildPalace(ctx) {
+  const P = SITES.palace;
+  const c = SITES.castle;
+  const wing = (x, z, rot, w, d, room, name, h = 5.2) => buildHouse(ctx, {
+    x, z, rot, w, d, floors: 2, style: 'stone', roof: 'slate', wallTint: TINT.castle, shutter: null,
+    heights: [h, 3.4], doorAt: 0, room, name, pitch: 44,
+  });
+  const hall = wing(0, -292, 0, 32, 13, furnishBanquet, 'Banquet Hall', 6.2);
+  const bed = wing(-28, -262, Math.PI / 2, 17, 11, furnishBedchamber, 'King’s Bedchamber');
+  const kitchen = wing(28, -262, -Math.PI / 2, 17, 11, furnishKitchen, 'Royal Kitchen');
+  const library = wing(-28, -238, Math.PI / 2, 12, 10, furnishLibrary, 'Royal Library');
+  wing(28, -238, -Math.PI / 2, 12, 10, furnishCouncil, 'Council Chamber');
+  ctx.world.spots.steward = { x: hall.room.keeper[0], z: hall.room.keeper[1], heading: 0 };
+  ctx.world.spots.royalCook = { x: kitchen.room.keeper[0], z: kitchen.room.keeper[1], heading: -Math.PI / 2 };
+  ctx.world.spots.archivist = { x: library.room.keeper[0], z: library.room.keeper[1], heading: Math.PI / 2 };
+  void bed;
+  // Towers flanking the hall's front, a porch of columns at its door, banners.
+  for (const s of [-1, 1]) {
+    roundTower(ctx, s * 19.8, -287, { cx: 0, cz: -292, r: 3.4, height: 19, tint: TINT.castle, roof: true, roofTint: TINT.slate });
+    ctx.flags.push({ x: s * 19.8, y: c.y + 26.5, z: -287, rot: 0, scale: 1.3 });
+  }
+  {
+    const F = new Frame(ctx, 0, -284.6, 0);
+    const y = c.y + 0.15;
+    for (const s of [-1, 1]) {
+      F.geo('stone', new THREE.CylinderGeometry(0.32, 0.36, 4.6, 12), s * 2.2, y + 2.3, 1.2, 0, 0, 0, 1, 1, 1, TINT.castle);
+      F.collideCircle(s * 2.2, 1.2, 0.38, y - 1, y + 4.8);
+      F.box('timber', s * 3.6, y + 3.5, 0.3, 0.16, 7, 0.16, TINT.beam);
+      ctx.flags.push({ x: s * 3.6, y: y + 6.6, z: -284.3, rot: 0, scale: 1.1 });
+    }
+    F.box('stone', 0, y + 4.75, 0.8, 5.6, 0.4, 2.0, TINT.castle);
+    F.geo('shingle', new THREE.ConeGeometry(3.6, 1.4, 4, 1, true), 0, y + 5.65, 0.8, 0, Math.PI / 4, 0, 1, 1, 0.45, TINT.slate);
+  }
+  // The court: a fountain, hedges, lamps; paved (buildRoads lays the paving).
+  {
+    const F = new Frame(ctx, 0, -262, 0);
+    const g = c.y + 0.1;
+    F.geo('stone', BASIN_OUT, 0, g + 0.37, 0, 0, 0, 0, 1, 1, 1, TINT.stone);
+    F.geo('stone', BASIN_IN, 0, g + 0.37, 0, 0, 0, 0, 1, 1, 1, TINT.stone);
+    F.geo('stone', BASIN_RIM, 0, g + 0.76, 0, 0, 0, 0, 1, 1, 1, TINT.stone);
+    F.geo('pool', POOL_DISC, 0, g + 0.55, 0);
+    F.geo('stone', new THREE.CylinderGeometry(0.35, 0.45, 2.2, 12), 0, g + 1.1, 0, 0, 0, 0, 1, 1, 1, TINT.stone);
+    F.geo('stone', BOWL_GEO, 0, g + 2.35, 0, 0, 0, 0, 1, 1, 1, TINT.stone);
+    F.geo('pool', BOWL_POOL, 0, g + 2.55, 0);
+    F.geo('gold', new THREE.SphereGeometry(0.22, 12, 8), 0, g + 2.9, 0);
+    F.collideCircle(0, 0, 3.6, g - 1, g + 0.8);
+    for (const sx of [-1, 1]) {
+      for (const sz of [-1, 1]) {
+        F.box('plainCloth', sx * 9, g + 0.45, sz * 8, 5.0, 0.9, 1.0, HEDGE);
+        F.collideBox(sx * 9, sz * 8, 2.5, 0.5, g - 1, g + 0.9);
+        F.box('plainCloth', sx * 11, g + 0.45, sz * 4.5, 1.0, 0.9, 6.0, HEDGE);
+        F.collideBox(sx * 11, sz * 4.5, 0.5, 3.0, g - 1, g + 0.9);
+        for (let k = 0; k < 6; k++) F.geo('plainCloth', FLOWER_GEO, sx * (7 + k * 0.6), g + 0.95, sz * 8, 0, 0, 0, 1.6, 1.6, 1.6, ROSES[k % ROSES.length]);
+      }
+    }
+  }
+  for (const [x, z] of [[-14, -276], [14, -276], [-14, -246], [14, -246], [-6, -228], [6, -228]]) ctx.lamps.push([x, z, Math.atan2(-x, -262 - z)]);
+  ctx.occupy(rect(P.x, P.z + 2, P.hw - 2, P.hd - 4));
+}
+
 // ============================================================== the bridge
 
 function buildBridge(ctx) {
@@ -4850,6 +5115,9 @@ function buildRoads(ctx) {
   const c = SITES.castle;
   const hall = rect(SITES.hall.x, SITES.hall.z, SITES.hall.w / 2, SITES.hall.d / 2);
   groundPatch(ctx, 'cobbleRoad', rect(c.x, c.z, 31, 31), 2, 0.09, (lx, lz, x, z) => [x / 2.4, z / 2.4], (x, z) => Math.hypot(x - c.x, z - c.z) < 31.5 && !rectContains(hall, x, z, -1.0));
+  // The palace ward, from the old castle's courtyard to the far wall.
+  const P = SITES.palace;
+  groundPatch(ctx, 'cobbleRoad', rect(P.x, P.z, P.hw, P.hd), 2, 0.09, (lx, lz, x, z) => [x / 2.4, z / 2.4], (x, z) => pointInPolygon(x, z, CASTLE_WALL) && distToPolygonEdge(x, z, CASTLE_WALL) > 1.5 && Math.hypot(x - c.x, z - c.z) > 31);
 }
 
 // ============================================================= vegetation
@@ -5352,6 +5620,7 @@ export class World {
 
     await progress('Fortifying the castle…');
     buildCastle(ctx);
+    buildPalace(ctx);
     streetLamps(ctx, (r) => r.kind === 'cobble' && !r.town && !r.culture, 26);
 
     await progress('Spanning the river, tilling the fields…');
@@ -5823,6 +6092,7 @@ export class World {
     if (h < WATER_LEVEL + 0.5) return false;
     if (pointInPolygon(x, z, TOWN_WALL) || distToPolygonEdge(x, z, TOWN_WALL) < 5) return false;
     if (Math.hypot(x - SITES.castle.x, z - SITES.castle.z) < 46) return false;
+    if (Math.abs(x - SITES.palace.x) < SITES.palace.hw + 6 && Math.abs(z - SITES.palace.z) < SITES.palace.hd + 6) return false;
     if (Math.hypot(x - SITES.ruins.x, z - SITES.ruins.z) < 14) return false;
     if (Math.abs(x) < BRIDGE.halfWidth + 4 && z > BRIDGE.zN - 4 && z < BRIDGE.zS + 4) return false;
     if (ctx.occupied(x, z, pad)) return false;
@@ -6219,6 +6489,7 @@ export class World {
     if (lakeWeight(x, z) > 0) return false;
     for (const site of [SITES.harbour, SITES.millbrook]) if (Math.hypot(x - site.x, z - site.z) < 75) return false;
     if (Math.hypot(x - castle.x, z - castle.z) < castle.r + 34) return false;
+    if (Math.abs(x - SITES.palace.x) < SITES.palace.hw + 30 && Math.abs(z - SITES.palace.z) < SITES.palace.hd + 30) return false;
     if (roadClearance(x, z) < 4) return false;
     if (Math.abs(z - riverZ(x)) < 24) return false;
     if (Math.max(Math.abs(x - farmland.x) / farmland.hw, Math.abs(z - farmland.z) / farmland.hd) < 1.15) return false;

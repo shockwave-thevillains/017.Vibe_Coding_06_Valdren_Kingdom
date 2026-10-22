@@ -10650,6 +10650,395 @@
           }
         }
       }
+    },
+    {
+      "id": "steward",
+      "name": "Lord Aldous Pell",
+      "role": "Royal Steward",
+      "position": {
+        "x": 13.8,
+        "z": -297.3
+      },
+      "heading": 0,
+      "spot": "steward",
+      "action": "staff",
+      "look": {
+        "female": false,
+        "skin": "#d9a882",
+        "hair": "#8a8580",
+        "eyes": "#4a3a2a",
+        "tunic": "#24356e",
+        "trousers": "#4c3d31",
+        "boots": "#4a3322",
+        "belt": "#3a2a1a",
+        "trim": "#d4a640",
+        "cloak": null,
+        "age": 0.6,
+        "hairStyle": "short",
+        "beard": "short",
+        "sleeves": "#efeae0",
+        "skirt": "robe"
+      },
+      "outfit": {
+        "staff": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_steward"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Welcome to the Royal Palace. Do not touch the silver, do not sit in the King's chair, and wipe your boots.",
+            "choices": [
+              {
+                "text": "What is this place?",
+                "next": "t0"
+              },
+              {
+                "text": "When is the next feast?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "You again. The silver is still counted, I trust.",
+            "choices": [
+              {
+                "text": "What is this place?",
+                "next": "t0"
+              },
+              {
+                "text": "When is the next feast?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "His Majesty's palace: the Banquet Hall here, his bedchamber and the library to the west, the kitchen and the council chamber to the east. The old castle keeps the throne.",
+            "choices": [
+              {
+                "text": "When is the next feast?",
+                "next": "t1"
+              },
+              {
+                "text": "May I see the King's bedchamber?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Every evening is a feast, to hear the cook tell it. Officially, at midsummer, for the princess's name-day.",
+            "choices": [
+              {
+                "text": "What is this place?",
+                "next": "t0"
+              },
+              {
+                "text": "May I see the King's bedchamber?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "You may look. You may not lie down. Last time a traveller did, the King had the bed burned.",
+            "choices": [
+              {
+                "text": "What is this place?",
+                "next": "t0"
+              },
+              {
+                "text": "When is the next feast?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "cook",
+      "name": "Mistress Bramble",
+      "role": "Royal Cook",
+      "position": {
+        "x": 29.2,
+        "z": -261.4
+      },
+      "heading": -1.5708,
+      "spot": "royalCook",
+      "action": "wipe",
+      "look": {
+        "female": true,
+        "skin": "#a8774f",
+        "hair": "#6a3a1e",
+        "eyes": "#4a5e72",
+        "tunic": "#efeae0",
+        "trousers": "#2e2a26",
+        "boots": "#4a3322",
+        "belt": "#2e2116",
+        "trim": "#c8b48a",
+        "cloak": null,
+        "age": 0.5,
+        "skirt": "robe",
+        "hairStyle": "bun",
+        "lips": "#c06060",
+        "stubble": false,
+        "belly": 0.7,
+        "sleeves": "#e8dcc4"
+      },
+      "outfit": {
+        "apron": "#f2eee4"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_cook"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Out of my kitchen! Unless you're hungry. Are you hungry? You look hungry.",
+            "choices": [
+              {
+                "text": "I'd like the King's leftovers.",
+                "do": "shop"
+              },
+              {
+                "text": "What do you cook for the King?",
+                "next": "t0"
+              },
+              {
+                "text": "Can I buy something?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back already? The pastry's just out.",
+            "choices": [
+              {
+                "text": "I'd like the King's leftovers.",
+                "do": "shop"
+              },
+              {
+                "text": "What do you cook for the King?",
+                "next": "t0"
+              },
+              {
+                "text": "Can I buy something?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Venison, swan, honey cakes, and on bad days porridge. He likes the porridge best. Don't tell anyone.",
+            "choices": [
+              {
+                "text": "Can I buy something?",
+                "next": "t1"
+              },
+              {
+                "text": "Any gossip from the palace?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "The King's leftovers, if you've coin. Finest food in Valdren, a day old.",
+            "choices": [
+              {
+                "text": "What do you cook for the King?",
+                "next": "t0"
+              },
+              {
+                "text": "Any gossip from the palace?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "The princess sneaks down to the garden at night. The steward counts the spoons twice. The archivist talks to the books.",
+            "choices": [
+              {
+                "text": "What do you cook for the King?",
+                "next": "t0"
+              },
+              {
+                "text": "Can I buy something?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "archivist",
+      "name": "Master Ansel Quill",
+      "role": "Royal Archivist",
+      "position": {
+        "x": -30.8,
+        "z": -233.8
+      },
+      "heading": 1.5708,
+      "spot": "archivist",
+      "stoop": 0.15,
+      "look": {
+        "female": false,
+        "skin": "#e8c0a0",
+        "hair": "#b0aca6",
+        "eyes": "#4a5e72",
+        "tunic": "#4a3a2a",
+        "trousers": "#2e2a26",
+        "boots": "#4a3322",
+        "belt": "#3a2a1a",
+        "trim": "#8a6a3a",
+        "cloak": null,
+        "age": 0.7,
+        "hairStyle": "short",
+        "beard": "full",
+        "sleeves": "#6a5a44",
+        "skirt": "robe"
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_archivist"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Shh. Books are sleeping. What brings you to the Royal Library?",
+            "choices": [
+              {
+                "text": "What do you keep here?",
+                "next": "t0"
+              },
+              {
+                "text": "Tell me about the dungeons.",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Ah, a reader returns. Rare as hen's teeth.",
+            "choices": [
+              {
+                "text": "What do you keep here?",
+                "next": "t0"
+              },
+              {
+                "text": "Tell me about the dungeons.",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "The chronicles of Valdren, the maps of every quarter, and the charters of the peoples who settled them: the Norse, the eastern clans, the merchants of the south.",
+            "choices": [
+              {
+                "text": "Tell me about the dungeons.",
+                "next": "t1"
+              },
+              {
+                "text": "Who are the wanted folk?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Seven of them. Gloomhollow, Frostfang, the Sunken Vault, the Jade Hollow, the Mistveil Grotto, the Serpent Grotto, and Red Garrick's cellars. All marked on your map with a red sword, if you look.",
+            "choices": [
+              {
+                "text": "What do you keep here?",
+                "next": "t0"
+              },
+              {
+                "text": "Who are the wanted folk?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "The Wardens' Guild keeps their bounties. Look at faces: press T near a stranger and you'll know if they match a notice. Once bound, follow the arrow to the Guild.",
+            "choices": [
+              {
+                "text": "What do you keep here?",
+                "next": "t0"
+              },
+              {
+                "text": "Tell me about the dungeons.",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
     }
   ]
 }
