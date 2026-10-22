@@ -11,7 +11,8 @@ import { Lantern } from './lantern.js';
 import { Sword } from './gear.js';
 import { Combat, MAX_HEALTH } from './combat.js';
 import { Rasengan } from './rasengan.js';
-import { Quests, CASES } from './quests.js';
+import { Dungeon } from './dungeon.js';
+import { Quests, CASES, SHOPS } from './quests.js';
 import { Music } from './music.js';
 import { Dialogue } from './dialogue.js';
 import { Lore, Reader, Journal, Progress } from './lore.js';
@@ -23,7 +24,8 @@ import { UI } from './ui.js';
  * runs the game loop and the state machine:
  *   title -> playing <-> paused
  *   playing <-> talking (a conversation), reading (a discovery),
- *               journal, map, shop, sleeping (and knocked out)
+ *               journal, map, shop, sleeping (and knocked out, and going
+ *               into or out of the mine, which is a scene of its own)
  * Progress is saved to the browser as you play and restored on the next visit.
  *
  * URL options: ?debug shows the performance readout (also F3 or `),
@@ -184,6 +186,11 @@ async function boot() {
   const rasengan = new Rasengan(scene);
   // Its sounds play through the music's audio context (once Begin has started it).
   rasengan.audio = () => (music.ctx && music.noise ? { ctx: music.ctx, noise: music.noise } : null);
+  // The Gloomhollow Mine: built the first time the traveller goes down.
+  const dungeon = new Dungeon(world, quality);
+  dungeon.audio = rasengan.audio;
+  combat.foes = dungeon;
+  rasengan.foes = dungeon;
   const music = new Music();
   music.volume = typeof settings.music === 'number' ? Math.min(1, Math.max(0, settings.music)) : 0.6;
   const follow = new FollowCamera(camera, world);
@@ -218,13 +225,17 @@ async function boot() {
   const progress = new Progress();
   let saveWarned = false;
   let mark = null; // { x, z }: the spot the traveller has marked on the map
+  let underground = false; // in the mine
 
   function snapshot() {
     const visited = {};
     for (const [id, set] of dialogue.visited) visited[id] = [...set];
     return {
       time: world.timeOfDay,
-      player: { x: player.position.x, z: player.position.z, heading: player.heading, health: Math.round(combat.health) },
+      // In the mine, the journey is saved at its way in.
+      player: underground
+        ? { x: world.mine.out[0], z: world.mine.out[1], heading: world.mine.out[2], health: Math.round(combat.health) }
+        : { x: player.position.x, z: player.position.z, heading: player.heading, health: Math.round(combat.health) },
       flags: [...flags],
       lore: [...lore.found],
       visited,
@@ -438,17 +449,31 @@ async function boot() {
     enter('journal');
   }
 
+  // Where to eat and shop: each seller's own spot.
+  function shopPlaces() {
+    const out = [];
+    for (const [id, shop] of Object.entries(SHOPS)) {
+      const npc = npcs.byId.get(id);
+      if (npc) out.push({ id, x: npc.home.x, z: npc.home.z, icon: shop.icon, name: shop.title, where: shop.where, sells: shop.sells, food: shop.kind === 'food' });
+    }
+    return out;
+  }
+  const shops = shopPlaces();
+
   function mapView() {
     const metPeople = npcs.list.filter((n) => flags.has(`met_${n.id}`) && n.mood !== 'gone');
+    // Below ground, the map shows where the mine's way in is.
+    const at = underground ? { x: world.mine.door[0], z: world.mine.door[1] } : player.position;
     return {
-      x: player.position.x,
-      z: player.position.z,
+      x: at.x,
+      z: at.z,
       heading: player.heading,
       places: world.guild ? [...PLACES, { name: world.guild.name, x: world.guild.board[0], z: world.guild.board[1], size: 0 }] : PLACES,
       people: metPeople.map((n) => ({ x: n.position.x, z: n.position.z, name: n.name })),
       finds: lore.found.map((id) => lore.byId.get(id)).map((e) => ({ x: e.pos.x, z: e.pos.z, title: e.title })),
       home: world.home,
       mark,
+      shops,
       touch: input.touchMode,
     };
   }
@@ -460,9 +485,10 @@ async function boot() {
   }
 
   // Marking the map: a pin to head for, with a pointer on screen and on the compass.
-  ui.onMark = (spot) => {
+  ui.onMark = (spot, name) => {
     mark = spot;
     if (mode === 'map') ui.showMap(mapView());
+    if (name) ui.toast(`Marked: ${name}. Close the map and follow the red pointer.`, 3000);
     saveNow();
   };
 
@@ -530,6 +556,7 @@ async function boot() {
     await nextFrame();
     world.setQuality(current);
     lantern.setQuality(current);
+    dungeon.setQuality(current);
     npcs.range = current.people;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, current.pixelRatio));
     post.setQuality(current);
@@ -586,6 +613,9 @@ async function boot() {
     else if (reachable && reachable.balloon) boardBalloon();
     else if (reachable && reachable.bed) sleep();
     else if (reachable && reachable.captive) bindCaptive(reachable.captive);
+    else if (reachable && reachable.mine) enterMine();
+    else if (reachable && reachable.exit) leaveMine();
+    else if (reachable && reachable.chest) openChest();
     else if (balloons.riding) ui.toast('Hold on to the basket. The meadow is a long way down.');
     else ui.toast('There is nothing here to interact with.');
   });
@@ -740,12 +770,110 @@ async function boot() {
     saveNow();
   }
 
+  // ------------------------------------------------------------ the mine
+
+  // What the traveller carries between the world and the mine: themselves and their gear.
+  const travellers = () => [player.figure.root, lantern.prop, lantern.light, lantern.light.target, lantern.shaft,
+    sword.blade, sword.scabbard, rasengan.orb, rasengan.shock, rasengan.groundRing, rasengan.sparks];
+  function carryTo(target) {
+    for (const o of travellers()) target.add(o);
+    post.setScene(target);
+  }
+
+  let mineVisits = 0;
+  async function enterMine() {
+    if (mode !== 'playing' || underground) return;
+    setMode('sleeping');
+    await ui.fade(true, 'You climb down into the dark…');
+    dungeon.build();
+    const s = dungeon.reset();
+    dungeon.active = true;
+    underground = true;
+    carryTo(dungeon.scene);
+    player.teleport(s.x, s.z, s.heading);
+    follow.yaw = player.heading + Math.PI;
+    follow.pitch = 0.3;
+    follow.update(0, player.position, true);
+    renderer.compile(dungeon.scene, camera);
+    needsRender = true;
+    await wait(500);
+    await ui.fade(false);
+    setMode('playing');
+    mineVisits++;
+    const dark = lantern.on ? '' : ` It is dark down here: ${input.touchMode ? 'tap the lantern button' : 'press F'} for your lantern.`;
+    ui.toast(mineVisits === 1
+      ? `The Gloomhollow Mine. Rats, spiders, slimes and goblins lurk below, and a cave troll in the deepest hall. Every monster you defeat drops crowns.${dark}`
+      : `Back in the Gloomhollow Mine. The monsters have crept back in.${dark}`, 6500);
+  }
+
+  // Back up at the mine's way in, at once (also when knocked out below).
+  function surface() {
+    dungeon.active = false;
+    underground = false;
+    carryTo(scene);
+    ui.setBoss(null);
+    const [x, z, heading] = world.mine.out;
+    player.teleport(x, z, heading);
+    follow.yaw = heading + Math.PI;
+    follow.update(0, player.position, true);
+    needsRender = true;
+  }
+
+  async function leaveMine() {
+    if (mode !== 'playing' || !underground) return;
+    setMode('sleeping');
+    await ui.fade(true, world.night > 0.5 ? 'Up into the night air…' : 'Up into the daylight…');
+    surface();
+    await wait(400);
+    await ui.fade(false);
+    setMode('playing');
+    saveNow();
+  }
+
+  // A monster's blow; the troll's knocks the traveller back.
+  dungeon.onBlow = (monster, damage) => {
+    if (mode !== 'playing') return;
+    ui.flashHurt();
+    if (monster.spec.boss) {
+      const dx = player.position.x - monster.position.x;
+      const dz = player.position.z - monster.position.z;
+      const d = Math.hypot(dx, dz) || 1;
+      player.lunge((dx / d) * 9, (dz / d) * 9, 0.22);
+      shake = Math.max(shake, 0.18);
+    }
+    if (combat.hurt(damage)) knockedOut();
+  };
+  let lootShown = false;
+  dungeon.onLoot = (monster, coins) => {
+    quests.addCoins(coins);
+    if (monster.spec.boss) ui.toast(`The cave troll falls! +${coins} crowns. The chest behind him is yours to open.`, 5000);
+    else if (!lootShown) {
+      lootShown = true;
+      ui.toast(`${monster.name} defeated: +${coins} crowns!`, 2600);
+    }
+  };
+  dungeon.onBoss = (boss) => ui.setBoss(boss ? { name: boss.name, fraction: boss.health / boss.spec.health } : null);
+
+  function openChest() {
+    const r = dungeon.openChest();
+    if (!r) return;
+    if (r.coins) {
+      quests.addCoins(r.coins);
+      ui.toast(`The miners' silver! +${r.coins} crowns.`, 4000);
+      saveNow();
+    } else {
+      ui.toast(r.text, 3000);
+    }
+  }
+
   // Beaten senseless: the traveller comes to in their cottage, and whoever did it gets away.
   async function knockedOut() {
     if (mode !== 'playing') return;
     setMode('sleeping');
     music.hush(true);
     await ui.fade(true, 'Everything goes dark…');
+    const below = underground;
+    if (below) surface();
     for (const n of npcs.list) if (n.mood === 'fight' || n.mood === 'flee') n.goHome();
     world.setTime((world.timeOfDay + 3) % 24);
     combat.health = MAX_HEALTH * 0.5;
@@ -765,7 +893,9 @@ async function boot() {
     await ui.fade(false);
     music.hush(false);
     setMode('playing');
-    ui.toast('You wake in your cottage, sore all over. Whoever beat you is long gone.', 4500);
+    ui.toast(below
+      ? 'You wake in your cottage, sore all over. Someone must have dragged you out of the mine.'
+      : 'You wake in your cottage, sore all over. Whoever beat you is long gone.', 4500);
   }
 
   // Inside an inn the music turns to a jig; otherwise it follows day and night.
@@ -777,7 +907,7 @@ async function boot() {
     const p = player.position;
     const room = world.interiorAt(p.x, p.y + 0.5, p.z);
     const inn = room && (room.name === 'The Broken Oar' || room.name === 'The Millstone');
-    music.setScene(inn ? 'inn' : world.night > 0.55 ? 'night' : 'day');
+    music.setScene(inn ? 'inn' : underground || world.night > 0.55 ? 'night' : 'day');
   }
 
   // ------------------------------------------------------------- sleep
@@ -855,9 +985,9 @@ async function boot() {
   renderer.info.autoReset = false;
   function draw() {
     renderer.info.reset();
-    animals.draw(camera, player.position);
-    if (post.active) post.render(world.night);
-    else renderer.render(scene, camera);
+    if (!underground) animals.draw(camera, player.position);
+    if (post.active) post.render(underground ? 1 : world.night);
+    else renderer.render(underground ? dungeon.scene : scene, camera);
   }
   const look = { yaw: 0, pitch: 0 };
   const stats = { frames: 0, time: 0 };
@@ -906,6 +1036,7 @@ async function boot() {
   // The nearest thing to act on: a person, a discovery or an animal to pet, whichever is closest.
   function findReachable() {
     if (player.flying || player.airborne) return null;
+    if (underground) return dungeon.reachable(player);
     const npc = npcs.nearest(player);
     const spot = lore.nearest(player);
     const pet = animals.nearest(player);
@@ -918,6 +1049,10 @@ async function boot() {
       const b = balloons.basketFloor;
       const d = Math.hypot(b.x - p.x, b.z - p.z);
       if (d < BOARD_RANGE) options.push({ d, r: { balloon: true } });
+    }
+    if (world.mine) {
+      const d = Math.hypot(world.mine.door[0] - p.x, world.mine.door[1] - p.z);
+      if (d < 2.6) options.push({ d, r: { mine: true } });
     }
     // A beaten criminal on their knees, waiting to be bound.
     for (const n of npcs.list) {
@@ -943,6 +1078,21 @@ async function boot() {
     minimapTimer -= dt;
     if (minimapTimer > 0) return;
     minimapTimer = 1 / 30;
+    if (underground) {
+      // The mine's own plan, with its monsters.
+      ui.drawMinimap({
+        x: player.position.x,
+        z: player.position.z,
+        heading: player.heading,
+        yaw: follow.yaw,
+        people: dungeon.alive.map((m) => ({ x: m.position.x, z: m.position.z, foe: true })),
+        finds: [],
+        home: null,
+        mark: null,
+        map: dungeon.minimap,
+      });
+      return;
+    }
     ui.drawMinimap({
       x: player.position.x,
       z: player.position.z,
@@ -952,6 +1102,7 @@ async function boot() {
       finds: lore.found.map((id) => lore.byId.get(id).pos),
       home: world.home,
       mark,
+      shops,
     });
   }
 
@@ -959,7 +1110,7 @@ async function boot() {
   // screen pointing the way. Reaching the spot clears the mark.
   const markPoint = new THREE.Vector3();
   function updateMark() {
-    if (!mark) {
+    if (!mark || underground) {
       ui.updateWaypoint(null);
       ui.setCompassMark(null);
       return;
@@ -1069,10 +1220,15 @@ async function boot() {
       if (rasengan.state === 'lunge' && player.animator.action === 'orb') player.animator.action = lantern.on ? 'lanternL' : null;
       if (orbBusy && !rasengan.busy) endOrb();
       npcs.update(dt, player);
-      quests.update(dt, player, standable);
-      if (!balloons.riding) npcs.separate(player);
+      if (!underground) quests.update(dt, player, standable);
       animals.update(dt, player, npcs);
-      if (!balloons.riding) animals.separate(player);
+      if (underground) {
+        dungeon.update(dt, player);
+        dungeon.separate(player);
+      } else if (!balloons.riding) {
+        npcs.separate(player);
+        animals.separate(player);
+      }
       lore.update(dt);
       follow.update(dt, player.position);
       if (shake > 0.002) {
@@ -1083,7 +1239,7 @@ async function boot() {
       }
       // Hide the player when an obstacle squeezes the camera right up to them.
       player.figure.root.visible = follow.actualDistance > 1.0;
-      lantern.update(dt, player, camera, world.night);
+      lantern.update(dt, player, camera, underground ? 1 : world.night);
       sword.update(player);
       chooseMusic(dt);
       if (!homeGreeted && world.home && world.interiorAt(player.position.x, player.position.y + 0.5, player.position.z) === world.home.interior) {
@@ -1101,9 +1257,12 @@ async function boot() {
       else if (reachable && reachable.entry) ui.setPrompt(reachable.entry.title, input.touchMode, lore.kindOf(reachable.entry).verb);
       else if (reachable && reachable.animal) ui.setPrompt(animals.label(reachable.animal), input.touchMode, 'Pet');
       else if (reachable && reachable.captive) ui.setPrompt(reachable.captive.name, input.touchMode, 'Bind');
+      else if (reachable && reachable.mine) ui.setPrompt('the Gloomhollow Mine', input.touchMode, 'Enter');
+      else if (reachable && reachable.exit) ui.setPrompt('the mine', input.touchMode, 'Climb out of');
+      else if (reachable && reachable.chest) ui.setPrompt('the chest', input.touchMode, 'Open');
       else ui.setPrompt(reachable ? reachable.npc.name : null, input.touchMode);
-      world.update(dt, player.position, camera);
-      ui.updateLabels(npcs.labels(camera, window.innerWidth, window.innerHeight, reachable && reachable.npc));
+      if (!underground) world.update(dt, player.position, camera);
+      ui.updateLabels(underground ? dungeon.labels(camera, window.innerWidth, window.innerHeight) : npcs.labels(camera, window.innerWidth, window.innerHeight, reachable && reachable.npc));
       updateHud(dt);
       updateMark();
       draw();
@@ -1159,7 +1318,7 @@ async function boot() {
   ui.setReady(saved ? `Saved journey found: ${lore.found.length} of ${lore.total} discoveries.` : null, progress.available);
 
   // Handy from the browser console while developing.
-  window.valdren = { THREE, renderer, post, scene, camera, world, player, lantern, setLantern, sword, combat, rasengan, quests, setFlying, music, sleep, follow, input, ui, npcs, animals, balloons, boats, dragon, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
+  window.valdren = { THREE, renderer, post, scene, camera, world, player, lantern, setLantern, sword, combat, rasengan, dungeon, enterMine, leaveMine, quests, setFlying, music, sleep, follow, input, ui, npcs, animals, balloons, boats, dragon, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
 }
 
 boot().catch((err) => {

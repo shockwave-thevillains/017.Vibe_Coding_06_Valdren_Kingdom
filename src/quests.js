@@ -27,6 +27,12 @@ export const ITEMS = {
   ale: { name: 'Mug of ale', icon: '🍺', price: 3, heal: 12, verb: 'Drink', about: 'Brown, foaming, and warming on a cold night.' },
   cheese: { name: 'Wedge of cheese', icon: '🧀', price: 5, heal: 25, verb: 'Eat', about: 'Sharp ewe’s-milk cheese from Millbrook.' },
   salve: { name: 'Healing salve', icon: '🏺', price: 9, heal: 70, verb: 'Apply', about: 'A little pot of salve from the coast. Soothes cuts and bruises in moments.' },
+  sausage: { name: 'Smoked sausage', icon: '🌭', price: 4, heal: 22, verb: 'Eat', about: 'Hung in Martha’s chimney for a month. Salty and filling.' },
+  honey: { name: 'Pot of honey', icon: '🍯', price: 5, heal: 25, verb: 'Eat', about: 'The hermit’s honey, sold by the spoonful or the pot.' },
+  eggs: { name: 'Boiled eggs', icon: '🥚', price: 3, heal: 16, verb: 'Eat', about: 'Three of them, still warm, with a pinch of salt.' },
+  fish: { name: 'Grilled perch', icon: '🐟', price: 5, heal: 30, verb: 'Eat', about: 'Caught in Mirrormere this morning and grilled on the quay.' },
+  eel: { name: 'Smoked eel', icon: '🍢', price: 7, heal: 40, verb: 'Eat', about: 'A harbour favourite: rich, smoky and oddly delicious.' },
+  stew: { name: 'Mutton stew', icon: '🍲', price: 6, heal: 45, verb: 'Eat', about: 'Gwen’s stew, in a crock with a lid. Hearty enough for a troll hunt.' },
   ribbon: { name: 'Silk ribbon', icon: '🎀', price: 6, keepsake: 'You tie the ribbon round your wrist. It flutters prettily.', about: 'Bright silk, dyed in Saltmere.' },
   horse: { name: 'Wooden horse', icon: '🐴', price: 8, keepsake: 'You trot the little horse along your palm. Mila’s father has a gift.', about: 'Carved and painted by Mila’s father.' },
   top: { name: 'Spinning top', icon: '🌀', price: 4, keepsake: 'You spin the top on your palm. It hums as it turns.', about: 'A painted top that hums as it spins.' },
@@ -34,13 +40,20 @@ export const ITEMS = {
   steel: { name: 'Steel sword', icon: '⚔️', price: 40, unique: true, about: 'Brannoc’s best blade: longer, keener and better balanced than your old sword. Its strokes bite harder.' },
 };
 
+/*
+ * Who sells what. icon and kind ('food' or 'goods') mark the place on the map and
+ * the minimap; where and sells describe it in the map's list of places to eat and shop.
+ */
 export const SHOPS = {
-  jory: { title: 'Jory’s Fruit Stall', greeting: 'Fresh today, every one of them!', items: ['apple', 'pear', 'berries'] },
-  hilde: { title: 'Hilde’s Bakery', greeting: 'Bread, cakes and pies, straight from the oven.', items: ['bread', 'cake', 'pie'] },
-  maera: { title: 'The Broken Oar', greeting: 'Ale’s brown, the pie’s hot.', items: ['ale', 'pie', 'cheese'] },
-  mila: { title: 'Mila’s Toys and Ribbons', greeting: 'Something pretty, or something for the little ones?', items: ['ribbon', 'horse', 'top'] },
-  smith: { title: 'Brannoc’s Forge', greeting: 'Good steel isn’t cheap. Cheap steel isn’t good.', items: ['steel', 'horseshoe'] },
-  tobias: { title: 'Tobias Fenn, Merchant of Saltmere', greeting: 'Wonders from the coast, at honest prices!', items: ['salve', 'cheese', 'ribbon'] },
+  jory: { title: 'Jory’s Fruit Stall', greeting: 'Fresh today, every one of them!', items: ['apple', 'pear', 'berries'], icon: '🍎', kind: 'food', where: 'Market', sells: 'Fruit' },
+  martha: { title: 'Brindle’s Provisions', greeting: 'A bit of everything, and all of it good.', items: ['bread', 'sausage', 'eggs', 'cheese', 'honey'], icon: '🧺', kind: 'food', where: 'Market', sells: 'Grocer: bread, sausage, eggs, cheese, honey' },
+  hilde: { title: 'Hilde’s Bakery', greeting: 'Bread, cakes and pies, straight from the oven.', items: ['bread', 'cake', 'pie'], icon: '🍞', kind: 'food', where: 'Fountain Square', sells: 'Bakery: bread, honey cake, pies' },
+  maera: { title: 'The Broken Oar', greeting: 'Ale’s brown, the pie’s hot.', items: ['ale', 'pie', 'cheese'], icon: '🍺', kind: 'food', where: 'By the market', sells: 'Tavern: ale, pies, cheese' },
+  gwen: { title: 'The Millstone', greeting: 'Sit down, eat up, and don’t mind the ducks.', items: ['stew', 'pie', 'ale'], icon: '🍺', kind: 'food', where: 'Millbrook', sells: 'Inn: mutton stew, pies, ale' },
+  dob: { title: 'Haddock’s Fish Stall', greeting: 'Caught this morning, grilled this minute!', items: ['fish', 'eel'], icon: '🐟', kind: 'food', where: 'Aldra’s Haven', sells: 'Fish stall: grilled perch, smoked eel' },
+  tobias: { title: 'Tobias Fenn, Merchant of Saltmere', greeting: 'Wonders from the coast, at honest prices!', items: ['salve', 'cheese', 'ribbon'], icon: '🏺', kind: 'goods', where: 'Market', sells: 'Merchant: healing salve, cheese, ribbons' },
+  mila: { title: 'Mila’s Toys and Ribbons', greeting: 'Something pretty, or something for the little ones?', items: ['ribbon', 'horse', 'top'], icon: '🎀', kind: 'goods', where: 'Fountain Square', sells: 'Toys and ribbons' },
+  smith: { title: 'Brannoc’s Forge', greeting: 'Good steel isn’t cheap. Cheap steel isn’t good.', items: ['steel', 'horseshoe'], icon: '⚒️', kind: 'goods', where: 'North-west of the market', sells: 'Forge: the steel sword' },
 };
 
 export const CASES = [

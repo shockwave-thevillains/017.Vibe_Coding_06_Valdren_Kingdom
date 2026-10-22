@@ -37,6 +37,7 @@
     <div id="prompt" class="hidden"></div>
     <div id="hint" class="hidden"></div>
     <div id="toast" role="status" aria-live="polite"></div>
+    <div id="boss" class="hidden" aria-live="polite"><span class="boss-name"></span><div class="boss-bar"><i></i></div></div>
     <pre id="debug" class="hidden"></pre>
   </div>
 
@@ -140,11 +141,18 @@
         <p id="map-tip" class="map-tip">Click the map to set your mark; click it again to clear it.</p>
         <button type="button" id="map-close" class="close" aria-label="Close the map">×</button>
       </header>
-      <div class="map-frame">
-        <canvas id="map-canvas"></canvas>
-        <div id="map-marks"></div>
+      <div class="map-body">
+        <div class="map-frame">
+          <canvas id="map-canvas"></canvas>
+          <div id="map-marks"></div>
+        </div>
+        <aside class="map-places" aria-labelledby="map-places-title">
+          <h3 id="map-places-title">Food &amp; shops</h3>
+          <p class="map-places-tip">Pick one to mark it and follow the pointer.</p>
+          <ul id="map-places"></ul>
+        </aside>
       </div>
-      <p class="map-legend"><span class="key you"></span> You <span class="key person"></span> People you have met <span class="key find"></span> Discoveries <span class="key home"></span> Your cottage <span class="key pin"></span> Your mark
+      <p class="map-legend"><span class="key you"></span> You <span class="key person"></span> People you have met <span class="key find"></span> Discoveries <span class="key home"></span> Your cottage <span class="key pin"></span> Your mark <span class="key food">🍽</span> Food &amp; shops
         <button type="button" id="map-zoom" class="link map-zoom">Show the whole kingdom</button></p>
     </div>
   </section>

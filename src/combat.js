@@ -30,6 +30,8 @@ export class Combat {
     // Told when a blow lands on someone: onLanded(npc, result, wasCalm), result being
     // what NPC.hit returned ('dodge', 'hurt', 'down' or 'yield').
     this.onLanded = null;
+    // Monsters to fight as well (the mine's): { alive, struck(player, reach, sweep) }.
+    this.foes = null;
   }
 
   get kind() {
@@ -57,8 +59,8 @@ export class Combat {
     const pos = p.position;
     let best = null;
     let bestD = range;
-    for (const npc of this.npcs.list) {
-      if (npc.mood === 'gone' || !npc.figure.root.visible || npc.talking) continue;
+    const people = this.npcs.list.filter((n) => n.mood !== 'gone' && n.figure.root.visible && !n.talking);
+    for (const npc of this.foes ? people.concat(this.foes.alive) : people) {
       const dx = npc.position.x - pos.x;
       const dz = npc.position.z - pos.z;
       const d = Math.hypot(dx, dz);
@@ -88,6 +90,7 @@ export class Combat {
       const result = npc.hit(damage, this.player.position);
       if (result && this.onLanded) this.onLanded(npc, result, wasCalm);
     }
+    if (this.foes) for (const foe of this.foes.struck(this.player, blow.reach, blow.sweep)) foe.hit(damage, this.player.position);
   }
 
   // A blow on the traveller. Returns true when it knocks them out.

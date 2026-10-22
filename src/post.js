@@ -98,6 +98,11 @@ export class Post {
   }
 
   // night: 0 by day, 1 after dark.
+  // Draws another scene through the same passes (the mine).
+  setScene(scene) {
+    this.renderPass.scene = scene;
+  }
+
   render(night) {
     this.bloom.threshold = THREE.MathUtils.lerp(BLOOM.dayThreshold, BLOOM.nightThreshold, night);
     this.composer.render();

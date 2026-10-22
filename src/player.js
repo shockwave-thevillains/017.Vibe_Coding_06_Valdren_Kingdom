@@ -1706,8 +1706,10 @@ export class Player {
       }
     }
     world.colliders.resolve(pos, this.radius, pos.y + 0.15, pos.y + 1.8);
-    pos.x = clamp(pos.x, -PLAY_HALF, PLAY_HALF);
-    pos.z = clamp(pos.z, -PLAY_HALF, PLAY_HALF);
+    if (!world.inDungeon(pos.x)) {
+      pos.x = clamp(pos.x, -PLAY_HALF, PLAY_HALF);
+      pos.z = clamp(pos.z, -PLAY_HALF, PLAY_HALF);
+    }
 
     const ground = world.getGroundHeight(pos.x, pos.z);
     if (this.flying || this.airborne) {

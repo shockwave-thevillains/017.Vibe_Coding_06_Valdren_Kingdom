@@ -62,6 +62,11 @@ export class UI {
     this.mapView = 0;
     this._mapData = null;
     this.mapTip = $('map-tip');
+    this.mapPlaces = $('map-places');
+    this.bossEl = $('boss');
+    this.bossName = this.bossEl.querySelector('.boss-name');
+    this.bossBar = this.bossEl.querySelector('i');
+    this._boss = '';
     this.waypointEl = $('waypoint');
     this.waypointDist = this.waypointEl.querySelector('.wp-dist');
     this.waypointArrow = this.waypointEl.querySelector('.wp-arrow');
@@ -243,6 +248,18 @@ export class UI {
       el.style.setProperty('--ready', String(v));
       el.classList.toggle('cooling', v < 1);
     }
+  }
+
+  // The health of the monster in charge (the cave troll) at the top of the screen; null hides it.
+  setBoss(boss) {
+    const key = boss ? `${boss.name}:${Math.round(boss.fraction * 100)}` : '';
+    if (key === this._boss) return;
+    this._boss = key;
+    this.bossEl.classList.toggle('hidden', !boss);
+    this.body.classList.toggle('boss', !!boss);
+    if (!boss) return;
+    this.bossName.textContent = boss.name;
+    this.bossBar.style.width = `${Math.round(boss.fraction * 100)}%`;
   }
 
   // A blue-white flash as a Rasengan bursts.
@@ -448,11 +465,13 @@ export class UI {
 
   /*
    * The minimap turns with the camera, so "up" is the way you are looking.
-   * view: { x, z, heading, yaw, people: [{ x, z, met, foe }], finds: [{ x, z }], home: { x, z }, mark: { x, z } }
+   * view: { x, z, heading, yaw, people: [{ x, z, met, foe }], finds: [{ x, z }], home: { x, z }, mark: { x, z },
+   *         shops: [{ x, z, icon }], map: { image, half, cx, cz } to show another plan (the mine's) }
    */
   drawMinimap(view) {
     const el = this.miniEl;
     if (!this.mapImage || !el.clientWidth) return;
+    const plan = view.map || { image: this.mapImage, half: this.mapHalf, cx: 0, cz: 0 };
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const size = Math.round(el.clientWidth * dpr);
     if (el.width !== size) el.width = el.height = size;
@@ -470,8 +489,7 @@ export class UI {
     g.rotate(view.yaw);
     g.scale(scale, scale);
     g.translate(-view.x, -view.z);
-    const half = this.mapHalf;
-    g.drawImage(this.mapImage, -half, -half, half * 2, half * 2);
+    g.drawImage(plan.image, plan.cx - plan.half, plan.cz - plan.half, plan.half * 2, plan.half * 2);
     const px = 1 / scale;
     if (view.home) {
       // The traveller's cottage: a little house, kept upright.
@@ -537,6 +555,23 @@ export class UI {
       g.fill();
       g.restore();
     }
+    // Places to eat and shop, drawn upright in screen space.
+    if (view.shops && view.shops.length) {
+      g.save();
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      const cy = Math.cos(view.yaw);
+      const sy = Math.sin(view.yaw);
+      const size = 16 * dpr;
+      for (const shop of view.shops) {
+        const dx = (shop.x - view.x) * scale;
+        const dz = (shop.z - view.z) * scale;
+        const sx = r + dx * cy - dz * sy;
+        const szz = r + dx * sy + dz * cy;
+        if (Math.hypot(sx - r, szz - r) > r - 9 * dpr) continue;
+        g.drawImage(this._iconSprite(shop.icon), sx - size / 2, szz - size / 2, size, size);
+      }
+      g.restore();
+    }
     // The player, pointing where they face.
     const s = Math.sin(view.heading);
     const c = Math.cos(view.heading);
@@ -571,6 +606,26 @@ export class UI {
     g.textAlign = 'center';
     g.textBaseline = 'middle';
     g.fillText('N', nx, ny + 0.5 * dpr);
+  }
+
+  // A shop's icon on a pale disc, drawn once and then copied (text is slow to draw).
+  _iconSprite(icon) {
+    this._icons = this._icons || new Map();
+    let c = this._icons.get(icon);
+    if (c) return c;
+    c = document.createElement('canvas');
+    c.width = c.height = 32;
+    const g = c.getContext('2d');
+    g.fillStyle = 'rgba(255, 248, 225, 0.88)';
+    g.beginPath();
+    g.arc(16, 16, 15, 0, Math.PI * 2);
+    g.fill();
+    g.font = '20px serif';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText(icon, 16, 17);
+    this._icons.set(icon, c);
+    return c;
   }
 
   get mapOpen() {
@@ -627,11 +682,38 @@ export class UI {
     if (view.home && inView(view.home.x, view.home.z)) mark('home', view.home.x, view.home.z, null, view.home.name).title = view.home.name;
     for (const f of view.finds) if (inView(f.x, f.z)) mark('dot find', f.x, f.z).title = f.title;
     for (const p of view.people) if (inView(p.x, p.z)) mark('dot person', p.x, p.z, null, roomy ? p.name : null).title = p.name;
+    for (const shop of view.shops || []) if (inView(shop.x, shop.z)) mark('shop', shop.x, shop.z, shop.icon, roomy ? shop.name : null).title = `${shop.name}: ${shop.sells}`;
     if (view.mark && inView(view.mark.x, view.mark.z)) mark('pin', view.mark.x, view.mark.z, null, 'Your mark');
     const you = mark('you', clamp(view.x, V.x - V.half, V.x + V.half), clamp(view.z, V.z - V.half, V.z + V.half));
     // Bearing of the facing direction (north = -z, east = +x).
     you.style.transform = `translate(-50%, -50%) rotate(${Math.atan2(Math.sin(view.heading), -Math.cos(view.heading))}rad)`;
     this.mapMarks.replaceChildren(...marks);
+    this._placesList(view);
+  }
+
+  // Beside the map: every place to eat or shop; picking one marks it.
+  _placesList(view) {
+    const items = [];
+    const sorted = [...(view.shops || [])].sort((a, b) => (b.food - a.food) || a.where.localeCompare(b.where));
+    for (const shop of sorted) {
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      const marked = view.mark && Math.hypot(view.mark.x - shop.x, view.mark.z - shop.z) < 1;
+      btn.className = marked ? 'marked' : '';
+      const icon = Object.assign(document.createElement('span'), { className: 'pl-icon', textContent: shop.icon });
+      icon.setAttribute('aria-hidden', 'true');
+      const text = document.createElement('span');
+      text.className = 'pl-text';
+      text.append(Object.assign(document.createElement('b'), { textContent: shop.name }), Object.assign(document.createElement('span'), { textContent: `${shop.where} · ${shop.sells}` }));
+      btn.append(icon, text);
+      btn.addEventListener('click', () => {
+        if (this.onMark) this.onMark({ x: shop.x, z: shop.z }, shop.name);
+      });
+      li.append(btn);
+      items.push(li);
+    }
+    this.mapPlaces.replaceChildren(...items);
   }
 
   hideMap() {

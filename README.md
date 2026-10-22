@@ -17,9 +17,10 @@ generated in code at load time; the project ships no art assets.
 > prettier sky, water and light. Since then: a hand lantern, your own cottage
 > with a bed to sleep in, music composed as you play, the Milky Way across the
 > night sky, and adventuring: jumping and flying, fist and sword fights, marks
-> on the map with a pointer to follow, market shops, and bounties from the
-> Wardens' Guild for catching wrongdoers. The kingdom has no religious buildings or symbols, so it sits
-> comfortably with every faith.
+> on the map with a pointer to follow, market shops, bounties from the
+> Wardens' Guild for catching wrongdoers, and the Gloomhollow Mine, a dungeon
+> full of monsters that pay out in crowns. The kingdom has no religious
+> buildings or symbols, so it sits comfortably with every faith.
 
 ## The kingdom
 
@@ -191,11 +192,24 @@ ends the conversation.
   along the compass and the minimap. Click it again to clear it; reaching it
   clears it too.
 - **Coins and shops:** you start with 30 crowns (the purse under the health
-  bar). Ask a shopkeeper what they have for sale: Jory's fruit, Hilde's bread,
-  cakes and pies, ale and cheese at the Broken Oar, Mila's ribbons and toys,
-  Tobias Fenn's healing salve, and at the forge Brannoc's steel sword, which
-  hits harder than your old one. What you buy goes into the **Bag** page of the
-  journal, where you eat or use it.
+  bar). Ask a shopkeeper what they have for sale. What you buy goes into the
+  **Bag** page of the journal, where you eat or use it. Food heals.
+- **Where to eat and shop:** every seller is marked with a little icon on the
+  map and the minimap, and the full map (`M`) lists them all under **Food &
+  shops**; pick one and it becomes your mark, with the red pointer leading you
+  there.
+
+  | Where | Who | Sells |
+  | --- | --- | --- |
+  | Market | Jory's Fruit Stall | apples, pears, berries |
+  | Market | Brindle's Provisions (Martha, the grocer) | bread, smoked sausage, boiled eggs, cheese, honey |
+  | Market | Tobias Fenn, merchant | healing salve, cheese, ribbons |
+  | By the market | The Broken Oar (tavern, Maera) | ale, mutton pie, cheese |
+  | Fountain Square | Hilde's Bakery | bread, honey cake, mutton pie |
+  | Fountain Square | Mila's Toys and Ribbons | ribbons, a wooden horse, a spinning top |
+  | North-west of the market | Brannoc's Forge | the steel sword, a lucky horseshoe |
+  | Aldra's Haven | Haddock's Fish Stall (Dob) | grilled perch, smoked eel |
+  | Millbrook | The Millstone (inn, Gwen) | mutton stew, mutton pie, ale |
 - **The Wardens' Guild** has its house on the street west of the market, with a
   painted sign and a notice board at the door. Its guildmaster, Edric Vane,
   offers three bounties, one after another: a cutpurse at the market (25
@@ -207,6 +221,40 @@ ends the conversation.
   `E` to **bind** them, and lead them back to the guildmaster (the guild is
   marked on your map) to be paid. Accuse the wrong person and they just put you
   right. The **Bounties** page of the journal keeps each case and its clues.
+
+## The Gloomhollow Mine
+
+An old silver mine in the hills north-west of the town (on the map, a short
+walk west of the castle road) that monsters have taken over. Its way in is a
+timber-framed tunnel in a pile of rock, with torches either side, rails and an
+old ore cart; stand at it and press `E` (**Enter**).
+
+- **Inside** it is dark (light your lantern with `F`), lit only by wall
+  torches. A tunnel leads from the entrance hall to a rats' nest; from there
+  tunnels run west to a cave of slimes and east to a spiders' cavern, and on
+  north to a goblin camp round a fire, and west again to the hall of the cave
+  troll, with the miners' chest of silver behind him. The minimap shows the
+  mine's own plan, with the monsters as red dots.
+- **Monsters** wake when you come close and chase you. Each one winds up
+  before it strikes (a rat rears, a spider lunges, a slime swells, a goblin
+  lifts its club), so you can step back or strike first. Punches, the sword
+  and the Rasengan all work on them; names and health bars float over them.
+
+  | Monster | Where | Health | Hits for | Drops |
+  | --- | --- | --- | --- | --- |
+  | Giant rat (6) | The nest | 30 | 5 | 2-4 crowns |
+  | Slime (4) | The pools | 40 | 6 | 3-6 crowns |
+  | Cave spider (4) | The webs | 48 | 8 | 4-7 crowns |
+  | Goblin (7) | The camp, and two in the troll's hall | 60 | 10 | 6-10 crowns |
+  | Cave troll (1) | The deepest hall | 420 | 22, and knocks you back | 55-70 crowns |
+
+- **Loot:** a fallen monster bursts into a shower of gold coins that fly into
+  your purse. The troll's health shows at the top of the screen while he
+  fights; once he is down, open the chest (`E`) for 30-45 crowns more.
+- **Coming back:** climb the steps in the entrance hall (`E`, **Climb out**).
+  The monsters (and the silver in the chest) are back every time you go in. If
+  you are beaten down there, you wake in your cottage. The game is saved at the
+  mine's way in, never inside it.
 
 ## The mystery
 
@@ -298,6 +346,7 @@ maps), on desktop and on phones, with WebGL 2.
 | Mark the map | Click the full map             | Tap the full map                          |
 | Sleep       | `E` by the bed in your cottage | **Interact** button                       |
 | Ride the balloon | `E` by its basket on the meadow | **Interact** button                 |
+| Enter / leave the mine, open its chest | `E` at its way in, its steps, the chest | **Interact** button |
 | Journal     | `J`                            | **Journal** button                        |
 | Map         | `M`, or click the minimap      | Tap the minimap                           |
 | Map: town / kingdom | The button on the full map | The button on the full map           |
@@ -374,6 +423,21 @@ left mouse button and drag to look around.
   kneeling to yield, walking with bound hands) are poses too. An accused culprit
   flees (a little slower than you run), turns to fight when caught, and slips
   back to their haunts if you lose them for long.
+- **The mine** (`src/dungeon.js`) is a scene of its own. It lies far out east
+  of the land (beyond x = 2,700), so the world's height, collision and ceiling
+  queries reach it without touching anything above ground, and its layout is a
+  list of rectangles on a one-metre grid: every edge where floor meets rock
+  becomes a wall, merged into runs, built from the world's own rough-rock,
+  timber and stone with rocks bulging from the walls, timber props and torches.
+  Going in swaps the scene that is drawn (and the bloom passes' scene) and
+  carries the traveller and their gear across; it is built the first time, behind
+  the fade, so loading the game costs nothing extra. Torches get a small pool of
+  real lights (as street lanterns do), at least two even on Low. Rats, spiders
+  and slimes are a few merged shapes each (the spiders' legs move on their
+  own), goblins and the troll are the same skinned figure as every person, with
+  ears, tusks and a spiked club added to their skin. A monster idles, chases
+  within its sight, winds up, strikes and rests, and gives up past 28 m from
+  home.
 - **Rasengan** (`src/rasengan.js`): the sphere is a shader shell whose bands of
   wind spiral round its axis and brighten at the rim, over a white core, three
   whirling rings and a glow sprite, all additive (so it glows through the bloom on
@@ -569,6 +633,7 @@ src/post.js       bloom, tone mapping and vignette passes (High preset)
 src/lantern.js    the traveller's lantern: the prop, its beam and glow
 src/gear.js       the traveller's sword and scabbard
 src/combat.js     blows, the traveller's health, aiming at whoever is near
+src/dungeon.js    the Gloomhollow Mine: its caves, torches, monsters and loot
 src/rasengan.js   the Rasengan: the sphere, the lunge, the burst and its sound
 src/quests.js     purse, bag, shops, and the Wardens' Guild's bounties
 src/music.js      the music: synthesised instruments and a tune generator

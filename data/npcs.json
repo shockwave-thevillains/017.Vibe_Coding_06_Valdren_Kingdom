@@ -5853,6 +5853,10 @@
             "text": "Welcome to the Millstone! Warm fire, cold ale, and the best mutton pie south of the river.",
             "choices": [
               {
+                "text": "Something to eat, please.",
+                "do": "shop"
+              },
+              {
                 "text": "Is Millbrook a big village?",
                 "next": "t0"
               },
@@ -5868,6 +5872,10 @@
           "again": {
             "text": "Another pie? I'll put it on your tab. You don't have a tab. You do now.",
             "choices": [
+              {
+                "text": "Something to eat, please.",
+                "do": "shop"
+              },
               {
                 "text": "Is Millbrook a big village?",
                 "next": "t0"
@@ -7432,6 +7440,273 @@
               },
               {
                 "text": "My mistake. Sorry."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "martha",
+      "name": "Martha Brindle",
+      "role": "Grocer",
+      "position": {
+        "x": -15.9,
+        "z": 19.0
+      },
+      "heading": 1.5708,
+      "look": {
+        "female": true,
+        "skin": "#d9a882",
+        "hair": "#b0aca6",
+        "eyes": "#5a6e3a",
+        "tunic": "#6a4a5a",
+        "trousers": "#6a5a44",
+        "boots": "#2e2118",
+        "belt": "#3a2a1a",
+        "trim": "#c8b48a",
+        "cloak": null,
+        "age": 0.55,
+        "skirt": "robe",
+        "hairStyle": "long",
+        "lips": "#a8484a",
+        "stubble": false,
+        "belly": 0.4,
+        "sleeves": "#e8dcc4"
+      },
+      "outfit": {
+        "apron": "#e6dccb"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_martha"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Bread, eggs, sausage, cheese and honey! Brindle's Provisions, since my grandmother's day.",
+            "choices": [
+              {
+                "text": "I'd like to buy some food.",
+                "do": "shop"
+              },
+              {
+                "text": "What's good today?",
+                "next": "t0"
+              },
+              {
+                "text": "Where do you get it all?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back again? The sausages are fresh hung.",
+            "choices": [
+              {
+                "text": "I'd like to buy some food.",
+                "do": "shop"
+              },
+              {
+                "text": "What's good today?",
+                "next": "t0"
+              },
+              {
+                "text": "Where do you get it all?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Everything, dear. But the honey's the hermit's own, and there's none better.",
+            "choices": [
+              {
+                "text": "Where do you get it all?",
+                "next": "t1"
+              },
+              {
+                "text": "Is the mine really full of monsters?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Eggs from Millbrook, sausage from my own chimney, bread from Hilde when she's baked too much. Which is always.",
+            "choices": [
+              {
+                "text": "What's good today?",
+                "next": "t0"
+              },
+              {
+                "text": "Is the mine really full of monsters?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "Gloomhollow? Nobody's dug there since the silver ran out. Now there are things in the dark that eat miners' lunches, and then the miners. Take food if you go.",
+            "choices": [
+              {
+                "text": "What's good today?",
+                "next": "t0"
+              },
+              {
+                "text": "Where do you get it all?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "dob",
+      "name": "Dob Haddock",
+      "role": "Fishmonger",
+      "position": {
+        "x": 366.0,
+        "z": 51.5
+      },
+      "heading": -1.5708,
+      "look": {
+        "female": false,
+        "skin": "#6e4630",
+        "hair": "#b85a2a",
+        "eyes": "#5a6e3a",
+        "tunic": "#2e5e6e",
+        "trousers": "#3a2e24",
+        "boots": "#2e2118",
+        "belt": "#3a2a1a",
+        "trim": "#c8b48a",
+        "cloak": null,
+        "age": 0.45,
+        "hairStyle": "long",
+        "beard": "full",
+        "sleeves": "#c8b48a"
+      },
+      "outfit": {
+        "apron": "#8a7a5a"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_dob"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Fish! Fresh fish! Grilled on the quay, still smoking!",
+            "choices": [
+              {
+                "text": "I'll have some fish.",
+                "do": "shop"
+              },
+              {
+                "text": "What's the catch?",
+                "next": "t0"
+              },
+              {
+                "text": "Do you sell to the inns?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Hungry again? Can't blame you.",
+            "choices": [
+              {
+                "text": "I'll have some fish.",
+                "do": "shop"
+              },
+              {
+                "text": "What's the catch?",
+                "next": "t0"
+              },
+              {
+                "text": "Do you sell to the inns?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Perch this morning, and an eel last night that took two of us to land. It's smoking now.",
+            "choices": [
+              {
+                "text": "Do you sell to the inns?",
+                "next": "t1"
+              },
+              {
+                "text": "Any trouble on the quay?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "To Maera, to Gwen, to anyone with a crown and a fire. Fish don't keep.",
+            "choices": [
+              {
+                "text": "What's the catch?",
+                "next": "t0"
+              },
+              {
+                "text": "Any trouble on the quay?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "Barrels go missing off the night boats. The harbour master's furious. Not my barrels, mind.",
+            "choices": [
+              {
+                "text": "What's the catch?",
+                "next": "t0"
+              },
+              {
+                "text": "Do you sell to the inns?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
               }
             ]
           }

@@ -38,6 +38,7 @@ export const SITES = {
   tavern: { x: 12, z: -13 },
   townHall: { x: -22, z: -26 },
   guild: { x: -28, z: -2 },         // the Wardens' Guild takes the house nearest this
+  mine: { x: -76, z: -120, rot: 0.64 }, // the Gloomhollow Mine's entrance, facing south-east
   smithy: { x: -17, z: 35 },
   graveyard: { x: -40, z: -28 },
   fountain: { x: 84, z: 40 },
@@ -251,6 +252,7 @@ export const PLACES = [
   { name: 'Windmill', x: 72, z: 186, size: 0 },
   { name: 'The Greywatch', x: -240, z: -52, size: 1 },
   { name: 'Western Woods', x: -200, z: 60, size: 1 },
+  { name: 'Gloomhollow Mine', x: -76, z: -127, size: 1 },
 ];
 
 const ROAD_DEFS = [
@@ -3776,6 +3778,88 @@ function chooseGuild(ctx) {
   return { name: 'Wardens\u2019 Guild', x: best.x, z: best.z, door: best.door, board: [nx, nz], interior: best };
 }
 
+/*
+ * The way into the Gloomhollow Mine: a timber-framed tunnel mouth in a pile of rock,
+ * with a torch either side, rails running out of it, an old ore cart and a sign of
+ * crossed picks. Going in is an interaction (src/dungeon.js builds the mine below);
+ * the tunnel itself is blocked. Built after the forest and the boulders, from no
+ * random numbers, so nothing else moves.
+ */
+const MINE_ROCKS = [
+  [-4.2, -1.6, 2.4, 2.6], [4.2, -1.7, 2.3, 2.5], [-2.6, -5.0, 3.3, 3.4], [2.8, -5.1, 3.1, 3.2],
+  [0, -6.8, 3.9, 3.8], [0, -3.4, 2.4, 1.4], [-6.0, -4.2, 2.2, 1.9], [5.9, -4.0, 2.1, 1.8],
+  [-4.6, 1.2, 1.1, 0.9], [4.8, 1.3, 1.0, 0.8],
+];
+function buildMineEntrance(ctx) {
+  const site = SITES.mine;
+  const F = new Frame(ctx, site.x, site.z, site.rot);
+  const g = F.ground(0, 0.4);
+  const rock = rockGeometry();
+  const dark = C(0x7c776e);
+  MINE_ROCKS.forEach(([lx, lz, size, height], i) => {
+    // Centred a little above the ground, so they rise to about 1.2 times their height
+    // (one sits on the tunnel's roof).
+    const lift = i === 5 ? 3.1 : 0;
+    const base = Math.min(F.ground(lx, lz), g) + 0.1 * height + lift;
+    F.geo('crag', rock, lx, base, lz, 0.2 * Math.sin(i * 2.1), i * 1.7, 0.15 * Math.cos(i * 1.3), size, height, size * 0.9, i % 2 ? dark : ROCK_TINTS[i % 4]);
+    if (!lift) F.collideCircle(lx, lz, size * 0.8, base - height, base + height * 1.1);
+  });
+
+  // The tunnel: stone sides and roof, timber frames going back into the dark.
+  const black = C(0x0b0a09);
+  for (const sx of [-1, 1]) F.box('stone', sx * 1.7, g + 1.45, -2.2, 0.4, 3.3, 4.6, TINT.darkStone);
+  F.box('stone', 0, g + 3.25, -2.2, 3.8, 0.4, 4.6, TINT.darkStone);
+  F.box('stone', 0, g + 1.4, -4.4, 3.2, 3.2, 0.3, black);
+  F.box('stone', 0, g + 0.02, -2.2, 3.0, 0.08, 4.4, C(0x3a342c));
+  for (const [z, shade] of [[0.15, 1], [-1.4, 0.55], [-2.9, 0.3]]) {
+    const tint = TINT.beam.clone().multiplyScalar(shade);
+    for (const sx of [-1, 1]) F.box('timber', sx * 1.35, g + 1.5, z, 0.3, 3.0, 0.3, tint);
+    F.box('timber', 0, g + 3.05, z, 3.2, 0.32, 0.34, tint);
+  }
+  for (const sx of [-1, 1]) F.box('timber', sx * 0.95, g + 2.7, 0.2, 0.18, 0.95, 0.18, TINT.beam, 0, 0, sx * 0.75);
+  F.collideBox(0, -2.3, 1.55, 2.3, g - 1, g + 3.4);
+  for (const sx of [-1, 1]) F.collideCircle(sx * 1.35, 0.15, 0.22, g - 1, g + 3.2);
+
+  // A torch on each post, lit at night by the lantern lights.
+  for (const sx of [-1, 1]) {
+    F.box('metal', sx * 1.62, g + 2.15, 0.32, 0.22, 0.05, 0.05);
+    F.box('timber', sx * 1.75, g + 2.3, 0.34, 0.07, 0.42, 0.07, C(0x4a3624), 0, 0, -sx * 0.25);
+    F.geo('fire', FLAME_GEO, sx * 1.8, g + 2.62, 0.34, 0, 0, 0, 0.45, 0.6, 0.45);
+    const [hx, hz] = F.world(sx * 1.8, 0.34);
+    ctx.world.lampHeads.push(new THREE.Vector3(hx, g + 2.6, hz));
+  }
+
+  // Rails out of the tunnel, and an old ore cart on them.
+  for (let z = -1.6; z <= 7.4; z += 0.8) F.box('timber', 0, F.ground(0, z) + 0.04, z, 1.3, 0.08, 0.2, C(0x6a5440));
+  for (const sx of [-1, 1]) {
+    for (let z = -1.6; z < 7.4; z += 1.5) {
+      const y0 = F.ground(sx * 0.48, z);
+      const y1 = F.ground(sx * 0.48, z + 1.5);
+      F.box('metal', sx * 0.48, (y0 + y1) / 2 + 0.11, z + 0.75, 0.07, 0.07, 1.52, IRON, Math.atan2(y0 - y1, 1.5));
+    }
+  }
+  const cy = F.ground(0, 4.6) + 0.25;
+  F.box('planks', 0, cy + 0.45, 4.6, 1.15, 0.6, 1.5, C(0x7a5a3a));
+  F.box('metal', 0, cy + 0.76, 4.6, 1.2, 0.06, 1.55, IRON);
+  F.box('crag', 0, cy + 0.82, 4.6, 0.9, 0.22, 1.1, ROCK_TINTS[1]);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) F.box('metal', sx * 0.5, cy + 0.08, 4.6 + sz * 0.5, 0.08, 0.34, 0.34, IRON, Math.PI / 4);
+  F.collideBox(0, 4.6, 0.65, 0.8, cy - 1, cy + 1.1);
+
+  // A sign of crossed picks by the way in.
+  const py = F.ground(2.7, 1.8);
+  F.box('timber', 2.7, py + 0.9, 1.8, 0.14, 1.8, 0.14, TINT.beam);
+  F.box('planks', 2.7, py + 1.65, 1.86, 0.95, 0.6, 0.06, TINT.door);
+  for (const sz of [-1, 1]) {
+    F.box('timber', 2.7, py + 1.65, 1.9, 0.05, 0.62, 0.02, C(0x4a3624), 0, 0, sz * 0.75);
+    F.box('metal', 2.7 + sz * 0.2, py + 1.9, 1.91, 0.26, 0.06, 0.02, IRON, 0, 0, -sz * 0.4);
+  }
+  F.collideCircle(2.7, 1.8, 0.2, py - 1, py + 2);
+
+  const [dx, dz] = F.world(0, 1.7);
+  const [ox, oz] = F.world(0, 3.0);
+  return { name: 'Gloomhollow Mine', x: site.x, z: site.z, door: [dx, dz], out: [ox, oz, site.rot] };
+}
+
 // Houses outside the walls: the riverside quarter, the road east, the harbour town and Millbrook.
 function placeOuterHouses(ctx) {
   const dry = (x, z) => ctx.ground(x, z) > WATER_LEVEL + 0.9 && lakeWeight(x, z) < 0.01 && (x > 410 || Math.abs(z - riverZ(x)) > 19);
@@ -4944,7 +5028,7 @@ function upNormals(material, key) {
 const _ax = new THREE.Vector3();
 const _ay = new THREE.Vector3();
 const _centre = new THREE.Vector3();
-const UV_SCALES = { stone: 3.3, stoneFloor: 3.6, plaster: 3, timber: 1.5, planks: 2, shingle: 2.4, thatch: 2.5, cloth: 1.2, plainCloth: 2, metal: 1, gold: 1, glass: 1, pane: 1, pool: 1.5, stained: 1, lamp: 1, fire: 1 };
+const UV_SCALES = { stone: 3.3, stoneFloor: 3.6, crag: 2.6, plaster: 3, timber: 1.5, planks: 2, shingle: 2.4, thatch: 2.5, cloth: 1.2, plainCloth: 2, metal: 1, gold: 1, glass: 1, pane: 1, pool: 1.5, stained: 1, lamp: 1, fire: 1 };
 const NO_SHADOW = new Set(['glass', 'pane', 'pool', 'stained', 'lamp', 'fire']);
 
 export class World {
@@ -5075,6 +5159,7 @@ export class World {
     for (const [x, z, rot] of ctx.lamps) buildLamp(ctx, x, z, rot);
     this._vegetation(ctx, rng, q);
     this._boulders(ctx, mulberry32(1337));
+    this.mine = buildMineEntrance(ctx);
 
     await progress('Sowing the meadows…');
     this._flags(ctx);
@@ -5200,6 +5285,8 @@ export class World {
     this.mat = {
       terrain: std({ map: T.ground.map, normalMap: T.ground.normal, normalScale: n(0.9), vertexColors: true, roughness: 0.97 }),
       stone: std({ map: T.stone.map, normalMap: T.stone.normal, normalScale: n(1.1), vertexColors: true, roughness: 0.92 }),
+      // Rough rock, tinted per piece: the mine's walls and the boulders round its way in.
+      crag: std({ map: T.dirt.map, normalMap: T.dirt.normal, normalScale: n(1.6), vertexColors: true, roughness: 0.96 }),
       plaster: std({ map: T.plaster.map, normalMap: T.plaster.normal, normalScale: n(0.6), vertexColors: true, roughness: 0.96 }),
       timber: std({ map: T.wood.map, normalMap: T.wood.normal, normalScale: n(0.8), vertexColors: true, roughness: 0.85 }),
       planks: std({ map: T.planks.map, normalMap: T.planks.normal, normalScale: n(1), vertexColors: true, roughness: 0.84 }),
@@ -5698,8 +5785,10 @@ export class World {
     return this.terrain.getHeight(x, z);
   }
 
-  // Height an actor stands at: the terrain, or a walkable structure above it.
+  // Height an actor stands at: the terrain, or a walkable structure above it (or, far
+  // out east beyond the land, the floor of the mine; see src/dungeon.js).
   getGroundHeight(x, z) {
+    if (this.dungeon && x > this.dungeon.minX) return this.dungeon.ground(x, z);
     let h = this.terrain.getHeight(x, z);
     const list = this._surfacesNear(x, z);
     for (let i = 0; i < list.length; i++) {
@@ -5712,6 +5801,27 @@ export class World {
       if (Math.abs(lz) <= s.hd) h = Math.max(h, s.height(lx, lz));
     }
     return h;
+  }
+
+  // Whether (x) lies in the mine, which is out of the land and has no edge to keep to.
+  inDungeon(x) {
+    return !!this.dungeon && x > this.dungeon.minX;
+  }
+
+  /*
+   * Builds a place of its own with the world's materials (the mine): frame(x, z, rot)
+   * places boxes, shapes and colliders as the world's buildings do; finish(scene)
+   * merges them into meshes in that scene.
+   */
+  builder() {
+    const ctx = new BuildContext(this, mulberry32(4711));
+    ctx.batch = new Batch(UV_SCALES, 160);
+    return {
+      frame: (x, z, rot = 0) => new Frame(ctx, x, z, rot),
+      rock: rockGeometry(),
+      flame: FLAME_GEO,
+      finish: (scene) => ctx.batch.build(scene, this.mat, NO_SHADOW),
+    };
   }
 
   _onSurface(x, z) {

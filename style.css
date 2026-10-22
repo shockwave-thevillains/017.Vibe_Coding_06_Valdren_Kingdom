@@ -1124,6 +1124,181 @@ ul.rumours li {
   cursor: crosshair;
 }
 
+/* The map with the list of places to eat and shop beside it (below it on narrow screens). */
+.map-body {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.map-body .map-frame {
+  flex: none;
+  margin: 0;
+  width: min(64vh, calc(100% - 254px));
+}
+
+.map-places {
+  flex: 0 1 240px;
+  min-width: 200px;
+  max-height: 64vh;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.map-places h3 {
+  margin: 0 0 2px;
+  font-size: 17px;
+}
+
+.map-places-tip {
+  margin: 0 0 6px;
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+#map-places {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#map-places button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 3px;
+  padding: 6px 7px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+#map-places button:hover,
+#map-places button.marked {
+  border-color: rgba(107, 74, 36, 0.5);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+#map-places button.marked {
+  box-shadow: inset 3px 0 0 #c0392b;
+}
+
+.pl-icon {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  font-size: 17px;
+  line-height: 30px;
+  text-align: center;
+}
+
+.pl-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pl-text b {
+  font-size: 14.5px;
+}
+
+.pl-text span {
+  font-size: 12.5px;
+  line-height: 1.3;
+  color: var(--ink-soft);
+}
+
+.mk.shop {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 248, 225, 0.9);
+  box-shadow: 0 0 0 1px rgba(107, 74, 36, 0.55);
+  font-size: 14px;
+  line-height: 22px;
+  text-align: center;
+}
+
+.mk.shop .name {
+  left: 25px;
+  top: 4px;
+}
+
+.key.food {
+  width: auto;
+  height: auto;
+  border: none;
+  border-radius: 0;
+  font-size: 13px;
+}
+
+@media (max-width: 760px) {
+  .map-body {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .map-body .map-frame {
+    width: min(100%, 64vh);
+  }
+
+  .map-places {
+    flex: none;
+    width: 100%;
+    max-height: 26vh;
+  }
+}
+
+/* The cave troll's health while it fights. */
+#boss {
+  position: absolute;
+  left: 50%;
+  top: calc(64px + var(--safe-top));
+  width: min(70vw, 340px);
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.boss-name {
+  display: block;
+  margin-bottom: 3px;
+  color: #ffe0c0;
+  font-size: 15px;
+  font-variant: small-caps;
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.boss-bar {
+  height: 10px;
+  padding: 1px;
+  border-radius: 5px;
+  background: rgba(20, 10, 8, 0.7);
+  box-shadow: 0 0 0 1px rgba(255, 200, 160, 0.4);
+}
+
+.boss-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(#e0603a, #8a1e10);
+  transition: width 0.2s ease;
+}
+
+body.boss #toast {
+  top: calc(108px + var(--safe-top));
+}
+
 .map-tip {
   flex: 1;
   margin: 0 12px;
@@ -1310,8 +1485,13 @@ button.link {
     height: calc(100vh - 150px);
   }
 
-  .map-frame {
+  .map-frame,
+  .map-body .map-frame {
     width: min(100%, calc(100vh - 100px));
+  }
+
+  .map-places {
+    max-height: calc(100vh - 100px);
   }
 
   .map-legend {

@@ -102,6 +102,8 @@ export class Rasengan {
     // for the camera shake; audio() returns the AudioContext and a noise buffer (or null).
     this.onImpact = null;
     this.onBurst = null;
+    // Monsters it can be driven into as well: { alive, struck(player, reach, sweep) }.
+    this.foes = null;
     this.audio = () => null;
 
     // The sphere in the hand.
@@ -173,13 +175,18 @@ export class Rasengan {
     this._stopHum(0.15);
   }
 
-  // The nearest person in reach of a lunge, near the direction of the view.
+  // People (and monsters) it may strike: in sight, not gone.
+  _candidates(npcs) {
+    const people = npcs.list.filter((n) => n.mood !== 'gone' && n.figure.root.visible && !n.talking);
+    return this.foes ? people.concat(this.foes.alive) : people;
+  }
+
+  // The nearest one in reach of a lunge, near the direction of the view.
   _pick(player, npcs, aimYaw) {
     const pos = player.position;
     let best = null;
     let bestD = AIM_RANGE;
-    for (const npc of npcs.list) {
-      if (npc.mood === 'gone' || !npc.figure.root.visible || npc.talking) continue;
+    for (const npc of this._candidates(npcs)) {
       const dx = npc.position.x - pos.x;
       const dz = npc.position.z - pos.z;
       const d = Math.hypot(dx, dz);
@@ -262,12 +269,13 @@ export class Rasengan {
     // else whoever is now right in front.
     const pos = player.position;
     let main = this.target;
-    if (main && (main.mood === 'gone' || Math.hypot(main.position.x - pos.x, main.position.z - pos.z) > REACH + 0.6)) main = null;
-    if (!main) main = npcs.struck(player, REACH, false)[0] || null;
+    const gone = (t) => t.mood === 'gone' || t.alive === false;
+    if (main && (gone(main) || Math.hypot(main.position.x - pos.x, main.position.z - pos.z) > REACH + 0.6)) main = null;
+    if (!main) main = npcs.struck(player, REACH, false)[0] || (this.foes && this.foes.struck(player, REACH, false)[0]) || null;
     const struck = [];
     if (main) struck.push([main, DAMAGE]);
-    for (const npc of npcs.list) {
-      if (npc === main || npc.mood === 'gone' || !npc.figure.root.visible || npc.talking) continue;
+    for (const npc of this._candidates(npcs)) {
+      if (npc === main) continue;
       if (Math.hypot(npc.position.x - at.x, npc.position.z - at.z) < SPLASH_RADIUS && Math.abs(npc.position.y - pos.y) < 2) struck.push([npc, SPLASH]);
     }
     for (const [npc, damage] of struck) {
@@ -275,7 +283,7 @@ export class Rasengan {
       const result = npc.hit(damage, pos);
       if (!result) continue;
       if (result !== 'dodge') npc.fling(pos, damage === DAMAGE ? FLING : 1.6);
-      if (this.onImpact) this.onImpact(npc, result, wasCalm, damage === DAMAGE);
+      if (this.onImpact && !npc.isMonster) this.onImpact(npc, result, wasCalm, damage === DAMAGE);
     }
     this.target = null;
     this._burst(at, player, main ? 1 : 0.6);
