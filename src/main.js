@@ -58,17 +58,17 @@ const PRESETS = {
   low: {
     pixelRatio: 1, antialias: false, shadows: false, shadowMap: 1024, shadowExtent: 34,
     textureSize: 256, anisotropy: 2, treeDetail: 0, cropSparse: true,
-    grass: 2500, grassTile: 38, lampLights: 0, lodRadius: 40, people: 40, bloom: false, lanternShadow: false,
+    grass: 2500, grassTile: 38, lampLights: 0, lodRadius: 40, districtView: 300, people: 40, bloom: false, lanternShadow: false,
   },
   medium: {
     pixelRatio: 1.5, antialias: true, shadows: true, shadowMap: 1024, shadowExtent: 34,
     textureSize: 256, anisotropy: 4, treeDetail: 0, cropSparse: true,
-    grass: 6000, grassTile: 46, lampLights: 2, lodRadius: 55, people: 60, bloom: false, lanternShadow: false,
+    grass: 6000, grassTile: 46, lampLights: 2, lodRadius: 55, districtView: 420, people: 60, bloom: false, lanternShadow: false,
   },
   high: {
     pixelRatio: 2, antialias: true, shadows: true, shadowMap: 2048, shadowExtent: 46,
     textureSize: 512, anisotropy: 8, treeDetail: 1, cropSparse: false,
-    grass: 18000, grassTile: 64, lampLights: 4, lodRadius: 75, people: 90, bloom: true, lanternShadow: true,
+    grass: 18000, grassTile: 64, lampLights: 4, lodRadius: 75, districtView: 640, people: 90, bloom: true, lanternShadow: true,
   },
 };
 const LOAD_TIME = ['antialias', 'textureSize', 'anisotropy', 'treeDetail', 'cropSparse'];
@@ -151,15 +151,26 @@ async function boot() {
     return null;
   });
 
+  // The townsfolk's walks are known first, so the world plants no tree across them.
+  const people = await peopleData;
+  const paths = [];
+  for (const def of people ? people.npcs || [] : []) {
+    const pts = def.patrol && def.patrol.points;
+    if (!pts || pts.length < 2) continue;
+    for (let i = 0; i < pts.length - (def.patrol.mode === 'loop' ? 0 : 1); i++) {
+      const a = pts[i];
+      const b = pts[(i + 1) % pts.length];
+      paths.push([a.x, a.z, b.x, b.z]);
+    }
+  }
   const world = new World(scene, renderer, quality);
   await world.build(async (text) => {
     ui.setStatus(text);
     await nextFrame();
-  });
+  }, { paths });
 
   ui.setStatus('Gathering the townsfolk…');
   await nextFrame();
-  const people = await peopleData;
   const secrets = await loreData;
   const missing = [!people && 'data/npcs.json', !secrets && 'data/lore.json'].filter(Boolean);
   const dataError = missing.length ? `Some of Valdren could not be loaded (${missing.join(', ')}).` : null;

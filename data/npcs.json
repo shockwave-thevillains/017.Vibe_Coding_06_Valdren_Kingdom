@@ -7712,6 +7712,2944 @@
           }
         }
       }
+    },
+    {
+      "id": "sigrun",
+      "name": "Sigrun Ale-Hand",
+      "role": "Keeper of the Mead Hall",
+      "position": {
+        "x": -468,
+        "z": -51
+      },
+      "heading": 0,
+      "spot": "meadKeeper",
+      "action": "wipe",
+      "look": {
+        "female": true,
+        "skin": "#c49577",
+        "hair": "#d8b878",
+        "eyes": "#3a4a5a",
+        "tunic": "#5a6a3a",
+        "trousers": "#6a5a44",
+        "boots": "#2e2118",
+        "belt": "#3a2a1a",
+        "trim": "#8a6a3a",
+        "cloak": null,
+        "age": 0.35,
+        "skirt": "robe",
+        "hairStyle": "long",
+        "lips": "#a8484a",
+        "stubble": false,
+        "sleeves": "#c8b48a",
+        "belly": 0.2
+      },
+      "outfit": {
+        "apron": "#8a7a5a",
+        "mug": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_sigrun"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Shut the door, you're letting the warmth out! Mead, boar, skyr. Sit anywhere the dogs aren't.",
+            "choices": [
+              {
+                "text": "Mead and meat, please.",
+                "do": "shop"
+              },
+              {
+                "text": "What is Hrafnvik?",
+                "next": "t0"
+              },
+              {
+                "text": "Who rules here?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back for more mead? Wise.",
+            "choices": [
+              {
+                "text": "Mead and meat, please.",
+                "do": "shop"
+              },
+              {
+                "text": "What is Hrafnvik?",
+                "next": "t0"
+              },
+              {
+                "text": "Who rules here?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Raven Bay, in our tongue. Our grandfathers rowed up the river and liked the fishing. The king liked our ships, so here we stay.",
+            "choices": [
+              {
+                "text": "Who rules here?",
+                "next": "t1"
+              },
+              {
+                "text": "Any news?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Jarl Halvard sits the high seat when he isn't out on the river. He answers to King Osric. Mostly.",
+            "choices": [
+              {
+                "text": "What is Hrafnvik?",
+                "next": "t0"
+              },
+              {
+                "text": "Any news?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "Shields have gone missing from the boat sheds. And there's talk of frost in the caves under the western peaks, in high summer. Odd.",
+            "choices": [
+              {
+                "text": "What is Hrafnvik?",
+                "next": "t0"
+              },
+              {
+                "text": "Who rules here?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "haru",
+      "name": "Haru",
+      "role": "Keeper of the Teahouse",
+      "position": {
+        "x": -318,
+        "z": 268
+      },
+      "heading": 3.1416,
+      "spot": "teaKeeper",
+      "action": "wipe",
+      "look": {
+        "female": true,
+        "skin": "#6e4630",
+        "hair": "#1e1a18",
+        "eyes": "#4a5e72",
+        "tunic": "#2c3d6c",
+        "trousers": "#2e2a26",
+        "boots": "#2e2118",
+        "belt": "#4a3020",
+        "trim": "#b2382c",
+        "cloak": null,
+        "age": 0.3,
+        "skirt": "robe",
+        "hairStyle": "bun",
+        "lips": "#c06060",
+        "stubble": false,
+        "sleeves": "#e8e0d0"
+      },
+      "outfit": {
+        "apron": "#e8e0d0"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_haru"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Welcome to the teahouse. Please, sit. The kettle has only just sung.",
+            "choices": [
+              {
+                "text": "Tea, please, and something to eat.",
+                "do": "shop"
+              },
+              {
+                "text": "What is Sakuragawa?",
+                "next": "t0"
+              },
+              {
+                "text": "Who lives in the keep?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Welcome back. Your usual cushion is free.",
+            "choices": [
+              {
+                "text": "Tea, please, and something to eat.",
+                "do": "shop"
+              },
+              {
+                "text": "What is Sakuragawa?",
+                "next": "t0"
+              },
+              {
+                "text": "Who lives in the keep?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "The river of cherry trees. When they flower, the whole town smells of them, and nobody gets any work done.",
+            "choices": [
+              {
+                "text": "Who lives in the keep?",
+                "next": "t1"
+              },
+              {
+                "text": "Is it always this quiet?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Lord Takeda keeps the peace for King Osric on this bank. His walls are old, his gardeners are older.",
+            "choices": [
+              {
+                "text": "What is Sakuragawa?",
+                "next": "t0"
+              },
+              {
+                "text": "Is it always this quiet?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "On the surface. But a pickpocket works the bathhouse queue, and the river boatmen whisper about lights in the old grotto.",
+            "choices": [
+              {
+                "text": "What is Sakuragawa?",
+                "next": "t0"
+              },
+              {
+                "text": "Who lives in the keep?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "mei",
+      "name": "Mei Lin",
+      "role": "Cook at the Jade Lantern",
+      "position": {
+        "x": 381,
+        "z": -322
+      },
+      "heading": 3.1416,
+      "spot": "jadeKeeper",
+      "action": "wipe",
+      "look": {
+        "female": true,
+        "skin": "#e8c0a0",
+        "hair": "#1e1a18",
+        "eyes": "#4a5e72",
+        "tunic": "#a8302a",
+        "trousers": "#5a4a3a",
+        "boots": "#4a3322",
+        "belt": "#4a3020",
+        "trim": "#d8a530",
+        "cloak": null,
+        "age": 0.4,
+        "skirt": "robe",
+        "hairStyle": "bun",
+        "lips": "#c06060",
+        "stubble": false,
+        "sleeves": "#e8d8b0"
+      },
+      "outfit": {
+        "apron": "#f2eee4"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_mei"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Sit, sit! Dumplings are steaming, noodles are pulled. You look hungry. Everyone looks hungry.",
+            "choices": [
+              {
+                "text": "Dumplings, please!",
+                "do": "shop"
+              },
+              {
+                "text": "Why is it called the Jade Lantern?",
+                "next": "t0"
+              },
+              {
+                "text": "What's the drum tower for?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Ah, my favourite customer! Don't tell the others.",
+            "choices": [
+              {
+                "text": "Dumplings, please!",
+                "do": "shop"
+              },
+              {
+                "text": "Why is it called the Jade Lantern?",
+                "next": "t0"
+              },
+              {
+                "text": "What's the drum tower for?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "My grandmother hung one green lantern over the door so travellers could find her soup at night. Now the whole street is lanterns.",
+            "choices": [
+              {
+                "text": "What's the drum tower for?",
+                "next": "t1"
+              },
+              {
+                "text": "Heard any rumours?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "It beats the hours, and the closing of the gates. If it beats in the middle of the night, bar your door.",
+            "choices": [
+              {
+                "text": "Why is it called the Jade Lantern?",
+                "next": "t0"
+              },
+              {
+                "text": "Heard any rumours?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "A man with a scar sells 'jade' that is green glass. And the magistrate's clerk says something howls in the hills to the north.",
+            "choices": [
+              {
+                "text": "Why is it called the Jade Lantern?",
+                "next": "t0"
+              },
+              {
+                "text": "What's the drum tower for?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "tariq",
+      "name": "Tariq",
+      "role": "Master of the Caravanserai",
+      "position": {
+        "x": -326,
+        "z": 455
+      },
+      "heading": 3.1416,
+      "spot": "seraiKeeper",
+      "action": "behind",
+      "look": {
+        "female": false,
+        "skin": "#b07a58",
+        "hair": "#2a1e16",
+        "eyes": "#4a5e72",
+        "tunic": "#c89a4a",
+        "trousers": "#4c3d31",
+        "boots": "#4a3322",
+        "belt": "#4a3020",
+        "trim": "#2a7a7a",
+        "cloak": null,
+        "age": 0.5,
+        "hairStyle": "long",
+        "beard": "full",
+        "sleeves": "#e8dcc4",
+        "skirt": "robe"
+      },
+      "outfit": {
+        "cowl": "#e8dcc4"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_tariq"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Peace on your road, traveller. Rest your feet. There is bread, there is lamb, there is cool sherbet.",
+            "choices": [
+              {
+                "text": "What do you serve?",
+                "do": "shop"
+              },
+              {
+                "text": "What is this place?",
+                "next": "t0"
+              },
+              {
+                "text": "Where do the caravans come from?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "You return like the swallows. Welcome.",
+            "choices": [
+              {
+                "text": "What do you serve?",
+                "do": "shop"
+              },
+              {
+                "text": "What is this place?",
+                "next": "t0"
+              },
+              {
+                "text": "Where do the caravans come from?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "A caravanserai: an inn for merchants and their beasts. Silk, saffron, salt, stories. We trade in all of them.",
+            "choices": [
+              {
+                "text": "Where do the caravans come from?",
+                "next": "t1"
+              },
+              {
+                "text": "Any trouble on the roads?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "From beyond the southern mountains, through passes only the camels remember. Then up the river to Valdren's market.",
+            "choices": [
+              {
+                "text": "What is this place?",
+                "next": "t0"
+              },
+              {
+                "text": "Any trouble on the roads?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "Bandits watch the passes, and some sleep in the old cellars under Mudwick. And scorpions the size of dogs nest in a sunken vault west of here.",
+            "choices": [
+              {
+                "text": "What is this place?",
+                "next": "t0"
+              },
+              {
+                "text": "Where do the caravans come from?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "lucia",
+      "name": "Lucia Marino",
+      "role": "Keeper of the Blue Shutter",
+      "position": {
+        "x": 401,
+        "z": 195
+      },
+      "heading": 0,
+      "spot": "tavernaKeeper",
+      "action": "wipe",
+      "look": {
+        "female": true,
+        "skin": "#f0d0b4",
+        "hair": "#3a2a1e",
+        "eyes": "#4a3a2a",
+        "tunic": "#2a5aa0",
+        "trousers": "#4c3d31",
+        "boots": "#4a3322",
+        "belt": "#4a3020",
+        "trim": "#b8923e",
+        "cloak": null,
+        "age": 0.45,
+        "skirt": "robe",
+        "hairStyle": "long",
+        "lips": "#a8484a",
+        "stubble": false,
+        "sleeves": "#f2eee4",
+        "belly": 0.3
+      },
+      "outfit": {
+        "apron": "#f2eee4"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_lucia"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Benvenuto! Sit by the window, you can see the whole lake. Wine? Olives? My stew?",
+            "choices": [
+              {
+                "text": "I'd like something to eat.",
+                "do": "shop"
+              },
+              {
+                "text": "What is Costa Mirra?",
+                "next": "t0"
+              },
+              {
+                "text": "Who painted all the shutters blue?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Ah, you again! The good table is free.",
+            "choices": [
+              {
+                "text": "I'd like something to eat.",
+                "do": "shop"
+              },
+              {
+                "text": "What is Costa Mirra?",
+                "next": "t0"
+              },
+              {
+                "text": "Who painted all the shutters blue?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "The shore of Mirrormere, that's all it means. We came for the sun, and stayed for the fish and the gossip.",
+            "choices": [
+              {
+                "text": "Who painted all the shutters blue?",
+                "next": "t1"
+              },
+              {
+                "text": "Anything strange about?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Everyone, every spring. It keeps the flies off. That's what my mother said, anyway.",
+            "choices": [
+              {
+                "text": "What is Costa Mirra?",
+                "next": "t0"
+              },
+              {
+                "text": "Anything strange about?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "The fishermen won't row near the east shore after dark. They say something big moves in the caves there, with claws.",
+            "choices": [
+              {
+                "text": "What is Costa Mirra?",
+                "next": "t0"
+              },
+              {
+                "text": "Who painted all the shutters blue?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "nan",
+      "name": "Old Nan",
+      "role": "Keeper of the Leaky Bucket",
+      "position": {
+        "x": -245,
+        "z": 58
+      },
+      "heading": 3.1416,
+      "spot": "bucketKeeper",
+      "stoop": 0.25,
+      "action": "wipe",
+      "look": {
+        "female": true,
+        "skin": "#c49577",
+        "hair": "#b0aca6",
+        "eyes": "#3a4a5a",
+        "tunic": "#6a5a4a",
+        "trousers": "#4c3d31",
+        "boots": "#3a2a1e",
+        "belt": "#2e2116",
+        "trim": "#b8923e",
+        "cloak": null,
+        "age": 0.8,
+        "skirt": "robe",
+        "hairStyle": "bun",
+        "lips": "#a8484a",
+        "stubble": false,
+        "sleeves": "#8a7a62"
+      },
+      "outfit": {
+        "apron": "#8a7a62"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_nan"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Mind the puddle. Gruel's a copper, bread's two, ale's three, and the roof leaks for free.",
+            "choices": [
+              {
+                "text": "A bowl of whatever's hot.",
+                "do": "shop"
+              },
+              {
+                "text": "What is Mudwick?",
+                "next": "t0"
+              },
+              {
+                "text": "Is it dangerous here?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back again, dearie? Sit where it's dry. If you can find it.",
+            "choices": [
+              {
+                "text": "A bowl of whatever's hot.",
+                "do": "shop"
+              },
+              {
+                "text": "What is Mudwick?",
+                "next": "t0"
+              },
+              {
+                "text": "Is it dangerous here?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Where folk end up when the town's too dear. We look after our own. Mostly.",
+            "choices": [
+              {
+                "text": "Is it dangerous here?",
+                "next": "t1"
+              },
+              {
+                "text": "Who's in charge?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Only if you're careless with your purse. Or if you go poking about in the cellars by the river, where the bad lot sleep.",
+            "choices": [
+              {
+                "text": "What is Mudwick?",
+                "next": "t0"
+              },
+              {
+                "text": "Who's in charge?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "Nobody, which suits everybody. Rook knows everything that goes on, if you can stand his chatter.",
+            "choices": [
+              {
+                "text": "What is Mudwick?",
+                "next": "t0"
+              },
+              {
+                "text": "Is it dangerous here?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "bjorn",
+      "name": "Bjorn",
+      "role": "Shipwright of Hrafnvik",
+      "position": {
+        "x": -455,
+        "z": -22
+      },
+      "heading": 0,
+      "patrol": {
+        "points": [
+          {
+            "x": -455,
+            "z": -22,
+            "wait": 6
+          },
+          {
+            "x": -459,
+            "z": 20,
+            "wait": 6
+          },
+          {
+            "x": -465,
+            "z": 66,
+            "wait": 6
+          },
+          {
+            "x": -468,
+            "z": 98,
+            "wait": 6
+          }
+        ]
+      },
+      "look": {
+        "female": false,
+        "skin": "#e8c0a0",
+        "hair": "#c89a5a",
+        "eyes": "#6a4a2a",
+        "tunic": "#5a4a3a",
+        "trousers": "#6a5a44",
+        "boots": "#3a2a1e",
+        "belt": "#2e2116",
+        "trim": "#d8d0c0",
+        "cloak": null,
+        "age": 0.45,
+        "hairStyle": "bald",
+        "beard": "full",
+        "sleeves": "#8a7a62",
+        "belly": 0.3
+      },
+      "outfit": {
+        "hammer": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_bjorn"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Mind the tar, it's still wet. That longship won't caulk herself.",
+            "choices": [
+              {
+                "text": "Do the ships go far?",
+                "next": "t0"
+              },
+              {
+                "text": "What are the crossed boards on the roofs?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Come to watch me work again?",
+            "choices": [
+              {
+                "text": "Do the ships go far?",
+                "next": "t0"
+              },
+              {
+                "text": "What are the crossed boards on the roofs?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Up the river to the mountains, down it to the lake. The king pays us to carry stone and timber. Less glorious than raiding, more profitable.",
+            "choices": [
+              {
+                "text": "What are the crossed boards on the roofs?",
+                "next": "t1"
+              },
+              {
+                "text": "Where is the Frostfang Cavern?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Dragon heads, to frighten off bad weather. They don't work, but they look grand.",
+            "choices": [
+              {
+                "text": "Do the ships go far?",
+                "next": "t0"
+              },
+              {
+                "text": "Where is the Frostfang Cavern?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "West, at the foot of the peaks, where the snow never melts. Wolves of ice live in there, and worse. Take a fire.",
+            "choices": [
+              {
+                "text": "Do the ships go far?",
+                "next": "t0"
+              },
+              {
+                "text": "What are the crossed boards on the roofs?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "astrid",
+      "name": "Astrid",
+      "role": "Shield-maiden of the Watch",
+      "position": {
+        "x": -415,
+        "z": -45
+      },
+      "heading": 0,
+      "patrol": {
+        "mode": "loop",
+        "speed": 1.1,
+        "points": [
+          {
+            "x": -455.0,
+            "z": -5.0,
+            "wait": 0.05
+          },
+          {
+            "x": -444.65,
+            "z": -6.36,
+            "wait": 0.05
+          },
+          {
+            "x": -435.0,
+            "z": -10.36,
+            "wait": 0.05
+          },
+          {
+            "x": -426.72,
+            "z": -16.72,
+            "wait": 0.05
+          },
+          {
+            "x": -420.36,
+            "z": -25.0,
+            "wait": 0.05
+          },
+          {
+            "x": -416.36,
+            "z": -34.65,
+            "wait": 0.05
+          },
+          {
+            "x": -415.0,
+            "z": -45.0,
+            "wait": 0.05
+          },
+          {
+            "x": -416.36,
+            "z": -55.35,
+            "wait": 0.05
+          },
+          {
+            "x": -420.36,
+            "z": -65.0,
+            "wait": 0.05
+          },
+          {
+            "x": -426.72,
+            "z": -73.28,
+            "wait": 0.05
+          },
+          {
+            "x": -435.0,
+            "z": -79.64,
+            "wait": 0.05
+          },
+          {
+            "x": -444.65,
+            "z": -83.64,
+            "wait": 0.05
+          },
+          {
+            "x": -455.0,
+            "z": -85.0,
+            "wait": 0.05
+          },
+          {
+            "x": -465.35,
+            "z": -83.64,
+            "wait": 0.05
+          },
+          {
+            "x": -475.0,
+            "z": -79.64,
+            "wait": 0.05
+          },
+          {
+            "x": -483.28,
+            "z": -73.28,
+            "wait": 0.05
+          },
+          {
+            "x": -489.64,
+            "z": -65.0,
+            "wait": 0.05
+          },
+          {
+            "x": -493.64,
+            "z": -55.35,
+            "wait": 0.05
+          },
+          {
+            "x": -495.0,
+            "z": -45.0,
+            "wait": 0.05
+          },
+          {
+            "x": -493.64,
+            "z": -34.65,
+            "wait": 0.05
+          },
+          {
+            "x": -489.64,
+            "z": -25.0,
+            "wait": 0.05
+          },
+          {
+            "x": -483.28,
+            "z": -16.72,
+            "wait": 0.05
+          },
+          {
+            "x": -475.0,
+            "z": -10.36,
+            "wait": 0.05
+          },
+          {
+            "x": -465.35,
+            "z": -6.36,
+            "wait": 0.05
+          }
+        ]
+      },
+      "look": {
+        "female": true,
+        "skin": "#d9a882",
+        "hair": "#e0c890",
+        "eyes": "#4a5e72",
+        "tunic": "#2e4a6a",
+        "trousers": "#4c3d31",
+        "boots": "#2e2118",
+        "belt": "#2e2116",
+        "trim": "#c8b48a",
+        "cloak": "#6a2a2a",
+        "age": 0.3,
+        "skirt": "robe",
+        "hairStyle": "long",
+        "lips": "#a8484a",
+        "stubble": false
+      },
+      "outfit": {
+        "helmet": true,
+        "breastplate": true,
+        "sword": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_astrid"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Halt. Ah, a traveller. Walk softly in the hold; the jarl's dogs bite.",
+            "choices": [
+              {
+                "text": "What do you guard against?",
+                "next": "t0"
+              },
+              {
+                "text": "Have you seen any criminals?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Still here? Good. Fewer thieves when there are more eyes.",
+            "choices": [
+              {
+                "text": "What do you guard against?",
+                "next": "t0"
+              },
+              {
+                "text": "Have you seen any criminals?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Wolves, bandits, and men who think a palisade is a suggestion.",
+            "choices": [
+              {
+                "text": "Have you seen any criminals?",
+                "next": "t1"
+              },
+              {
+                "text": "Can you fight?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "The Wardens' Guild posts its bounties in the town. Read the notice, then look for faces that match. Press T near someone to look them over.",
+            "choices": [
+              {
+                "text": "What do you guard against?",
+                "next": "t0"
+              },
+              {
+                "text": "Can you fight?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "Better than you, I'd wager. Don't test it.",
+            "choices": [
+              {
+                "text": "What do you guard against?",
+                "next": "t0"
+              },
+              {
+                "text": "Have you seen any criminals?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "rook",
+      "name": "Rook",
+      "role": "Mudwick's Informant",
+      "position": {
+        "x": -185,
+        "z": 46
+      },
+      "heading": 0,
+      "patrol": {
+        "points": [
+          {
+            "x": -185,
+            "z": 46,
+            "wait": 5
+          },
+          {
+            "x": -230,
+            "z": 55,
+            "wait": 5
+          },
+          {
+            "x": -275,
+            "z": 51,
+            "wait": 5
+          }
+        ]
+      },
+      "look": {
+        "female": false,
+        "skin": "#6e4630",
+        "hair": "#2a1c12",
+        "eyes": "#5a6e3a",
+        "tunic": "#4a4a3a",
+        "trousers": "#6a5a44",
+        "boots": "#4a3322",
+        "belt": "#4a3020",
+        "trim": "#8a6a3a",
+        "cloak": "#3a3530",
+        "age": 0.25,
+        "hairStyle": "short",
+        "beard": "short",
+        "sleeves": "#6a5a4a"
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_rook"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Psst. Psst! You look like someone who wants to know things. Rook knows things.",
+            "choices": [
+              {
+                "text": "What do you know about wanted folk?",
+                "next": "t0"
+              },
+              {
+                "text": "What's under Mudwick?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "My favourite customer! What'll it be? Gossip's free today.",
+            "choices": [
+              {
+                "text": "What do you know about wanted folk?",
+                "next": "t0"
+              },
+              {
+                "text": "What's under Mudwick?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "The Guild posts their faces. Look at a stranger close, press T, and you'll see if they match a bounty. Then it's up to your fists.",
+            "choices": [
+              {
+                "text": "What's under Mudwick?",
+                "next": "t1"
+              },
+              {
+                "text": "Why are you called Rook?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Old cellars, all joined up, where Red Garrick's cutthroats sleep. There's a trapdoor by the river. Don't tell 'em I told you.",
+            "choices": [
+              {
+                "text": "What do you know about wanted folk?",
+                "next": "t0"
+              },
+              {
+                "text": "Why are you called Rook?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "Because I see everything from up high, and I steal shiny things. The second part's a joke. Mostly.",
+            "choices": [
+              {
+                "text": "What do you know about wanted folk?",
+                "next": "t0"
+              },
+              {
+                "text": "What's under Mudwick?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "grizel",
+      "name": "Grizel",
+      "role": "Washerwoman",
+      "position": {
+        "x": -300,
+        "z": 48
+      },
+      "heading": 0,
+      "patrol": {
+        "points": [
+          {
+            "x": -300,
+            "z": 48,
+            "wait": 8
+          },
+          {
+            "x": -340,
+            "z": 45,
+            "wait": 8
+          }
+        ]
+      },
+      "look": {
+        "female": true,
+        "skin": "#c49577",
+        "hair": "#6e6258",
+        "eyes": "#5a7a4a",
+        "tunic": "#7a6a5a",
+        "trousers": "#6a5a44",
+        "boots": "#2e2118",
+        "belt": "#3a2a1a",
+        "trim": "#b8923e",
+        "cloak": null,
+        "age": 0.55,
+        "skirt": "robe",
+        "hairStyle": "bun",
+        "lips": "#c06060",
+        "stubble": false,
+        "sleeves": "#c8b48a"
+      },
+      "outfit": {
+        "apron": "#c8b48a"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_grizel"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Out of the way, love, these sheets won't wring themselves.",
+            "choices": [
+              {
+                "text": "Is life hard here?",
+                "next": "t0"
+              },
+              {
+                "text": "Who built the red bridge?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "You again. Got any washing? A copper a shirt.",
+            "choices": [
+              {
+                "text": "Is life hard here?",
+                "next": "t0"
+              },
+              {
+                "text": "Who built the red bridge?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Hard's a word for rich folk. Here it's just life. The river gives us water and takes our shacks every spring.",
+            "choices": [
+              {
+                "text": "Who built the red bridge?",
+                "next": "t1"
+              },
+              {
+                "text": "Seen anything odd?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "The Sakuragawa folk, so their lord could come and frown at us. Handy for the market, mind.",
+            "choices": [
+              {
+                "text": "Is life hard here?",
+                "next": "t0"
+              },
+              {
+                "text": "Seen anything odd?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "A man in a fine coat came through last week asking after cellars. Fine coats don't come to Mudwick for the view.",
+            "choices": [
+              {
+                "text": "Is life hard here?",
+                "next": "t0"
+              },
+              {
+                "text": "Who built the red bridge?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "pip",
+      "name": "Pip",
+      "role": "Mudlark",
+      "position": {
+        "x": -150,
+        "z": 28
+      },
+      "heading": 0,
+      "child": true,
+      "patrol": {
+        "points": [
+          {
+            "x": -150,
+            "z": 28,
+            "wait": 3
+          },
+          {
+            "x": -185,
+            "z": 46,
+            "wait": 3
+          }
+        ],
+        "speed": 1.6
+      },
+      "look": {
+        "female": false,
+        "skin": "#6e4630",
+        "hair": "#5a3a22",
+        "eyes": "#5a6e3a",
+        "tunic": "#6a8a4a",
+        "trousers": "#5a4a3a",
+        "boots": "#3a2a1e",
+        "belt": "#2e2116",
+        "trim": "#c8b48a",
+        "cloak": null,
+        "age": 0,
+        "hairStyle": "short",
+        "beard": null,
+        "stubble": false,
+        "pouch": null
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_pip"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Got a crown? Got a crust? Got a… no? Fine.",
+            "choices": [
+              {
+                "text": "What do you do all day?",
+                "next": "t0"
+              },
+              {
+                "text": "Where's your family?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "You came back! Did you bring a crust?",
+            "choices": [
+              {
+                "text": "What do you do all day?",
+                "next": "t0"
+              },
+              {
+                "text": "Where's your family?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Mudlarking! I find things in the river mud. Buttons, nails, once a whole spoon.",
+            "choices": [
+              {
+                "text": "Where's your family?",
+                "next": "t1"
+              },
+              {
+                "text": "Know any secrets?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Nan looks after me. Everyone looks after me, a bit. That's Mudwick.",
+            "choices": [
+              {
+                "text": "What do you do all day?",
+                "next": "t0"
+              },
+              {
+                "text": "Know any secrets?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "There's a trapdoor by the river that the bad men use. I'm not allowed near it. I go near it all the time.",
+            "choices": [
+              {
+                "text": "What do you do all day?",
+                "next": "t0"
+              },
+              {
+                "text": "Where's your family?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "kenji",
+      "name": "Kenji",
+      "role": "Guard of the Keep",
+      "position": {
+        "x": -385,
+        "z": 256
+      },
+      "heading": 1.5708,
+      "patrol": {
+        "points": [
+          {
+            "x": -386,
+            "z": 256,
+            "wait": 6
+          },
+          {
+            "x": -300,
+            "z": 256,
+            "wait": 6
+          },
+          {
+            "x": -200,
+            "z": 256,
+            "wait": 6
+          }
+        ]
+      },
+      "look": {
+        "female": false,
+        "skin": "#d9a882",
+        "hair": "#1e1a18",
+        "eyes": "#5a7a4a",
+        "tunic": "#3a3a4a",
+        "trousers": "#6a5a44",
+        "boots": "#2e2118",
+        "belt": "#4a3020",
+        "trim": "#d8d0c0",
+        "cloak": null,
+        "age": 0.35,
+        "hairStyle": "long",
+        "beard": null,
+        "sleeves": "#2c3d6c"
+      },
+      "outfit": {
+        "helmet": true,
+        "breastplate": true,
+        "sword": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_kenji"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Good day. You stand on Lord Takeda's avenue; keep your blade in its sheath.",
+            "choices": [
+              {
+                "text": "Can I visit the keep?",
+                "next": "t0"
+              },
+              {
+                "text": "Is there danger near Sakuragawa?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "You again. The avenue is peaceful today.",
+            "choices": [
+              {
+                "text": "Can I visit the keep?",
+                "next": "t0"
+              },
+              {
+                "text": "Is there danger near Sakuragawa?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Its gate stands open to the garden, but the tower itself is the lord's. Admire it from the walls, as everyone does.",
+            "choices": [
+              {
+                "text": "Is there danger near Sakuragawa?",
+                "next": "t1"
+              },
+              {
+                "text": "Any wanted folk here?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "The Mistveil Grotto, up the river, where the ronin bandits hide among the bamboo. We have lost two patrols to it.",
+            "choices": [
+              {
+                "text": "Can I visit the keep?",
+                "next": "t0"
+              },
+              {
+                "text": "Any wanted folk here?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "A pickpocket in the bathhouse queue. If you catch them, bind them and take them to the Wardens' Guild in Valdren.",
+            "choices": [
+              {
+                "text": "Can I visit the keep?",
+                "next": "t0"
+              },
+              {
+                "text": "Is there danger near Sakuragawa?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "yuki",
+      "name": "Yuki",
+      "role": "Silk Merchant",
+      "position": {
+        "x": -300,
+        "z": 176
+      },
+      "heading": 0,
+      "patrol": {
+        "points": [
+          {
+            "x": -300,
+            "z": 176,
+            "wait": 7
+          },
+          {
+            "x": -300,
+            "z": 256,
+            "wait": 7
+          },
+          {
+            "x": -300,
+            "z": 331,
+            "wait": 7
+          }
+        ]
+      },
+      "look": {
+        "female": true,
+        "skin": "#a8774f",
+        "hair": "#1e1a18",
+        "eyes": "#4a5e72",
+        "tunic": "#7a2b4a",
+        "trousers": "#5a4a3a",
+        "boots": "#4a3322",
+        "belt": "#2e2116",
+        "trim": "#8a6a3a",
+        "cloak": null,
+        "age": 0.35,
+        "skirt": "robe",
+        "hairStyle": "long",
+        "lips": "#c06060",
+        "stubble": false,
+        "sleeves": "#f2e6d8"
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_yuki"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Silk from the east, dyed in the river! Feel it. No, don't feel it with those hands.",
+            "choices": [
+              {
+                "text": "Where does the silk come from?",
+                "next": "t0"
+              },
+              {
+                "text": "What's the bathhouse like?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back to admire the silk?",
+            "choices": [
+              {
+                "text": "Where does the silk come from?",
+                "next": "t0"
+              },
+              {
+                "text": "What's the bathhouse like?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Our own mulberry trees and our own worms. The colours come from the river: the mud, the moss, the cherry bark.",
+            "choices": [
+              {
+                "text": "What's the bathhouse like?",
+                "next": "t1"
+              },
+              {
+                "text": "Do you trade with the Jade Lantern Quarter?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Hot, crowded and full of gossip. The best place in town to learn anything.",
+            "choices": [
+              {
+                "text": "Where does the silk come from?",
+                "next": "t0"
+              },
+              {
+                "text": "Do you trade with the Jade Lantern Quarter?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "Every month. They cheat us, we cheat them, everyone goes home happy.",
+            "choices": [
+              {
+                "text": "Where does the silk come from?",
+                "next": "t0"
+              },
+              {
+                "text": "What's the bathhouse like?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "taro",
+      "name": "Old Taro",
+      "role": "Gardener of the Keep",
+      "position": {
+        "x": -470,
+        "z": 340
+      },
+      "heading": 1.5708,
+      "stoop": 0.2,
+      "action": "hoe",
+      "patrol": {
+        "points": [
+          {
+            "x": -470,
+            "z": 340,
+            "wait": 10
+          },
+          {
+            "x": -405,
+            "z": 336,
+            "wait": 10
+          }
+        ],
+        "speed": 0.8
+      },
+      "look": {
+        "female": false,
+        "skin": "#d9a882",
+        "hair": "#b0aca6",
+        "eyes": "#4a5e72",
+        "tunic": "#4a5a3a",
+        "trousers": "#3a2e24",
+        "boots": "#2e2118",
+        "belt": "#4a3020",
+        "trim": "#c8b48a",
+        "cloak": null,
+        "age": 0.75,
+        "hairStyle": "long",
+        "beard": null,
+        "sleeves": "#6a5a44"
+      },
+      "outfit": {
+        "strawHat": true,
+        "hoe": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_taro"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Shh. You will frighten the carp.",
+            "choices": [
+              {
+                "text": "What do you grow?",
+                "next": "t0"
+              },
+              {
+                "text": "How old is the keep?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Ah. The quiet one. Sit, if you like.",
+            "choices": [
+              {
+                "text": "What do you grow?",
+                "next": "t0"
+              },
+              {
+                "text": "How old is the keep?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Cherries, pines, moss and patience. The last takes longest.",
+            "choices": [
+              {
+                "text": "How old is the keep?",
+                "next": "t1"
+              },
+              {
+                "text": "Any advice?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Older than me, which is saying something. My grandfather carried its stones.",
+            "choices": [
+              {
+                "text": "What do you grow?",
+                "next": "t0"
+              },
+              {
+                "text": "Any advice?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "Strike first, as the dragon strikes. Lightning in the left hand, the wind in the right. So the old stories say.",
+            "choices": [
+              {
+                "text": "What do you grow?",
+                "next": "t0"
+              },
+              {
+                "text": "How old is the keep?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "samira",
+      "name": "Samira",
+      "role": "Spice Seller",
+      "position": {
+        "x": -150,
+        "z": 420
+      },
+      "heading": -1.5708,
+      "patrol": {
+        "points": [
+          {
+            "x": -150,
+            "z": 420,
+            "wait": 7
+          },
+          {
+            "x": -230,
+            "z": 420,
+            "wait": 7
+          },
+          {
+            "x": -300,
+            "z": 420,
+            "wait": 7
+          }
+        ]
+      },
+      "look": {
+        "female": true,
+        "skin": "#b07a58",
+        "hair": "#2a1e16",
+        "eyes": "#5a6e3a",
+        "tunic": "#c23a2a",
+        "trousers": "#5a4a3a",
+        "boots": "#4a3322",
+        "belt": "#4a3020",
+        "trim": "#b8923e",
+        "cloak": null,
+        "age": 0.35,
+        "skirt": "robe",
+        "hairStyle": "long",
+        "lips": "#b4504e",
+        "stubble": false,
+        "sleeves": "#e8dcc4"
+      },
+      "outfit": {
+        "cowl": "#e0a020"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_samira"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Saffron! Cumin! Cardamom! Smell, smell, it's free to smell!",
+            "choices": [
+              {
+                "text": "What's the Saffron Bazaar?",
+                "next": "t0"
+              },
+              {
+                "text": "Is the desert far?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "My nose-friend returns!",
+            "choices": [
+              {
+                "text": "What's the Saffron Bazaar?",
+                "next": "t0"
+              },
+              {
+                "text": "Is the desert far?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Every road from the south ends here. We sell what the caravans bring, and buy what Valdren makes.",
+            "choices": [
+              {
+                "text": "Is the desert far?",
+                "next": "t1"
+              },
+              {
+                "text": "Any danger?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Beyond the southern mountains. You smell it in the wind sometimes: hot stone and dust.",
+            "choices": [
+              {
+                "text": "What's the Saffron Bazaar?",
+                "next": "t0"
+              },
+              {
+                "text": "Any danger?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "The Sunken Vault, west of here, half buried in sand. Scorpions, and things that were once guards. The brave go in. Few of them twice.",
+            "choices": [
+              {
+                "text": "What's the Saffron Bazaar?",
+                "next": "t0"
+              },
+              {
+                "text": "Is the desert far?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "omar",
+      "name": "Omar",
+      "role": "Camel Driver",
+      "position": {
+        "x": -375,
+        "z": 388
+      },
+      "heading": 0,
+      "action": "staff",
+      "patrol": {
+        "points": [
+          {
+            "x": -375,
+            "z": 388,
+            "wait": 8
+          },
+          {
+            "x": -375,
+            "z": 478,
+            "wait": 8
+          }
+        ],
+        "speed": 1.0
+      },
+      "look": {
+        "female": false,
+        "skin": "#a06a48",
+        "hair": "#1e1a18",
+        "eyes": "#6a4a2a",
+        "tunic": "#8a6a3a",
+        "trousers": "#4c3d31",
+        "boots": "#4a3322",
+        "belt": "#4a3020",
+        "trim": "#b8923e",
+        "cloak": null,
+        "age": 0.4,
+        "hairStyle": "short",
+        "beard": "short",
+        "sleeves": "#e8dcc4",
+        "skirt": "robe"
+      },
+      "outfit": {
+        "cowl": "#f2eee4",
+        "staff": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_omar"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "My camel bit the last person who asked me a question. She's resting, so ask away.",
+            "choices": [
+              {
+                "text": "Where are the camels?",
+                "next": "t0"
+              },
+              {
+                "text": "What do you carry?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Ah, my friend. The camel remembers you.",
+            "choices": [
+              {
+                "text": "Where are the camels?",
+                "next": "t0"
+              },
+              {
+                "text": "What do you carry?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Grazing by the caravanserai. They don't like the town, and the town doesn't like them.",
+            "choices": [
+              {
+                "text": "What do you carry?",
+                "next": "t1"
+              },
+              {
+                "text": "Where do bandits hide?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Salt north, silk south. And letters. And once, a very angry goat.",
+            "choices": [
+              {
+                "text": "Where are the camels?",
+                "next": "t0"
+              },
+              {
+                "text": "Where do bandits hide?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "Some in the mountain passes. Some under Mudwick. Some, they say, in the king's own court. Ha!",
+            "choices": [
+              {
+                "text": "Where are the camels?",
+                "next": "t0"
+              },
+              {
+                "text": "What do you carry?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "wei",
+      "name": "Wei",
+      "role": "Lantern Maker",
+      "position": {
+        "x": 350,
+        "z": -200
+      },
+      "heading": 3.1416,
+      "patrol": {
+        "points": [
+          {
+            "x": 350,
+            "z": -200,
+            "wait": 8
+          },
+          {
+            "x": 350,
+            "z": -305,
+            "wait": 8
+          },
+          {
+            "x": 350,
+            "z": -450,
+            "wait": 8
+          }
+        ]
+      },
+      "look": {
+        "female": false,
+        "skin": "#8a5a3a",
+        "hair": "#1e1a18",
+        "eyes": "#3a4a5a",
+        "tunic": "#2e6a58",
+        "trousers": "#5a4a3a",
+        "boots": "#2e2118",
+        "belt": "#4a3020",
+        "trim": "#d8d0c0",
+        "cloak": null,
+        "age": 0.5,
+        "hairStyle": "bald",
+        "beard": "short",
+        "sleeves": "#e8d8b0",
+        "skirt": "robe"
+      },
+      "outfit": {
+        "hat": "#2a2420"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_wei"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Lanterns! Red for luck, gold for wealth, green for… the Jade Lantern. Buy one, light one.",
+            "choices": [
+              {
+                "text": "How many lanterns are there?",
+                "next": "t0"
+              },
+              {
+                "text": "Who is the magistrate?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Your lantern still burning? Good.",
+            "choices": [
+              {
+                "text": "How many lanterns are there?",
+                "next": "t0"
+              },
+              {
+                "text": "Who is the magistrate?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "On this avenue? Three hundred and twelve. I made three hundred and eleven. The other one is my rival's, and it leans.",
+            "choices": [
+              {
+                "text": "Who is the magistrate?",
+                "next": "t1"
+              },
+              {
+                "text": "Any trouble in the quarter?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Magistrate Zhou judges disputes in the great hall. He is fair, slow, and fond of long speeches.",
+            "choices": [
+              {
+                "text": "How many lanterns are there?",
+                "next": "t0"
+              },
+              {
+                "text": "Any trouble in the quarter?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "A forger sells false jade by the drum tower. And the hunters say the Jade Hollow in the northern hills is crawling with crystal beetles.",
+            "choices": [
+              {
+                "text": "How many lanterns are there?",
+                "next": "t0"
+              },
+              {
+                "text": "Who is the magistrate?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "lan",
+      "name": "Lan",
+      "role": "Scholar",
+      "position": {
+        "x": 200,
+        "z": -305
+      },
+      "heading": 1.5708,
+      "patrol": {
+        "points": [
+          {
+            "x": 200,
+            "z": -305,
+            "wait": 6
+          },
+          {
+            "x": 350,
+            "z": -305,
+            "wait": 6
+          },
+          {
+            "x": 500,
+            "z": -305,
+            "wait": 6
+          }
+        ]
+      },
+      "look": {
+        "female": true,
+        "skin": "#c49577",
+        "hair": "#1e1a18",
+        "eyes": "#4a5e72",
+        "tunic": "#2c4e7c",
+        "trousers": "#6a5a44",
+        "boots": "#4a3322",
+        "belt": "#2e2116",
+        "trim": "#c8b48a",
+        "cloak": null,
+        "age": 0.3,
+        "skirt": "robe",
+        "hairStyle": "bun",
+        "lips": "#b4504e",
+        "stubble": false,
+        "sleeves": "#e8e0d0"
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_lan"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Forgive me, I was counting the roof tiles. Four thousand and… never mind.",
+            "choices": [
+              {
+                "text": "What do you study?",
+                "next": "t0"
+              },
+              {
+                "text": "Tell me about the caves.",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Ah, you. Have you read anything good lately?",
+            "choices": [
+              {
+                "text": "What do you study?",
+                "next": "t0"
+              },
+              {
+                "text": "Tell me about the caves.",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Old maps and older stories. Every cave in Valdren has a story, and most of them end badly.",
+            "choices": [
+              {
+                "text": "Tell me about the caves.",
+                "next": "t1"
+              },
+              {
+                "text": "What is the moon gate for?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Gloomhollow, Frostfang, the Sunken Vault, the Jade Hollow, the Mistveil Grotto, the cellars under Mudwick. Six holes, six kinds of trouble.",
+            "choices": [
+              {
+                "text": "What do you study?",
+                "next": "t0"
+              },
+              {
+                "text": "What is the moon gate for?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "For walking through, slowly, while thinking. It's a garden; that is all it needs to be.",
+            "choices": [
+              {
+                "text": "What do you study?",
+                "next": "t0"
+              },
+              {
+                "text": "Tell me about the caves.",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "marco",
+      "name": "Marco",
+      "role": "Fisherman",
+      "position": {
+        "x": 345,
+        "z": 203
+      },
+      "heading": 0,
+      "patrol": {
+        "points": [
+          {
+            "x": 345,
+            "z": 203,
+            "wait": 6
+          },
+          {
+            "x": 378,
+            "z": 179,
+            "wait": 6
+          },
+          {
+            "x": 420,
+            "z": 196,
+            "wait": 6
+          },
+          {
+            "x": 470,
+            "z": 212,
+            "wait": 6
+          }
+        ]
+      },
+      "look": {
+        "female": false,
+        "skin": "#d9a882",
+        "hair": "#3a2a1e",
+        "eyes": "#5a7a4a",
+        "tunic": "#2a5aa0",
+        "trousers": "#2e2a26",
+        "boots": "#3a2a1e",
+        "belt": "#3a2a1a",
+        "trim": "#c8b48a",
+        "cloak": null,
+        "age": 0.5,
+        "hairStyle": "bald",
+        "beard": "full",
+        "sleeves": "#f2eee4"
+      },
+      "outfit": {
+        "strawHat": true
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_marco"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Ciao! Fish are biting, sun is shining, wife is at her mother's. A perfect day!",
+            "choices": [
+              {
+                "text": "What do you catch?",
+                "next": "t0"
+              },
+              {
+                "text": "What's across the lake?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back again? The fish are still biting.",
+            "choices": [
+              {
+                "text": "What do you catch?",
+                "next": "t0"
+              },
+              {
+                "text": "What's across the lake?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Perch, pike, eels, and once a boot with a foot still in it. Don't eat Lucia's stew on Fridays.",
+            "choices": [
+              {
+                "text": "What's across the lake?",
+                "next": "t1"
+              },
+              {
+                "text": "What lives in the grotto?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Aldra's Haven to the west, the lighthouse to the north. And the Serpent Grotto on the east shore, where nobody fishes.",
+            "choices": [
+              {
+                "text": "What do you catch?",
+                "next": "t0"
+              },
+              {
+                "text": "What lives in the grotto?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "Crabs as big as carts and a serpent that rings like a bell. My cousin swears. My cousin also swears a lot.",
+            "choices": [
+              {
+                "text": "What do you catch?",
+                "next": "t0"
+              },
+              {
+                "text": "What's across the lake?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "sofia",
+      "name": "Sofia",
+      "role": "Flower Seller",
+      "position": {
+        "x": 432,
+        "z": 240
+      },
+      "heading": 0,
+      "patrol": {
+        "points": [
+          {
+            "x": 432,
+            "z": 240,
+            "wait": 7
+          },
+          {
+            "x": 432,
+            "z": 300,
+            "wait": 7
+          },
+          {
+            "x": 432,
+            "z": 380,
+            "wait": 7
+          }
+        ]
+      },
+      "look": {
+        "female": true,
+        "skin": "#a8774f",
+        "hair": "#4a2a1a",
+        "eyes": "#4a3a2a",
+        "tunic": "#d23a8a",
+        "trousers": "#4c3d31",
+        "boots": "#4a3322",
+        "belt": "#4a3020",
+        "trim": "#d8d0c0",
+        "cloak": null,
+        "age": 0.25,
+        "skirt": "robe",
+        "hairStyle": "long",
+        "lips": "#b4504e",
+        "stubble": false,
+        "sleeves": "#f2eee4"
+      },
+      "outfit": {
+        "apron": "#f2eee4"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_sofia"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Flowers for your sweetheart? For your mother? For your horse?",
+            "choices": [
+              {
+                "text": "Why is everything white here?",
+                "next": "t0"
+              },
+              {
+                "text": "Is there a market?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back for more flowers? Who's the lucky one?",
+            "choices": [
+              {
+                "text": "Why is everything white here?",
+                "next": "t0"
+              },
+              {
+                "text": "Is there a market?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Lime-wash keeps the houses cool and the walls clean. And it makes the flowers look brighter. That part's my doing.",
+            "choices": [
+              {
+                "text": "Is there a market?",
+                "next": "t1"
+              },
+              {
+                "text": "Do you know the king?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t1": {
+            "text": "On the piazza, by the fountain, every morning. Under the loggia when it rains.",
+            "choices": [
+              {
+                "text": "Why is everything white here?",
+                "next": "t0"
+              },
+              {
+                "text": "Do you know the king?",
+                "next": "t2"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          },
+          "t2": {
+            "text": "He came once and bought every flower I had, for his daughter. I bought new shoes.",
+            "choices": [
+              {
+                "text": "Why is everything white here?",
+                "next": "t0"
+              },
+              {
+                "text": "Is there a market?",
+                "next": "t1"
+              },
+              {
+                "text": "Goodbye."
+              }
+            ]
+          }
+        }
+      }
     }
   ]
 }

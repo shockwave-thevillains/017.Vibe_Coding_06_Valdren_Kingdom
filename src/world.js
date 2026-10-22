@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+import { DISTRICT_PLACES, DISTRICT_ROADS, TERRACES, districtWeight, buildDistricts } from './districts.js';
 
 /*
  * world.js: the kingdom of Valdren.
@@ -251,8 +252,10 @@ export const PLACES = [
   { name: 'Farmstead', x: -24, z: 208, size: 1 },
   { name: 'Windmill', x: 72, z: 186, size: 0 },
   { name: 'The Greywatch', x: -240, z: -52, size: 1 },
-  { name: 'Western Woods', x: -200, z: 60, size: 1 },
+  { name: 'Greywood', x: -250, z: -170, size: 1 },
   { name: 'Gloomhollow Mine', x: -76, z: -127, size: 1 },
+  // The quarters where the western and north-eastern woods once stood (districts.js).
+  ...DISTRICT_PLACES,
 ];
 
 const ROAD_DEFS = [
@@ -293,13 +296,15 @@ const ROAD_DEFS = [
   { kind: 'dirt', w: 3.6, district: 'millbrook', pts: [[40, 352], [16, 372], [30, 394], [52, 392]] },
   // ...and the path up to the princess's garden.
   { kind: 'dirt', w: 2.6, pts: [[8, -152], [28, -160], [44, -176], [52, -186]] },
+  // The streets of the quarters, each tagged with its people (`culture`).
+  ...DISTRICT_ROADS,
 ];
 
 // ============================================================ height field
 
 const FIELD = { road: 0, dirt: 0, town: 0, farm: 0 }; // masks left behind by the last heightAt call
 
-function baseHeight(x, z) {
+function baseHeight(x, z, terraces = true) {
   // Rolling meadows with small bumps.
   let h = 3 + fbm(x * 0.005, z * 0.005, 4) * 13 + (fbm(x * 0.03 + 50, z * 0.03 - 20, 2) - 0.5) * 1.6;
 
@@ -348,15 +353,26 @@ function baseHeight(x, z) {
   if (peak > 0) h += peak * peak * (125 + fbm(x * 0.03, z * 0.03, 3) * 30);
   h += craggy * crag * crag * 16;
 
+  // Level ground for the great buildings of the quarters.
+  if (terraces) {
+    for (const t of TERRACES) {
+      const d = Math.hypot(x - t.x, z - t.z);
+      if (d < t.r + t.fade) h = lerp(h, t.y, 1 - smoothstep(t.r, t.r + t.fade, d));
+    }
+  }
+
   FIELD.town = town;
   FIELD.farm = farm;
   return h;
 }
 
-// Roads, resampled every ~2 m, each with a smoothed height profile to cut and fill to.
+for (const t of TERRACES) t.y = baseHeight(t.x, t.z, false);
+
+// Roads, resampled every ~2 m (the quarters' straighter streets every 3 m), each with a
+// smoothed height profile to cut and fill to.
 const ROADS = ROAD_DEFS.map((def) => {
   const curve = new THREE.CatmullRomCurve3(def.pts.map(([x, z]) => new THREE.Vector3(x, 0, z)), false, 'centripetal');
-  const n = Math.max(2, Math.ceil(curve.getLength() / 2));
+  const n = Math.max(2, Math.ceil(curve.getLength() / (def.culture ? 3 : 2)));
   const pts = curve.getSpacedPoints(n).map((p) => ({ x: p.x, z: p.z }));
   const raw = pts.map((p) => baseHeight(p.x, p.z));
   const prof = raw.map((_, i) => {
@@ -408,6 +424,9 @@ function applyRoads(h, x, z) {
   return lerp(h, bh, 1 - smoothstep(0.6, 5, best));
 }
 
+// The roads that were there before the quarters: what the old town's houses and lamps keep to.
+const OLD_ROADS = (r) => !r.culture;
+
 // Distance from (x, z) to the nearest road edge (negative on the road).
 function roadClearance(x, z, filter) {
   let best = Infinity;
@@ -454,7 +473,8 @@ export function forestDensity(x, z) {
   f = Math.max(f, smoothstep(-110, -150, x + n) * smoothstep(165, 200, z - n));
   f *= smoothstep(26, 42, Math.hypot(x - SITES.ruins.x, z - SITES.ruins.z));
   f *= smoothstep(16, 26, Math.abs(z - riverZ(x)));
-  return f;
+  // The quarters were built where the woods stood.
+  return f * (1 - districtWeight(x, z));
 }
 
 // ======================================================= procedural textures
@@ -735,6 +755,55 @@ function paintShingles(seed) {
     px.b = tone;
     px.h = lip * gap * (0.7 + 0.3 * round);
   };
+}
+
+// Channel tiles, as on the curved roofs of the East and the terracotta of the south:
+// barrel channels running down the slope, eight across, in four courses with a lip each.
+function paintKawara(seed) {
+  const rows = 4;
+  return (u, v, px) => {
+    const fx = u * 8;
+    const i = Math.floor(fx);
+    const t = fx - i;
+    const barrel = Math.pow(Math.sin(t * Math.PI), 0.7);
+    const fr = v * rows;
+    const r = Math.floor(fr);
+    const fv = fr - r;
+    const lip = smoothstep(0, 0.12, fv) * (0.75 + 0.25 * smoothstep(1, 0.55, fv));
+    const id = hash2(i + r * 13, seed);
+    const grain = tileFbm(u, v, 16, 2, seed + 1);
+    const tone = (0.84 + id * 0.14) * (0.86 + grain * 0.18) * (0.5 + 0.5 * barrel) * (0.55 + 0.45 * lip);
+    px.r = tone;
+    px.g = tone;
+    px.b = tone;
+    px.h = barrel * 0.75 + lip * 0.25;
+  };
+}
+
+/*
+ * A pattern with holes cut out (alpha 0 where see-through), for the lattices of the
+ * quarters: 'slats' are upright bars, 'lattice' a square grid. One tile across is
+ * one bar (or one cell); the material tests alpha, so the gaps are truly open.
+ */
+function cutTexture(S, solid) {
+  const data = new Uint8Array(S * S * 4);
+  for (let j = 0; j < S; j++) {
+    for (let i = 0; i < S; i++) {
+      const u = (i + 0.5) / S;
+      const v = (j + 0.5) / S;
+      const k = (j * S + i) * 4;
+      const a = solid(u, v);
+      const shade = a > 0 ? 0.62 + 0.38 * a : 0;
+      const grain = 0.9 + 0.1 * hash2(i, j * 3 + 7);
+      data[k] = clamp(shade * grain * 0.82, 0, 1) * 255;
+      data[k + 1] = clamp(shade * grain * 0.74, 0, 1) * 255;
+      data[k + 2] = clamp(shade * grain * 0.64, 0, 1) * 255;
+      data[k + 3] = a > 0 ? 255 : 0;
+    }
+  }
+  const t = dataTexture(data, S, true);
+  t.premultiplyAlpha = false;
+  return t;
 }
 
 function paintThatch(seed) {
@@ -1157,7 +1226,8 @@ class Batch {
     list.push(g);
   }
 
-  build(scene, materials, noShadow) {
+  // Merges each bucket into a mesh; `chunks`, if given, receives { mesh, x, z, half } for each.
+  build(scene, materials, noShadow, chunks = null) {
     let count = 0;
     for (const [bucket, list] of this.buckets) {
       const key = bucket.slice(0, bucket.indexOf('|'));
@@ -1172,6 +1242,10 @@ class Batch {
       mesh.matrixAutoUpdate = false;
       mesh.updateMatrix();
       scene.add(mesh);
+      if (chunks) {
+        const [, ix, iz] = bucket.split('|').map(Number);
+        chunks.push({ mesh, x: (ix + 0.5) * this.chunk, z: (iz + 0.5) * this.chunk, half: this.chunk / 2 });
+      }
       count++;
     }
     this.buckets.clear();
@@ -1816,6 +1890,9 @@ function rectsOverlap(a, b, pad = 0) {
 
 // ========================================================= build context
 
+const FOOT_CELL = 32;
+const FOOT_PAD = 3; // queries may pad a footprint by up to this much
+
 class BuildContext {
   constructor(world, rng) {
     this.world = world;
@@ -1824,7 +1901,16 @@ class BuildContext {
     this.rng = rng;
     this.instances = new Map();
     this.footprints = [];
+    // The footprints again in a grid of cells, for quick look-ups.
+    this.footGrid = new Map();
     this.lamps = [];
+  }
+
+  _footCells(r, pad, fn) {
+    const e = Math.hypot(r.hw, r.hd) + pad;
+    for (let ix = Math.floor((r.x - e) / FOOT_CELL); ix <= Math.floor((r.x + e) / FOOT_CELL); ix++) {
+      for (let iz = Math.floor((r.z - e) / FOOT_CELL); iz <= Math.floor((r.z + e) / FOOT_CELL); iz++) fn(ix * 65536 + iz);
+    }
   }
 
   ground(x, z) {
@@ -1839,12 +1925,38 @@ class BuildContext {
 
   occupy(r) {
     this.footprints.push(r);
+    this._footCells(r, FOOT_PAD, (key) => {
+      const cell = this.footGrid.get(key);
+      if (cell) cell.push(r);
+      else this.footGrid.set(key, [r]);
+    });
     return r;
   }
 
   occupied(x, z, pad = 0) {
-    for (const r of this.footprints) if (rectContains(r, x, z, pad)) return true;
+    const cell = this.footGrid.get(Math.floor(x / FOOT_CELL) * 65536 + Math.floor(z / FOOT_CELL));
+    if (cell) for (const r of cell) if (rectContains(r, x, z, pad)) return true;
     return false;
+  }
+
+  // Whether rectangle r (padded) overlaps anything built.
+  overlaps(r, pad = 0) {
+    let hit = false;
+    const seen = new Set();
+    this._footCells(r, 0, (key) => {
+      if (hit) return;
+      const cell = this.footGrid.get(key);
+      if (!cell) return;
+      for (const f of cell) {
+        if (seen.has(f)) continue;
+        seen.add(f);
+        if (rectsOverlap(f, r, pad)) {
+          hit = true;
+          return;
+        }
+      }
+    });
+    return hit;
   }
 
   pick(list) {
@@ -2212,6 +2324,7 @@ const PLATE_GEO = new THREE.CylinderGeometry(0.12, 0.1, 0.02, 14);
 const BOTTLE_GEO = new THREE.CylinderGeometry(0.04, 0.045, 0.26, 8);
 const LOAF_GEO = new THREE.SphereGeometry(0.13, 10, 6);
 const RING_GEO = new THREE.TorusGeometry(0.75, 0.035, 6, 24);
+const HORN_GEO = new THREE.ConeGeometry(0.05, 0.32, 8);
 const OVEN_GEO = new THREE.SphereGeometry(1, 16, 10, 0, TAU, 0, Math.PI / 2);
 const WOOD_DARK = C(0x6a4a32);
 const POTTERY = [C(0xb5653d), C(0x8f5a3a), C(0xc9a46a), C(0x6e7a5a), C(0xd8cdb4)];
@@ -3914,11 +4027,11 @@ function placeHouses(ctx, streets, cornerOk, opts = {}) {
         const r = rect(hx, hz, w / 2, d / 2, rot);
         let ok = true;
         for (const [cx, cz] of rectCorners(r, 0.3)) {
-          if (!cornerOk(cx, cz) || roadClearance(cx, cz) < 0.6) ok = false;
+          if (!cornerOk(cx, cz) || roadClearance(cx, cz, OLD_ROADS) < 0.6) ok = false;
         }
-        if (ok && roadClearance(hx, hz) < 0.6) ok = false;
+        if (ok && roadClearance(hx, hz, OLD_ROADS) < 0.6) ok = false;
         if (ok && gates.some(([gx, gz]) => Math.hypot(hx - gx, hz - gz) < 11)) ok = false;
-        if (ok && ctx.footprints.some((f) => rectsOverlap(f, r, 0.6))) ok = false;
+        if (ok && ctx.overlaps(r, 0.6)) ok = false;
         if (ok) {
           const floors = rng() < (opts.floors ?? 0.6) ? 2 : 1;
           const style = styles[Math.floor(rng() * styles.length)];
@@ -3969,7 +4082,7 @@ function streetLamps(ctx, filter, spacing) {
       const x = b.x + nx * (road.w / 2 + 0.5);
       const z = b.z + nz * (road.w / 2 + 0.5);
       if (ctx.occupied(x, z, 0.3)) continue;
-      if (roadClearance(x, z, (r) => r !== road) < 0.3) continue;
+      if (roadClearance(x, z, (r) => r !== road && !r.culture) < 0.3) continue;
       if (inSquare(x, z, 1)) continue;
       ctx.lamps.push([x, z, Math.atan2(-nx, -nz)]);
       ctx.occupy(rect(x, z, 0.4, 0.4));
@@ -4638,7 +4751,8 @@ function ribbon(ctx, key, pts, height, offsets, texScale, alphas = null, fade = 
   g.setAttribute('color', new THREE.BufferAttribute(col, 4));
   g.setIndex(index);
   g.computeVertexNormals();
-  ctx.world.addGround(key, g);
+  if (ctx) ctx.world.addGround(key, g);
+  return g;
 }
 
 // A grid patch inside a rectangle (or any `contains` test), draped over the terrain.
@@ -4681,7 +4795,25 @@ function groundPatch(ctx, key, r, step, lift, uvOf, contains = null) {
 }
 
 function buildRoads(ctx) {
-  ROADS.forEach((road, idx) => {
+  // The quarters' streets: one merged ribbon per people and surface, no kerbs.
+  const quarters = new Map();
+  ROADS.filter((r) => r.culture).forEach((road, k) => {
+    const lift = 0.06 + (k % 6) * 0.005;
+    const hw = road.w / 2;
+    const dirt = road.kind === 'dirt';
+    const g = dirt
+      ? ribbon(null, 'dirtRoad', road.pts, (x, z) => ctx.ground(x, z) + lift, [-hw - 1, -hw + 0.6, 0, hw - 0.6, hw + 1], 2.5, [0, 1, 1, 1, 0])
+      : ribbon(null, 'cobbleRoad', road.pts, (x, z) => ctx.ground(x, z) + lift, [-hw, -hw / 2, 0, hw / 2, hw], 2.4);
+    const key = `${road.culture}|${dirt ? 'dirtRoad' : 'cobbleRoad'}`;
+    if (!quarters.has(key)) quarters.set(key, []);
+    quarters.get(key).push(g);
+  });
+  for (const [key, list] of quarters) {
+    const merged = mergeGeometries(list);
+    for (const g of list) g.dispose();
+    ctx.world.addGround(key.split('|')[1], merged);
+  }
+  ROADS.filter((r) => !r.culture).forEach((road, idx) => {
     const lift = 0.05 + idx * 0.004;
     if (road.kind === 'dirt') {
       const hw = road.w / 2;
@@ -4818,6 +4950,72 @@ function pineGeometry(rng, tiers, segments = 9) {
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
   geo.computeVertexNormals();
   return geo;
+}
+
+// A date palm: a leaning ringed trunk and a crown of drooping fronds.
+function palmGeometry(rng, fronds) {
+  const H = 7.2;
+  const trunk = new THREE.CylinderGeometry(0.17, 0.27, H, 7, 6, true);
+  trunk.translate(0, H / 2, 0);
+  const tp = trunk.attributes.position;
+  for (let i = 0; i < tp.count; i++) {
+    const y = tp.getY(i);
+    const ring = 1 + 0.08 * Math.cos(y * 9);
+    tp.setXYZ(i, tp.getX(i) * ring + 0.8 * (y / H) ** 2, y, tp.getZ(i) * ring);
+  }
+  trunk.computeVertexNormals();
+  const parts = [];
+  for (let k = 0; k < fronds; k++) {
+    const g = new THREE.BoxGeometry(0.9, 0.04, 3.4, 2, 1, 6).toNonIndexed();
+    const q = g.attributes.position;
+    for (let i = 0; i < q.count; i++) {
+      const t = (q.getZ(i) + 1.7) / 3.4;
+      q.setXYZ(i, q.getX(i) * (1 - t * 0.85), q.getY(i) - 1.5 * t * t + 0.5 * t, t * 3.3);
+    }
+    g.rotateY((k / fronds) * TAU + rng() * 0.3);
+    g.translate(0.8, 0, 0);
+    g.deleteAttribute('uv');
+    parts.push(g);
+  }
+  const crown = mergeGeometries(parts);
+  const col = new Float32Array(crown.attributes.position.count * 3);
+  const c = new THREE.Color();
+  for (let i = 0; i < col.length / 3; i++) {
+    const y = crown.attributes.position.getY(i);
+    c.set(0x3a6a28).lerp(C(0x8aa848), clamp(0.5 + y * 0.4, 0, 1)).toArray(col, i * 3);
+  }
+  crown.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  crown.computeVertexNormals();
+  return { trunk, crown, crownY: H };
+}
+
+// A clump of bamboo: thin green canes with tufts of leaves at their tops.
+function bambooGeometry(rng, canes) {
+  const stems = [];
+  const tufts = [];
+  for (let k = 0; k < canes; k++) {
+    const a = rng() * TAU;
+    const r = 0.2 + rng() * 0.7;
+    const h = 5.5 + rng() * 3;
+    const lean = (rng() - 0.5) * 0.12;
+    const g = new THREE.CylinderGeometry(0.045, 0.06, h, 5, 1, true).toNonIndexed();
+    g.translate(0, h / 2, 0);
+    g.rotateZ(lean);
+    g.translate(Math.cos(a) * r, 0, Math.sin(a) * r);
+    stems.push(g);
+    const t = new THREE.IcosahedronGeometry(0.7 + rng() * 0.4, 0);
+    t.scale(1, 1.6, 1);
+    t.translate(Math.cos(a) * r - Math.sin(lean) * h, h - 0.6, Math.sin(a) * r);
+    tufts.push(t);
+  }
+  const trunk = mergeGeometries(stems);
+  const crown = mergeGeometries(tufts);
+  crown.deleteAttribute('uv');
+  withColor(crown, C(0x6a9a3a));
+  const cc = crown.attributes.color;
+  for (let i = 0; i < cc.count; i++) cc.setXYZ(i, cc.getX(i) * (0.8 + hash2(i, 9) * 0.4), cc.getY(i) * (0.85 + hash2(i, 3) * 0.3), cc.getZ(i));
+  crown.computeVertexNormals();
+  return { trunk, crown, crownY: 0 };
 }
 
 // One mesh per tree: bark-coloured trunk plus crown, so a tree costs a single draw per chunk.
@@ -5028,7 +5226,7 @@ function upNormals(material, key) {
 const _ax = new THREE.Vector3();
 const _ay = new THREE.Vector3();
 const _centre = new THREE.Vector3();
-const UV_SCALES = { stone: 3.3, stoneFloor: 3.6, crag: 2.6, plaster: 3, timber: 1.5, planks: 2, shingle: 2.4, thatch: 2.5, cloth: 1.2, plainCloth: 2, metal: 1, gold: 1, glass: 1, pane: 1, pool: 1.5, stained: 1, lamp: 1, fire: 1 };
+const UV_SCALES = { stone: 3.3, stoneFloor: 3.6, crag: 2.6, plaster: 3, timber: 1.5, planks: 2, shingle: 2.4, thatch: 2.5, cloth: 1.2, plainCloth: 2, metal: 1, gold: 1, glass: 1, pane: 1, pool: 1.5, stained: 1, lamp: 1, fire: 1, kawara: 2.4, turf: 3, paper: 1, slats: 1, lattice: 1 };
 const NO_SHADOW = new Set(['glass', 'pane', 'pool', 'stained', 'lamp', 'fire']);
 
 export class World {
@@ -5063,6 +5261,7 @@ export class World {
     this.lair = null;
     this.lighthouse = null;
     ANISOTROPY = quality.anisotropy;
+    this.districtView = quality.districtView;
 
     this.sky = new SkyDome(this.uTime);
     scene.add(this.sky.mesh);
@@ -5090,8 +5289,13 @@ export class World {
   }
 
   // Generates the world in stages; progress(text) is awaited between them so the page can repaint.
-  async build(progress) {
+  /*
+   * progress(text) is awaited between stages. opts.paths: the walks people take
+   * ([[x0, z0, x1, z1], ...]), which trees and props keep clear of.
+   */
+  async build(progress, opts = {}) {
     const q = this.quality;
+    this._setPaths(opts.paths || []);
     const rng = mulberry32(20241);
 
     await progress('Weaving textures…');
@@ -5148,11 +5352,20 @@ export class World {
 
     await progress('Fortifying the castle…');
     buildCastle(ctx);
-    streetLamps(ctx, (r) => r.kind === 'cobble' && !r.town, 26);
+    streetLamps(ctx, (r) => r.kind === 'cobble' && !r.town && !r.culture, 26);
 
     await progress('Spanning the river, tilling the fields…');
     buildBridge(ctx);
     buildFarm(ctx, q);
+
+    await progress('Raising the quarters…');
+    // The quarters go in a batch of their own, in smaller chunks that are hidden
+    // beyond the preset's view distance; their random stream is their own too.
+    const dctx = Object.create(ctx);
+    this.districtBatch = new Batch(UV_SCALES, 160);
+    dctx.batch = this.districtBatch;
+    dctx.rng = mulberry32(5150);
+    this.stats.districts = buildDistricts(dctx, this._districtKit());
 
     await progress('Planting the forest…');
     buildRuins(ctx);
@@ -5165,6 +5378,14 @@ export class World {
     this._flags(ctx);
     this._instances(ctx);
     this.stats.meshes = this.batch.build(this.scene, this.mat, NO_SHADOW);
+    this.districtChunks = [];
+    this.stats.meshes += this.districtBatch.build(this.scene, this.mat, NO_SHADOW, this.districtChunks);
+    // Once on the GPU, the quarters' vertex data is not needed in memory as well.
+    const release = function release() {
+      this.array = null;
+    };
+    for (const c of this.districtChunks) for (const a of Object.values(c.mesh.geometry.attributes)) a.onUpload(release);
+    this._cullTimer = 0;
     if (this.sails) this._buildSails();
     if (this.hallLight) {
       this.torchLight = new THREE.PointLight(0xffa860, 40, 28, 2);
@@ -5183,7 +5404,32 @@ export class World {
    * next load. Changing the number of shadows or lights recompiles the lit
    * materials once.
    */
+  // What districts.js builds with: the world's frames, footprints, tints, roads, rooms and furniture.
+  _districtKit() {
+    return {
+      Frame, rect, rectCorners, TINT, WATER_LEVEL, lakeWeight, ROADS, openRoom, pier,
+      furn: {
+        piece, table, bench, stool, chair, bed, chest, shelves, pots, books, hearth, candle, rug, tableware, crate, barrel, chandelier,
+        MUG: MUG_GEO, JAR: JAR_GEO, PLATE: PLATE_GEO, BOTTLE: BOTTLE_GEO, LOAF: LOAF_GEO, FLAME: FLAME_GEO, HORN: HORN_GEO,
+      },
+    };
+  }
+
+  // The quarters' chunks beyond the view distance are not drawn (re-checked a few times a second).
+  _cullDistricts(dt, pos) {
+    if (!this.districtChunks || (this._cullTimer -= dt) > 0) return;
+    this._cullTimer = 0.25;
+    const view = this.districtView || Infinity;
+    for (const c of this.districtChunks) {
+      const dx = Math.max(Math.abs(pos.x - c.x) - c.half, 0);
+      const dz = Math.max(Math.abs(pos.z - c.z) - c.half, 0);
+      c.mesh.visible = dx * dx + dz * dz < view * view;
+    }
+  }
+
   setQuality(q) {
+    this.districtView = q.districtView;
+    this._cullTimer = 0;
     this._setShadows(q);
     this._setLampLights(q.lampLights);
     if (this.lod) this.lod.uLodRadius.value = q.lodRadius;
@@ -5270,7 +5516,12 @@ export class World {
       bark: makeTexture(half, paintBark(121), 2.2),
       ripples: makeTexture(half, paintRipples(131), 1.6),
       stripes: makeTexture(128, paintStripes(141), 0.4),
+      kawara: makeTexture(half, paintKawara(151), 2.2),
     };
+    // A bar across the middle 45% of each tile (its edges rounded), or a grid of them.
+    const bar = (t) => Math.max(0, 1 - Math.abs(t - 0.5) / 0.225);
+    this.tex.slats = cutTexture(64, (u) => bar(u));
+    this.tex.lattice = cutTexture(64, (u, v) => Math.max(Math.max(0, 1 - Math.abs(u - 0.5) / 0.11), Math.max(0, 1 - Math.abs(v - 0.5) / 0.11)));
     this.tex.banner = makeBannerTexture();
     this.tex.sign = makeSignTexture();
     this.tex.parchment = makeParchmentTexture();
@@ -5319,6 +5570,14 @@ export class World {
       crop: upNormals(windMaterial(std({ vertexColors: true, roughness: 0.9, side: THREE.DoubleSide }), this.uTime, 0.07, 'wind-crop'), 'wind-crop-up'),
       cabbage: std({ color: 0x6f9a48, roughness: 0.75 }),
       rock: std({ map: T.ground.map, normalMap: T.ground.normal, normalScale: n(1.6), roughness: 0.95 }),
+      // The quarters (districts.js): glazed channel tiles (tinted grey, green, gold or
+      // terracotta), roofs of living turf, paper screens that glow after dark, and
+      // lattices whose gaps are cut out.
+      kawara: std({ map: T.kawara.map, normalMap: T.kawara.normal, normalScale: n(1.2), vertexColors: true, roughness: 0.55, metalness: 0.05, side: THREE.DoubleSide }),
+      turf: std({ map: T.ground.map, normalMap: T.ground.normal, normalScale: n(1.4), vertexColors: true, roughness: 1, side: THREE.DoubleSide }),
+      paper: std({ color: 0xf4ead2, emissive: 0xffb860, emissiveIntensity: 0.04, roughness: 0.9, vertexColors: true, side: THREE.DoubleSide }),
+      slats: std({ map: T.slats, alphaTest: 0.5, vertexColors: true, roughness: 0.8, side: THREE.DoubleSide }),
+      lattice: std({ map: T.lattice, alphaTest: 0.5, vertexColors: true, roughness: 0.8, side: THREE.DoubleSide }),
     };
     this.mat.stoneFloor = this.mat.stone;
     const foliage = (amount, key) => nearFade(windMaterial(std({ vertexColors: true, roughness: 0.85 }), this.uTime, amount, `${key}-wind`), `${key}-fade`);
@@ -5533,7 +5792,33 @@ export class World {
 
   // -------------------------------------------------------- vegetation
 
+  // A grid of the people's walks, so nothing is planted or dropped on them.
+  _setPaths(segments) {
+    const cells = new Map();
+    for (const s of segments) {
+      const [ax, az, bx, bz] = s;
+      for (let ix = Math.floor((Math.min(ax, bx) - 4) / 16); ix <= Math.floor((Math.max(ax, bx) + 4) / 16); ix++) {
+        for (let iz = Math.floor((Math.min(az, bz) - 4) / 16); iz <= Math.floor((Math.max(az, bz) + 4) / 16); iz++) {
+          const key = ix * 65536 + iz;
+          if (!cells.has(key)) cells.set(key, []);
+          cells.get(key).push(s);
+        }
+      }
+    }
+    this._paths = cells;
+  }
+
+  // Distance from (x, z) to the nearest walk (Infinity if none is within a few metres).
+  pathClearance(x, z) {
+    const list = this._paths && this._paths.get(Math.floor(x / 16) * 65536 + Math.floor(z / 16));
+    if (!list) return Infinity;
+    let best = Infinity;
+    for (const [ax, az, bx, bz] of list) best = Math.min(best, segDistance(x, z, ax, az, bx, bz));
+    return best;
+  }
+
   _canPlant(ctx, x, z, pad) {
+    if (this.pathClearance(x, z) < 1.5) return false;
     const h = this.terrain.getHeight(x, z);
     if (h < WATER_LEVEL + 0.5) return false;
     if (pointInPolygon(x, z, TOWN_WALL) || distToPolygonEdge(x, z, TOWN_WALL) < 5) return false;
@@ -5568,20 +5853,55 @@ export class World {
     };
     const bushGeo = canopyGeometry(vrng, 3, 0, 0.9, C(0x5e8a38), C(0x22381a));
     bushGeo.translate(0, 0.55, 0);
+    // The quarters' trees: cherries in Sakuragawa, palms in the bazaar, cypresses and
+    // olives in Costa Mirra, bamboo in the eastern gardens (their shapes from a stream
+    // of their own, so the forest's trees keep theirs).
+    const xrng = mulberry32(779);
+    const palm = (n) => palmGeometry(xrng, n);
+    const bamboo = (n) => bambooGeometry(xrng, n);
+    const pHi = palm(detail ? 11 : 8);
+    const pLo = palm(6);
+    const bHi = bamboo(detail ? 12 : 9);
+    const bLo = bamboo(6);
+    const cypress = (blobs, det) => {
+      const g = canopyGeometry(xrng, blobs, det, 1.0, C(0x3e6a34), C(0x16301a)).scale(1, 3.0, 1);
+      g.computeVertexNormals();
+      return g;
+    };
+    Object.assign(kinds, {
+      sakura: {
+        hi: treeGeometry(trunkGeometry(xrng, 2.5, 0.32, 0.18, 3, 7), canopyGeometry(xrng, detail ? 6 : 4, detail, 2.6, C(0xfad4e4), C(0xd07898)), 3.3, C(0x4a3832)),
+        lo: treeGeometry(trunkGeometry(xrng, 2.5, 0.32, 0.18, 0, 4), canopyGeometry(xrng, 3, 0, 2.6, C(0xfad4e4), C(0xd07898)), 3.3, C(0x4a3832)),
+      },
+      palm: { hi: treeGeometry(pHi.trunk, pHi.crown, pHi.crownY, C(0x8a7458)), lo: treeGeometry(pLo.trunk, pLo.crown, pLo.crownY, C(0x8a7458)) },
+      cypress: {
+        hi: treeGeometry(trunkGeometry(xrng, 1.6, 0.22, 0.16, 0, 6), cypress(detail ? 5 : 4, detail), 4.2, bark),
+        lo: treeGeometry(trunkGeometry(xrng, 1.6, 0.22, 0.16, 0, 4), cypress(3, 0), 4.2, bark),
+      },
+      olive: {
+        hi: treeGeometry(trunkGeometry(xrng, 1.9, 0.34, 0.2, 3, 6), canopyGeometry(xrng, detail ? 5 : 4, detail, 2.3, C(0xa8b488), C(0x4a5838)), 2.7, C(0x6a6050)),
+        lo: treeGeometry(trunkGeometry(xrng, 1.9, 0.34, 0.2, 0, 4), canopyGeometry(xrng, 3, 0, 2.3, C(0xa8b488), C(0x4a5838)), 2.7, C(0x6a6050)),
+      },
+      bamboo: { hi: treeGeometry(bHi.trunk, bHi.crown, 0, C(0x7a9a48)), lo: treeGeometry(bLo.trunk, bLo.crown, 0, C(0x7a9a48)) },
+    });
     // Placement draws from its own stream: the tree shapes above take more or fewer numbers
     // depending on the preset, and the forest (and its colliders) must not move with them.
     const prng = mulberry32(778);
-    const lists = { oakA: [], oakB: [], pine: [], bush: [], log: [], stump: [] };
+    const lists = { oakA: [], oakB: [], pine: [], sakura: [], palm: [], cypress: [], olive: [], bamboo: [], bush: [], log: [], stump: [] };
+    const trunkR = { pine: 0.3, palm: 0.3, cypress: 0.32, bamboo: 0.85 };
     const place = (kind, x, z, s, rot) => {
       const h = this.terrain.getHeight(x, z);
       const m = new THREE.Matrix4().compose(_p.set(x, h - 0.15, z), _q.setFromAxisAngle(UP, rot), _s.set(s, s * (0.9 + prng() * 0.25), s));
       lists[kind].push({ m, c: ctx.vary(WHITE, 0.12) });
       if (Math.max(Math.abs(x), Math.abs(z)) < PLAY_HALF + 3 && kind !== 'bush') {
-        this.colliders.addCircle(x, z, (kind === 'pine' ? 0.3 : 0.42) * s, h - 1, h + 3.5);
+        this.colliders.addCircle(x, z, (trunkR[kind] ?? 0.42) * s, h - 1, h + 3.5);
       }
     };
 
-    for (const t of ctx.trees) place(t.kind, t.x, t.z, t.s, prng() * TAU);
+    for (const t of ctx.trees) {
+      const rot = prng() * TAU;
+      if (this.pathClearance(t.x, t.z) > 1.4) place(t.kind, t.x, t.z, t.s, rot);
+    }
     const step = 7.5;
     const span = WORLD_HALF - 5;
     for (let gx = -span; gx < span; gx += step) {
@@ -5599,6 +5919,8 @@ export class World {
         if (dr > 19 && dr < 32 && x < 380) p = Math.max(p, 0.1);
         if (edge < MOUNTAIN_EDGE) p = Math.max(p, 0.014);
         p = Math.max(p, mountain * 0.5);
+        // The quarters plant their own trees (districts.js).
+        p *= 1 - districtWeight(x, z);
         if (lakeWeight(x, z) > 0.02 || h < WATER_LEVEL + 0.4) continue;
         if (prng() > p) continue;
         if (!this._canPlant(ctx, x, z, 2.5)) continue;
@@ -5630,15 +5952,16 @@ export class World {
     }
 
     this.lods = [];
-    for (const kind of ['oakA', 'oakB', 'pine']) {
-      const pine = kind === 'pine';
+    for (const kind of ['oakA', 'oakB', 'pine', 'sakura', 'palm', 'cypress', 'olive', 'bamboo']) {
+      if (!lists[kind].length) continue;
+      const pine = kind === 'pine' || kind === 'cypress';
       makeInstanced(this.scene, lists[kind], kinds[kind].hi, pine ? this.mat.needlesHi : this.mat.leavesHi, true, `${kind}-hi`, this.lods, 64);
       makeInstanced(this.scene, lists[kind], kinds[kind].lo, pine ? this.mat.needlesLo : this.mat.leavesLo, false, `${kind}-lo`, null, 256);
     }
     makeInstanced(this.scene, lists.bush, bushGeo, this.mat.leaves, true, 'bushes', null, 256);
     makeInstanced(this.scene, lists.log, new THREE.CylinderGeometry(0.32, 0.36, 4.2, 9), this.mat.bark, true, 'logs', null, Infinity);
     makeInstanced(this.scene, lists.stump, new THREE.CylinderGeometry(0.38, 0.48, 0.6, 9), this.mat.bark, true, 'stumps', null, Infinity);
-    this.stats.trees = lists.oakA.length + lists.oakB.length + lists.pine.length;
+    this.stats.trees = ['oakA', 'oakB', 'pine', 'sakura', 'palm', 'cypress', 'olive', 'bamboo'].reduce((n, k) => n + lists[k].length, 0);
   }
 
   _boulders(ctx, rng) {
@@ -5900,6 +6223,7 @@ export class World {
     if (Math.abs(z - riverZ(x)) < 24) return false;
     if (Math.max(Math.abs(x - farmland.x) / farmland.hw, Math.abs(z - farmland.z) / farmland.hd) < 1.15) return false;
     if (Math.hypot(x - ruins.x, z - ruins.z) < 15) return false;
+    if (districtWeight(x, z) > 0.05) return false;
     return this.getHeight(x, z) < 40;
   }
 
@@ -5955,6 +6279,7 @@ export class World {
     if (this.mat) {
       this.mat.lamp.emissiveIntensity = 0.2 + this.night * 3.2;
       this.mat.glass.emissiveIntensity = this.night * 0.9;
+      this.mat.paper.emissiveIntensity = 0.04 + this.night * 0.75;
       this.mat.pane.emissiveIntensity = (1 - this.night) * 0.85 + 0.03;
       this.mat.stained.color.setScalar(lerp(1.0, 0.25, this.night));
     }
@@ -5987,6 +6312,7 @@ export class World {
     if (this.mat) this.mat.fire.emissiveIntensity = 2.6 + Math.sin(t * 13) * 0.35 + Math.sin(t * 7.3) * 0.25;
     if (this.torchLight) this.torchLight.intensity = 38 + Math.sin(t * 11) * 4 + Math.sin(t * 5.7) * 3;
     if (this.lods) this.updateLods(camera.position);
+    this._cullDistricts(dt, camera.position);
     this._updateLampLights(dt, focus, t);
     this._placeSun(focus);
   }
