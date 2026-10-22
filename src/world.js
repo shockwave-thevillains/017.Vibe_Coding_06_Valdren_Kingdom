@@ -232,6 +232,19 @@ const FIELDS = [
 const RIVER_MID = riverZ(0);
 export const BRIDGE = { x: 0, zN: RIVER_MID - 17, zS: RIVER_MID + 17, halfWidth: 3.1, rise: 1.6, hN: 0, hS: 0 };
 
+/*
+ * The ways down into the other dungeons (see src/dungeon.js), each facing the way
+ * its frame's +Z points: a cave mouth, a buried portal, a trapdoor.
+ */
+export const DUNGEON_SITES = [
+  { id: 'frost', name: 'Frostfang Cavern', x: -549, z: -150, rot: Math.PI / 2, style: 'frost' },
+  { id: 'vault', name: 'The Sunken Vault', x: -528, z: 518, rot: Math.PI / 2, style: 'vault' },
+  { id: 'jade', name: 'The Jade Hollow', x: 250, z: -541, rot: 0, style: 'jade' },
+  { id: 'mist', name: 'The Mistveil Grotto', x: -530, z: 200, rot: Math.PI / 2, style: 'mist' },
+  { id: 'serpent', name: 'The Serpent Grotto', x: 534, z: -42, rot: -Math.PI / 2, style: 'serpent' },
+  { id: 'cellars', name: 'Red Garrick’s Cellars', x: -230, z: 101, rot: Math.PI, style: 'trapdoor' },
+];
+
 // Named places for the map.
 export const PLACES = [
   { name: 'Castle Valdren', x: 0, z: -168, size: 2 },
@@ -263,9 +276,9 @@ export const PLACES = [
   { name: 'Windmill', x: 72, z: 186, size: 0 },
   { name: 'The Greywatch', x: -240, z: -52, size: 1 },
   { name: 'Greywood', x: -250, z: -170, size: 1 },
-  { name: 'Gloomhollow Mine', x: -76, z: -127, size: 1 },
   // The quarters where the western and north-eastern woods once stood (districts.js).
   ...DISTRICT_PLACES,
+  // (The dungeons are named by their own red marks.)
 ];
 
 const ROAD_DEFS = [
@@ -3909,6 +3922,9 @@ function chooseGuild(ctx) {
  * the tunnel itself is blocked. Built after the forest and the boulders, from no
  * random numbers, so nothing else moves.
  */
+const SPHERE_LO = new THREE.SphereGeometry(1, 10, 6);
+const CRYSTAL_GEO = new THREE.OctahedronGeometry(0.28);
+const LANTERN_GEO = new THREE.CylinderGeometry(0.46, 0.5, 1, 8);
 const MINE_ROCKS = [
   [-4.2, -1.6, 2.4, 2.6], [4.2, -1.7, 2.3, 2.5], [-2.6, -5.0, 3.3, 3.4], [2.8, -5.1, 3.1, 3.2],
   [0, -6.8, 3.9, 3.8], [0, -3.4, 2.4, 1.4], [-6.0, -4.2, 2.2, 1.9], [5.9, -4.0, 2.1, 1.8],
@@ -3982,6 +3998,129 @@ function buildMineEntrance(ctx) {
   const [dx, dz] = F.world(0, 1.7);
   const [ox, oz] = F.world(0, 3.0);
   return { name: 'Gloomhollow Mine', x: site.x, z: site.z, door: [dx, dz], out: [ox, oz, site.rot] };
+}
+
+// How each dungeon's way in looks: the rocks round it, and what is strewn about.
+const MOUTHS = {
+  frost: { rocks: [0xd8e4f0, 0xc0d0e0, 0xe4ecf4, 0xb0c0d0], wall: 0xa8b8c8, key: 'plaster' },
+  jade: { rocks: [0x5a6a60, 0x4a5a52, 0x6a7a6a, 0x3a4a44], wall: 0x4a5a52 },
+  mist: { rocks: [0x6a7a5a, 0x5a6a4e, 0x7a8468, 0x4e5a44], wall: 0x5a6a4e },
+  serpent: { rocks: [0x4a5a5e, 0x3a4a4e, 0x5a6a6e, 0x34444a], wall: 0x3a4a4e },
+};
+
+/*
+ * A dungeon's way in: a mouth in a heap of rocks (or a sandstone portal, or a
+ * trapdoor), torches either side, a sign of crossed swords, and a tall pole with a
+ * red pennant and a lamp on top, so it can be seen from afar. Returns the door to
+ * stand at and where the traveller comes back out.
+ */
+function buildDungeonMouth(ctx, site) {
+  const F = new Frame(ctx, site.x, site.z, site.rot);
+  const g = F.ground(0, 0.4);
+  const rock = rockGeometry();
+  const black = C(0x0b0a09);
+  const style = site.style;
+  if (style === 'trapdoor') {
+    // A stone curb round a hatch in the ground, its door thrown back, a ladder going down.
+    F.box('stone', 0, g + 0.15, 0, 2.6, 0.5, 2.6, TINT.darkStone);
+    F.box('stone', 0, g + 0.42, 0, 1.8, 0.06, 1.8, black);
+    F.box('planks', 0, g + 1.3, -1.25, 1.8, 1.9, 0.12, C(0x5a4232), -0.15, 0, 0);
+    for (const sx of [-1, 1]) F.box('metal', sx * 0.6, g + 1.3, -1.18, 0.06, 1.7, 0.03, IRON, -0.15, 0, 0);
+    for (const sx of [-1, 1]) F.box('timber', sx * 0.4, g + 0.6, 0.2, 0.08, 1.2, 0.08, TINT.beam);
+    for (let k = 0; k < 3; k++) F.box('timber', 0, g + 0.2 + k * 0.4, 0.2, 0.8, 0.06, 0.06, TINT.beam);
+    F.collideBox(0, 0, 1.3, 1.3, g - 1, g + 0.4);
+    F.collideBox(0, -1.25, 0.9, 0.15, g - 1, g + 2.2);
+    for (const [x, z] of [[-2.2, -1.2], [-2.6, 0.2], [2.4, -1.6]]) {
+      F.box('planks', x, g + 0.4, z, 0.8, 0.8, 0.8, C(0x7a5a3a), 0, x, 0);
+      F.collideBox(x, z, 0.45, 0.45, g - 1, g + 0.8);
+    }
+  } else if (style === 'vault') {
+    // Two sandstone pillars and a lintel over steps going down into the sand.
+    const sand = C(0xd8b888);
+    for (const sx of [-1, 1]) {
+      F.box('stone', sx * 2.0, g + 2.0, 0, 1.0, 4.4, 1.0, sand);
+      F.box('stone', sx * 2.0, g + 4.3, 0, 1.3, 0.3, 1.3, sand);
+      F.collideBox(sx * 2.0, 0, 0.55, 0.55, g - 1, g + 4.5);
+    }
+    F.box('stone', 0, g + 4.75, 0, 5.4, 0.7, 1.2, sand);
+    F.box('gold', 0, g + 4.75, 0.61, 1.6, 0.36, 0.04);
+    for (let k = 0; k < 5; k++) F.box('stone', 0, g - 0.1 - k * 0.3, -0.8 - k * 0.6, 3.0, 0.3, 0.6, C(0xb89868));
+    F.box('stone', 0, g + 1.6, -3.4, 3.0, 3.6, 0.3, black);
+    for (const sx of [-1, 1]) F.box('stone', sx * 1.65, g + 1.6, -2.0, 0.3, 3.6, 4.0, sand);
+    F.box('stone', 0, g + 3.6, -2.0, 3.6, 0.4, 4.0, sand);
+    F.collideBox(0, -2.4, 1.5, 1.8, g - 1, g + 4);
+    for (const [x, z, s] of [[-4, -1, 1.6], [4.2, -1.5, 1.4], [-3, 2.5, 1.0], [3.4, 3, 0.9]]) F.geo('crag', rock, x, g - 0.2, z, 0, x, 0, s * 1.6, s * 0.5, s * 1.3, C(0xe0c890));
+    F.geo('stone', new THREE.CylinderGeometry(0.5, 0.55, 2.2, 10), -4.6, g + 0.4, 2.2, 1.45, 0.4, 0, 1, 1, 1, sand);
+    F.collideCircle(-4.6, 2.2, 0.9, g - 1, g + 1);
+  } else {
+    // A cave mouth in a heap of rocks.
+    const look = MOUTHS[style];
+    const tints = look.rocks.map((h) => C(h));
+    MINE_ROCKS.forEach(([lx, lz, size, height], i) => {
+      const lift = i === 5 ? 3.1 : 0;
+      const base = Math.min(F.ground(lx, lz), g) + 0.1 * height + lift;
+      F.geo(look.key || 'crag', rock, lx, base, lz, 0.2 * Math.sin(i * 2.1), i * 1.7, 0.15 * Math.cos(i * 1.3), size, height, size * 0.9, tints[i % tints.length]);
+      if (!lift) F.collideCircle(lx, lz, size * 0.8, base - height, base + height * 1.1);
+    });
+    const wall = C(look.wall);
+    for (const sx of [-1, 1]) F.box(look.key || 'crag', sx * 1.7, g + 1.45, -2.2, 0.4, 3.3, 4.6, wall);
+    F.box(look.key || 'crag', 0, g + 3.25, -2.2, 3.8, 0.4, 4.6, wall);
+    F.box('stone', 0, g + 1.4, -4.4, 3.2, 3.2, 0.3, black);
+    F.box('stone', 0, g + 0.02, -2.2, 3.0, 0.08, 4.4, C(0x3a342c));
+    F.collideBox(0, -2.3, 1.55, 2.3, g - 1, g + 3.4);
+    if (style === 'frost') {
+      for (let k = 0; k < 7; k++) F.geo('stone', new THREE.ConeGeometry(0.12, 0.9, 6), -1.4 + k * 0.45, g + 2.7, 0.15, Math.PI, 0, 0, 1, 0.6 + (k % 3) * 0.3, 1, C(0xe0f0ff));
+      for (const [x, z] of [[-3.5, 2.5], [3.8, 2.2], [0, 4.5]]) F.geo('plainCloth', SPHERE_LO, x, g - 0.2, z, 0, x, 0, 2.2, 0.5, 1.6, C(0xf4f8fc));
+    } else if (style === 'jade') {
+      for (const [x, z, k] of [[-2.6, 0.8, 0], [2.4, 0.6, 1], [-3.8, 2.2, 2], [3.4, 2.6, 3], [0, -0.2, 4]]) {
+        for (let j = 0; j < 3; j++) F.geo('lamp', CRYSTAL_GEO, x + (j - 1) * 0.25, g + 0.4 + j * 0.15, z, 0.2 * j, k, 0.3, 0.8 + j * 0.25, 2.0 - j * 0.3, 0.8 + j * 0.25, C(0x3aff9a));
+      }
+    } else if (style === 'mist') {
+      for (const [x, z] of [[-4.5, 2.5], [4.6, 2.2]]) ctx.trees.push({ x: F.world(x, z)[0], z: F.world(x, z)[1], kind: 'bamboo', s: 1.1 });
+      for (const sx of [-1, 1]) {
+        F.box('timber', sx * 2.6, g + 1.2, 1.4, 0.1, 2.4, 0.1, C(0x3e332b));
+        F.geo('lamp', LANTERN_GEO, sx * 2.6, g + 2.3, 1.55, 0, 0, 0, 0.36, 0.42, 0.36, C(0xff5a3a));
+      }
+    } else if (style === 'serpent') {
+      for (const [x, z, k] of [[-3, 2, 0], [2.6, 2.6, 1], [0.5, 4, 2]]) F.geo('plaster', SPHERE_LO, x, g, z, 0, k, 0, 0.3, 0.18, 0.3, C([0xf0d8c8, 0xe8b8a8, 0xd8e0f0][k]));
+      F.box('planks', 4.6, g + 0.3, 3.2, 1.2, 0.5, 3.0, C(0x6a5040), 0.2, 0.6, 0.5);
+      F.collideCircle(4.6, 3.2, 1.2, g - 1, g + 0.8);
+    }
+  }
+
+  // Torches either side of the way in, lit at night by the lantern lights.
+  for (const sx of [-1, 1]) {
+    const tx = sx * (style === 'trapdoor' ? 1.8 : 2.9);
+    const tz = style === 'trapdoor' ? 1.2 : 0.9;
+    const ty = F.ground(tx, tz);
+    F.box('timber', tx, ty + 1.1, tz, 0.14, 2.2, 0.14, TINT.beam);
+    F.geo('metal', BOWL_GEO, tx, ty + 2.25, tz, 0, 0, 0, 0.25, 0.4, 0.25);
+    F.geo('fire', FLAME_GEO, tx, ty + 2.55, tz, 0, 0, 0, 0.6, 0.75, 0.6);
+    F.collideCircle(tx, tz, 0.15, ty - 1, ty + 2.4);
+    const [hx, hz] = F.world(tx, tz);
+    ctx.world.lampHeads.push(new THREE.Vector3(hx, ty + 2.55, hz));
+  }
+  // A sign of crossed swords.
+  const py = F.ground(-2.2, 2.6);
+  F.box('timber', -2.2, py + 0.9, 2.6, 0.14, 1.8, 0.14, TINT.beam);
+  F.box('planks', -2.2, py + 1.65, 2.66, 0.95, 0.6, 0.06, TINT.door);
+  for (const sz of [-1, 1]) F.box('metal', -2.2, py + 1.65, 2.71, 0.05, 0.7, 0.02, IRON, 0, 0, sz * 0.75);
+  F.collideCircle(-2.2, 2.6, 0.2, py - 1, py + 2);
+  // The beacon: a tall pole with a red pennant and a lamp at its top.
+  const by = F.ground(3.4, 2.6);
+  F.box('timber', 3.4, by + 4.5, 2.6, 0.2, 9, 0.2, TINT.beam);
+  F.box('plainCloth', 3.4 + 1.1, by + 7.9, 2.6, 2.2, 1.0, 0.04, C(0xc0282a));
+  F.box('plainCloth', 3.4 + 2.5, by + 7.95, 2.6, 0.8, 0.5, 0.04, C(0xc0282a), 0, 0, 0.1);
+  F.box('lamp', 3.4, by + 9.2, 2.6, 0.45, 0.6, 0.45, C(0xff6040));
+  F.box('metal', 3.4, by + 9.55, 2.6, 0.6, 0.08, 0.6, IRON);
+  F.collideCircle(3.4, 2.6, 0.2, by - 1, by + 9.5);
+  const [lx, lz] = F.world(3.4, 2.6);
+  ctx.world.lampHeads.push(new THREE.Vector3(lx, by + 9.2, lz));
+
+  const doorAt = style === 'trapdoor' ? 1.0 : 1.7;
+  const [dx, dz] = F.world(0, doorAt);
+  const [ox, oz] = F.world(0, doorAt + 1.6);
+  return { id: site.id, name: site.name, x: site.x, z: site.z, door: [dx, dz], out: [ox, oz, site.rot] };
 }
 
 // Houses outside the walls: the riverside quarter, the road east, the harbour town and Millbrook.
@@ -5630,6 +5769,7 @@ export class World {
     await progress('Raising the quarters…');
     // The quarters go in a batch of their own, in smaller chunks that are hidden
     // beyond the preset's view distance; their random stream is their own too.
+    for (const d of DUNGEON_SITES) ctx.occupy(rect(d.x, d.z, 8, 8, d.rot));
     const dctx = Object.create(ctx);
     this.districtBatch = new Batch(UV_SCALES, 160);
     dctx.batch = this.districtBatch;
@@ -5642,6 +5782,8 @@ export class World {
     this._vegetation(ctx, rng, q);
     this._boulders(ctx, mulberry32(1337));
     this.mine = buildMineEntrance(ctx);
+    // Every way down, the mine's included: { id, name, door, out }.
+    this.dungeonDoors = [{ id: 'mine', ...this.mine }, ...DUNGEON_SITES.map((d) => buildDungeonMouth(ctx, d))];
 
     await progress('Sowing the meadows…');
     this._flags(ctx);

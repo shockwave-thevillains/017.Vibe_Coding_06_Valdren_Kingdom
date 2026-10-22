@@ -11,7 +11,7 @@ import { Lantern } from './lantern.js';
 import { Sword } from './gear.js';
 import { Combat, MAX_HEALTH } from './combat.js';
 import { Rasengan } from './rasengan.js';
-import { Dungeon } from './dungeon.js';
+import { Dungeons, DUNGEONS } from './dungeon.js';
 import { Quests, CASES, SHOPS } from './quests.js';
 import { Music } from './music.js';
 import { Dialogue } from './dialogue.js';
@@ -198,7 +198,7 @@ async function boot() {
   // Its sounds play through the music's audio context (once Begin has started it).
   rasengan.audio = () => (music.ctx && music.noise ? { ctx: music.ctx, noise: music.noise } : null);
   // The Gloomhollow Mine: built the first time the traveller goes down.
-  const dungeon = new Dungeon(world, quality);
+  const dungeon = new Dungeons(world, quality);
   dungeon.audio = rasengan.audio;
   combat.foes = dungeon;
   rasengan.foes = dungeon;
@@ -236,16 +236,19 @@ async function boot() {
   const progress = new Progress();
   let saveWarned = false;
   let mark = null; // { x, z }: the spot the traveller has marked on the map
-  let underground = false; // in the mine
+  let underground = false; // in a dungeon
+  // The way down into the dungeon the traveller is in (or last went into).
+  const doorOf = (id) => world.dungeonDoors.find((d) => d.id === id) || world.dungeonDoors[0];
+  const hereDoor = () => doorOf(dungeon.current.id);
 
   function snapshot() {
     const visited = {};
     for (const [id, set] of dialogue.visited) visited[id] = [...set];
     return {
       time: world.timeOfDay,
-      // In the mine, the journey is saved at its way in.
+      // In a dungeon, the journey is saved at its way in.
       player: underground
-        ? { x: world.mine.out[0], z: world.mine.out[1], heading: world.mine.out[2], health: Math.round(combat.health) }
+        ? { x: hereDoor().out[0], z: hereDoor().out[1], heading: hereDoor().out[2], health: Math.round(combat.health) }
         : { x: player.position.x, z: player.position.z, heading: player.heading, health: Math.round(combat.health) },
       flags: [...flags],
       lore: [...lore.found],
@@ -460,10 +463,13 @@ async function boot() {
     enter('journal');
   }
 
-  // Where to go: the mine and the guild, then every seller's own spot.
+  // Where to go: the dungeons and the guild, then every seller's own spot.
   function shopPlaces() {
     const out = [];
-    if (world.mine) out.push({ id: 'mine', x: world.mine.door[0], z: world.mine.door[1], icon: '⛏️', name: world.mine.name, where: 'North-west hills, west of the castle road', sells: 'Dungeon: monsters that drop crowns', place: true });
+    for (const def of DUNGEONS) {
+      const door = world.dungeonDoors.find((d) => d.id === def.id);
+      if (door) out.push({ id: `dungeon:${def.id}`, x: door.door[0], z: door.door[1], icon: def.icon, name: def.name, where: def.where, sells: `Dungeon: ${def.about}`, place: true, dungeon: true });
+    }
     if (world.guild) out.push({ id: 'guild', x: world.guild.board[0], z: world.guild.board[1], icon: '🛡️', name: world.guild.name, where: 'West of the market', sells: 'Bounties for catching wrongdoers', place: true });
     for (const [id, shop] of Object.entries(SHOPS)) {
       const npc = npcs.byId.get(id);
@@ -475,8 +481,8 @@ async function boot() {
 
   function mapView() {
     const metPeople = npcs.list.filter((n) => flags.has(`met_${n.id}`) && n.mood !== 'gone');
-    // Below ground, the map shows where the mine's way in is.
-    const at = underground ? { x: world.mine.door[0], z: world.mine.door[1] } : player.position;
+    // Below ground, the map shows where the dungeon's way in is.
+    const at = underground ? { x: hereDoor().door[0], z: hereDoor().door[1] } : player.position;
     return {
       x: at.x,
       z: at.z,
@@ -626,7 +632,7 @@ async function boot() {
     else if (reachable && reachable.balloon) boardBalloon();
     else if (reachable && reachable.bed) sleep();
     else if (reachable && reachable.captive) bindCaptive(reachable.captive);
-    else if (reachable && reachable.mine) enterMine();
+    else if (reachable && reachable.door) enterDungeon(reachable.door.id);
     else if (reachable && reachable.exit) leaveMine();
     else if (reachable && reachable.chest) openChest();
     else if (balloons.riding) ui.toast('Hold on to the basket. The meadow is a long way down.');
@@ -793,12 +799,12 @@ async function boot() {
     post.setScene(target);
   }
 
-  let mineVisits = 0;
-  async function enterMine() {
+  const visits = new Map();
+  async function enterDungeon(id = 'mine') {
     if (mode !== 'playing' || underground) return;
     setMode('sleeping');
     await ui.fade(true, 'You climb down into the dark…');
-    dungeon.build();
+    const place = dungeon.select(id);
     const s = dungeon.reset();
     dungeon.active = true;
     underground = true;
@@ -812,20 +818,22 @@ async function boot() {
     await wait(500);
     await ui.fade(false);
     setMode('playing');
-    mineVisits++;
+    const n = (visits.get(id) || 0) + 1;
+    visits.set(id, n);
     const dark = lantern.on ? '' : ` It is dark down here: ${input.touchMode ? 'tap the lantern button' : 'press F'} for your lantern.`;
-    ui.toast(mineVisits === 1
-      ? `The Gloomhollow Mine. Rats, spiders, slimes and goblins lurk below, and a cave troll in the deepest hall. Every monster you defeat drops crowns.${dark}`
-      : `Back in the Gloomhollow Mine. The monsters have crept back in.${dark}`, 6500);
+    ui.toast(n === 1
+      ? `${place.name}. ${place.def.about} Every monster you defeat drops crowns.${dark}`
+      : `Back in ${place.name}. The monsters have crept back in.${dark}`, 6500);
   }
+  const enterMine = () => enterDungeon('mine');
 
-  // Back up at the mine's way in, at once (also when knocked out below).
+  // Back up at the dungeon's way in, at once (also when knocked out below).
   function surface() {
     dungeon.active = false;
     underground = false;
     carryTo(scene);
     ui.setBoss(null);
-    const [x, z, heading] = world.mine.out;
+    const [x, z, heading] = hereDoor().out;
     player.teleport(x, z, heading);
     follow.yaw = heading + Math.PI;
     follow.update(0, player.position, true);
@@ -859,7 +867,7 @@ async function boot() {
   let lootShown = false;
   dungeon.onLoot = (monster, coins) => {
     quests.addCoins(coins);
-    if (monster.spec.boss) ui.toast(`The cave troll falls! +${coins} crowns. The chest behind him is yours to open.`, 5000);
+    if (monster.spec.boss) ui.toast(`The ${monster.name.toLowerCase()} falls! +${coins} crowns. The chest behind is yours to open.`, 5000);
     else if (!lootShown) {
       lootShown = true;
       ui.toast(`${monster.name} defeated: +${coins} crowns!`, 2600);
@@ -872,7 +880,7 @@ async function boot() {
     if (!r) return;
     if (r.coins) {
       quests.addCoins(r.coins);
-      ui.toast(`The miners' silver! +${r.coins} crowns.`, 4000);
+      ui.toast(`${r.text} +${r.coins} crowns.`, 4000);
       saveNow();
     } else {
       ui.toast(r.text, 3000);
@@ -907,7 +915,7 @@ async function boot() {
     music.hush(false);
     setMode('playing');
     ui.toast(below
-      ? 'You wake in your cottage, sore all over. Someone must have dragged you out of the mine.'
+      ? `You wake in your cottage, sore all over. Someone must have dragged you out of ${dungeon.current.name}.`
       : 'You wake in your cottage, sore all over. Whoever beat you is long gone.', 4500);
   }
 
@@ -1063,9 +1071,9 @@ async function boot() {
       const d = Math.hypot(b.x - p.x, b.z - p.z);
       if (d < BOARD_RANGE) options.push({ d, r: { balloon: true } });
     }
-    if (world.mine) {
-      const d = Math.hypot(world.mine.door[0] - p.x, world.mine.door[1] - p.z);
-      if (d < 2.6) options.push({ d, r: { mine: true } });
+    for (const door of world.dungeonDoors) {
+      const d = Math.hypot(door.door[0] - p.x, door.door[1] - p.z);
+      if (d < 2.6) options.push({ d, r: { door } });
     }
     // A beaten criminal on their knees, waiting to be bound.
     for (const n of npcs.list) {
@@ -1270,8 +1278,8 @@ async function boot() {
       else if (reachable && reachable.entry) ui.setPrompt(reachable.entry.title, input.touchMode, lore.kindOf(reachable.entry).verb);
       else if (reachable && reachable.animal) ui.setPrompt(animals.label(reachable.animal), input.touchMode, 'Pet');
       else if (reachable && reachable.captive) ui.setPrompt(reachable.captive.name, input.touchMode, 'Bind');
-      else if (reachable && reachable.mine) ui.setPrompt('the Gloomhollow Mine', input.touchMode, 'Enter');
-      else if (reachable && reachable.exit) ui.setPrompt('the mine', input.touchMode, 'Climb out of');
+      else if (reachable && reachable.door) ui.setPrompt(reachable.door.name, input.touchMode, 'Enter');
+      else if (reachable && reachable.exit) ui.setPrompt(dungeon.current.name, input.touchMode, 'Climb out of');
       else if (reachable && reachable.chest) ui.setPrompt('the chest', input.touchMode, 'Open');
       else ui.setPrompt(reachable ? reachable.npc.name : null, input.touchMode);
       if (!underground) world.update(dt, player.position, camera);
@@ -1331,7 +1339,7 @@ async function boot() {
   ui.setReady(saved ? `Saved journey found: ${lore.found.length} of ${lore.total} discoveries.` : null, progress.available);
 
   // Handy from the browser console while developing.
-  window.valdren = { THREE, renderer, post, scene, camera, world, player, lantern, setLantern, sword, combat, rasengan, dungeon, enterMine, leaveMine, quests, setFlying, music, sleep, follow, input, ui, npcs, animals, balloons, boats, dragon, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
+  window.valdren = { THREE, renderer, post, scene, camera, world, player, lantern, setLantern, sword, combat, rasengan, dungeon, enterMine, enterDungeon, leaveMine, quests, setFlying, music, sleep, follow, input, ui, npcs, animals, balloons, boats, dragon, dialogue, flags, lore, journal, reader, progress, saveNow, setQuality, get quality() { return current; } };
 }
 
 boot().catch((err) => {

@@ -561,13 +561,20 @@ export class UI {
       g.setTransform(1, 0, 0, 1, 0, 0);
       const cy = Math.cos(view.yaw);
       const sy = Math.sin(view.yaw);
-      const size = 16 * dpr;
       for (const shop of view.shops) {
         const dx = (shop.x - view.x) * scale;
         const dz = (shop.z - view.z) * scale;
         const sx = r + dx * cy - dz * sy;
         const szz = r + dx * sy + dz * cy;
         if (Math.hypot(sx - r, szz - r) > r - 9 * dpr) continue;
+        // Dungeons stand out: bigger, on a red disc.
+        const size = (shop.dungeon ? 20 : 16) * dpr;
+        if (shop.dungeon) {
+          g.fillStyle = 'rgba(176, 32, 28, 0.85)';
+          g.beginPath();
+          g.arc(sx, szz, size * 0.62, 0, Math.PI * 2);
+          g.fill();
+        }
         g.drawImage(this._iconSprite(shop.icon), sx - size / 2, szz - size / 2, size, size);
       }
       g.restore();
@@ -682,7 +689,11 @@ export class UI {
     if (view.home && inView(view.home.x, view.home.z)) mark('home', view.home.x, view.home.z, null, view.home.name).title = view.home.name;
     for (const f of view.finds) if (inView(f.x, f.z)) mark('dot find', f.x, f.z).title = f.title;
     for (const p of view.people) if (inView(p.x, p.z)) mark('dot person', p.x, p.z, null, roomy ? p.name : null).title = p.name;
-    for (const shop of view.shops || []) if (inView(shop.x, shop.z)) mark('shop', shop.x, shop.z, shop.icon, roomy ? shop.name : null).title = `${shop.name}: ${shop.sells}`;
+    for (const shop of view.shops || []) {
+      if (!inView(shop.x, shop.z)) continue;
+      // Dungeons are always named, however small the map.
+      mark(shop.dungeon ? 'shop dungeon' : 'shop', shop.x, shop.z, shop.icon, roomy || shop.dungeon ? shop.name : null).title = `${shop.name}: ${shop.sells}`;
+    }
     if (view.mark && inView(view.mark.x, view.mark.z)) mark('pin', view.mark.x, view.mark.z, null, 'Your mark');
     const you = mark('you', clamp(view.x, V.x - V.half, V.x + V.half), clamp(view.z, V.z - V.half, V.z + V.half));
     // Bearing of the facing direction (north = -z, east = +x).
@@ -700,7 +711,7 @@ export class UI {
       const btn = document.createElement('button');
       btn.type = 'button';
       const marked = view.mark && Math.hypot(view.mark.x - shop.x, view.mark.z - shop.z) < 1;
-      btn.className = marked ? 'marked' : '';
+      btn.className = `${marked ? 'marked' : ''}${shop.dungeon ? ' dungeon' : ''}`;
       const icon = Object.assign(document.createElement('span'), { className: 'pl-icon', textContent: shop.icon });
       icon.setAttribute('aria-hidden', 'true');
       const text = document.createElement('span');

@@ -1234,12 +1234,46 @@ ul.rumours li {
   top: 4px;
 }
 
+/* The dungeons: red, bigger, always named. */
+.mk.shop.dungeon {
+  width: 28px;
+  height: 28px;
+  background: #b0201c;
+  box-shadow: 0 0 0 2px #f6e7b0, 0 0 10px rgba(176, 32, 28, 0.8);
+  font-size: 16px;
+  line-height: 28px;
+  z-index: 2;
+}
+
+.mk.shop.dungeon .name {
+  left: 32px;
+  top: 6px;
+  color: #7a1210;
+  font-weight: 700;
+}
+
+#map-places button.dungeon .pl-icon {
+  background: #b0201c;
+  box-shadow: 0 0 0 2px #f6e7b0;
+}
+
 .key.food {
   width: auto;
   height: auto;
   border: none;
   border-radius: 0;
   font-size: 13px;
+}
+
+.key.dungeon {
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: #b0201c;
+  font-size: 10px;
+  line-height: 18px;
+  text-align: center;
 }
 
 @media (max-width: 760px) {
