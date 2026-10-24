@@ -3,7 +3,7 @@
  * joystick and look area, and the on-screen buttons. Everything is reduced to
  * a movement vector, accumulated look/zoom deltas, and named action events.
  *
- * Events emitted: interact, journal, map, lantern, jump, fly, attack, sword, rasengan, chidori, pause,
+ * Events emitted: interact, journal, map, lantern, jump, fly, attack, sword, rasengan, chidori, inspect, pause,
  * debug, lockchange, lockerror, touchmode.
  */
 
@@ -29,6 +29,7 @@ const ACTION_KEYS = {
   KeyR: 'sword',
   KeyV: 'rasengan',
   KeyX: 'chidori',
+  KeyT: 'inspect',
   Escape: 'pause',
   Backquote: 'debug',
   F3: 'debug',

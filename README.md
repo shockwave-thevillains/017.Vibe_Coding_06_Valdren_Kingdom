@@ -19,8 +19,14 @@ generated in code at load time; the project ships no art assets.
 > night sky, and adventuring: jumping and flying, fist and sword fights, marks
 > on the map with a pointer to follow, market shops, bounties from the
 > Wardens' Guild for catching wrongdoers, and the Gloomhollow Mine, a dungeon
-> full of monsters that pay out in crowns. The kingdom has no religious
-> buildings or symbols, so it sits comfortably with every faith.
+> full of monsters that pay out in crowns. The latest expansion turned the
+> woods round the town into six quarters of their own (a Viking hold, the
+> slums of Mudwick, Japanese and Chinese towns, a desert bazaar and a lakeside
+> town: about 1,400 buildings where there were about 130), added a royal palace
+> with a banquet hall and the King's bedchamber, seven dungeons with monsters of
+> their own, the Chidori, and wanted criminals to find, recognise and hand
+> over to the guild. The kingdom has no religious buildings or symbols, so it
+> sits comfortably with every faith.
 
 ## The kingdom
 
@@ -66,6 +72,40 @@ generated in code at load time; the project ships no art assets.
   Millstone***, an inn you can walk into.
 - **Dragon's Peak** towers over the north-western mountains, with the lair of
   **Old Ember**, the dragon, on a ledge high on its flank.
+- **The Royal Palace** north of the castle, joined to it by a widened curtain
+  wall: a great **Banquet Hall** with a long table, a high table and a gallery,
+  the **King's Bedchamber** (a canopied bed, wardrobes, a hearth), the royal
+  **kitchen** (whose cook sells the King's leftovers), the **library** with its
+  archivist, and the **council chamber**. Every room can be walked into.
+
+### The quarters
+
+The woods that ringed the town are now six quarters, each built in its own
+style, with streets, lamps, gardens, eating houses and people of its own. All
+are named on the map.
+
+- **Hrafnvik**, the Viking hold (west): a palisade with watchtowers, turf-roofed
+  longhouses round a ring road, the **Mead Hall** you can walk into, boat
+  sheds, longships drawn up on the river bank, fish racks and torches.
+- **Mudwick**, the slums (west, along the river): crooked shacks and leaning
+  tenements of patched boards and sagging roofs, junk heaps, washing lines,
+  fire barrels, and ***The Leaky Bucket***, an alehouse you can walk into. A
+  trapdoor by the river leads down to Red Garrick's cellars.
+- **Sakuragawa**, the Japanese town (south-west): a grid of streets lined with
+  machiya town houses and white-walled storehouses, farmhouses with thick
+  roofs, a public bathhouse, **Haru's Teahouse** (walk in), a red bridge, a
+  stroll garden and a white-walled castle keep with curved roofs.
+- **The Jade Lantern Quarter**, the Chinese town (north-east): a paved axis
+  through a ceremonial gateway and the **drum tower** to the magistrate's great
+  hall, courtyard houses, shops with upturned eaves, pavilions, a garden with a
+  moon gate, red lanterns, and **The Jade Lantern** eating house (walk in).
+- **The Saffron Bazaar**, the desert quarter (south-west, beyond the river):
+  flat-roofed mud-brick houses, striped awnings over the long bazaar street,
+  palms, and the **Caravanserai**, an inn round a courtyard.
+- **Costa Mirra**, the lakeside town (east, on Mirrormere): whitewashed villas
+  with tiled roofs and blue shutters climbing from a promenade, a piazza with a
+  fountain and a loggia, cypresses, and ***The Blue Shutter***, a taverna you
+  can walk into.
 
 ## The people
 
@@ -186,6 +226,13 @@ ends the conversation.
   scabbard for it and comes out again after; a lit lantern moves to your other
   hand. Children are too quick for it, and guards fine you for using it on
   honest folk, as for any blow.
+- **Chidori:** press `X` (or middle-click, or the lightning button on a phone).
+  Lightning crackles and chirps in your right hand for half a second, then you
+  dash about eight metres straight through whoever is in front of you: 75
+  damage to the one you aim at, 40 to anyone else the dash passes through, and
+  the lightning leaps on to up to three more within six metres (24 each). Its
+  cooldown (5 seconds) is its own, so it is ready while the Rasengan is still
+  gathering strength, and the other way round: use them one after the other.
 - **Mark the map:** open the map (`M`) and click or tap anywhere to set your
   mark, a red pin. A pointer then shows the way on screen, with the distance
   (at the edge of the screen when the spot is out of view), and the mark rides
@@ -196,7 +243,7 @@ ends the conversation.
   **Bag** page of the journal, where you eat or use it. Food heals.
 - **Where to eat and shop:** every seller is marked with a little icon on the
   map and the minimap, and the full map (`M`) lists them all under **Where to
-  go** (with the Gloomhollow Mine and the Wardens' Guild at the top); pick one
+  go** (with the dungeons, the Wardens' Guild and the wanted notices at the top); pick one
   and it becomes your mark, with the red pointer leading you there.
 
   | Where | Who | Sells |
@@ -210,6 +257,13 @@ ends the conversation.
   | North-west of the market | Brannoc's Forge | the steel sword, a lucky horseshoe |
   | Aldra's Haven | Haddock's Fish Stall (Dob) | grilled perch, smoked eel |
   | Millbrook | The Millstone (inn, Gwen) | mutton stew, mutton pie, ale |
+  | Hrafnvik | The Mead Hall (Sigrun) | mead, roast boar, skyr |
+  | Sakuragawa | Haru's Teahouse | green tea, rice balls, udon, dango |
+  | Jade Lantern Quarter | The Jade Lantern (Mei) | dumplings, noodles, mooncakes, jasmine tea |
+  | Saffron Bazaar | The Caravanserai (Tariq) | flatbread, lamb wraps, dates, sherbet |
+  | Costa Mirra | The Blue Shutter (Lucia) | olives, fish stew, lemon cake, wine |
+  | Mudwick | The Leaky Bucket (Old Nan) | gruel, bread, ale |
+  | Royal Palace | The Royal Kitchen (Mistress Bramble) | venison pie, pastries, honey cake, wine |
 - **The Wardens' Guild** has its house on the street west of the market, with a
   painted sign and a notice board at the door. Its guildmaster, Edric Vane,
   offers three bounties, one after another: a cutpurse at the market (25
@@ -221,15 +275,65 @@ ends the conversation.
   `E` to **bind** them, and lead them back to the guildmaster (the guild is
   marked on your map) to be paid. Accuse the wrong person and they just put you
   right. The **Bounties** page of the journal keeps each case and its clues.
+- **Wanted criminals.** Five more faces are on the guild's **wanted notices**
+  from the start, each in one of the quarters, each with a lookalike or two
+  about:
 
-## The Gloomhollow Mine
+  | Notice | Last seen | Description | Bounty |
+  | --- | --- | --- | --- |
+  | The Bathhouse Pickpocket | the bathhouse queue, Sakuragawa | a young woman with black hair, a blue cowl | 30 |
+  | The False-Jade Forger | by the drum tower, Jade Lantern Quarter | a man with a short black beard, a black hat, a scar | 45 |
+  | Red Garrick's Cutthroat | the main lane, Mudwick | big, a full black beard, a red cowl | 60 |
+  | The Shield Thief of Hrafnvik | the road to the boat sheds, Hrafnvik | big, a full blond beard, a green cloak | 50 |
+  | The Saffron Swindler | the bazaar street, Saffron Bazaar | a man with a short black beard, a yellow cowl | 35 |
 
-An old silver mine in the hills north-west of the town (on the map, a short
-walk west of the castle road, about 230 m north-west of where the journey
-begins) that monsters have taken over. To find it, open the map (`M`) and pick
-**Gloomhollow Mine** at the top of the list: the red pointer leads you there. Its way in is a
+  **Searching:** each notice in the journal (**Bounties**) has a **Mark where
+  last seen** button, and the full map shows the spots (📜) and lists them at
+  the top of **Where to go**. **Recognising:** walk up to someone and press `T`
+  (or tap **Look** on a phone) to look them over. A card lists their looks (man
+  or woman, age, build, hair, beard, headwear, cloak, scars) and checks them,
+  detail by detail, against every description you know: the wanted notices
+  and what your witnesses told you. A lookalike fits some details and not
+  others ("Close, but not quite"); the culprit fits every one, and is then
+  **spotted**: a red **WANTED** tag rides over their name, they show red on the
+  minimap, and the journal names them. Talk to them and name them to their
+  face; they run or fight, so beat them until they yield and bind them (`E`).
+  **Handing over:** once someone is bound, a **golden pointer** with the
+  distance ("Wardens' Guild · 580 m") leads to the guildmaster, on screen, on
+  the compass, the minimap and the map, whatever else you had marked; at the
+  guild it tells you whom to talk to. Edric Vane pays the bounty, and the
+  pointer goes back to your own mark.
+
+## The dungeons
+
+Seven dungeons, each with its own caves, light and monsters, and a boss
+guarding a chest. They are marked on the full map and the minimap in **red**,
+always named, and listed at the top of **Where to go** on the map: pick one and
+the pointer leads you there. Stand at the way in and press `E` (**Enter**).
+
+| Dungeon | Where | Monsters | Boss |
+| --- | --- | --- | --- |
+| ⛏️ Gloomhollow Mine | north-west hills, west of the castle road | giant rats, cave spiders, slimes, goblins | Cave troll |
+| ❄️ Frostfang Cavern | under the western peaks, beyond Hrafnvik | frost bats, ice wolves, ice slimes | Frost giant |
+| 🦂 The Sunken Vault | half buried in sand, west of the Saffron Bazaar | giant scorpions, jackals, sand slimes | Sand golem |
+| 💎 The Jade Hollow | the hills north of the Jade Lantern Quarter | crystal beetles, cave bats, jade slimes | Jade golem |
+| 🎋 The Mistveil Grotto | up the river, west of Sakuragawa | ronin, giant centipedes, mist wolves | Ronin warlord |
+| 🦀 The Serpent Grotto | the north-east shore of Mirrormere | giant crabs, cave serpents, brine slimes | Crab queen |
+| 🗡️ Red Garrick's Cellars | under Mudwick, a trapdoor by the river | thugs, cutthroats, guard dogs, rats | Red Garrick |
+
+Each looks its part: icicles, ice crystals and drifts of snow in cold blue light
+in Frostfang, sandstone columns and drifting sand in the Vault, glowing jade
+crystals in the Jade Hollow, bamboo, paper lanterns and mist in the Mistveil
+Grotto, tidal pools and shells in the Serpent Grotto, and barrels of stolen
+goods, dice tables and a strongroom in the cellars. The deeper dungeons hit harder and
+pay better; their bosses show a health bar at the top of the screen.
+
+### The Gloomhollow Mine
+
+An old silver mine in the hills north-west of the town (about 230 m north-west
+of where the journey begins) that monsters have taken over. Its way in is a
 timber-framed tunnel in a pile of rock, with torches either side, rails and an
-old ore cart; stand at it and press `E` (**Enter**).
+old ore cart.
 
 - **Inside** it is dark (light your lantern with `F`), lit only by wall
   torches. A tunnel leads from the entrance hall to a rats' nest; from there
@@ -298,6 +402,7 @@ offer three presets. Touch devices start on **Medium**, everything else on
 | People drawn within | 40 m | 60 m | 90 m |
 | Grass tufts around you | 2,500 | 6,000 | 18,000 |
 | Full-detail trees within | 40 m | 55 m | 75 m |
+| The quarters' buildings drawn within | 300 m | 420 m | 640 m |
 | Textures | 256 px | 256 px | 512 px |
 | Bloom (glowing lanterns, windows, sun) and vignette | off | off | on |
 | Shadows from your lantern's beam | off | off | on |
@@ -343,12 +448,14 @@ maps), on desktop and on phones, with WebGL 2.
 | Punch, swing the sword | Left click (while looking around) or `Q` | **Attack** button       |
 | Draw / sheathe the sword | `R`                 | **Sword** button                          |
 | Rasengan    | `V`, or right click (while looking around) | The blue swirl button          |
+| Chidori     | `X`, or middle click           | The lightning button                      |
+| Look someone over (wanted?) | `T` near them  | **Look** button (shows when someone is near) |
 | Bind a beaten culprit | `E` next to them        | **Interact** button                       |
 | Buy something | Ask a shopkeeper, then **Buy**  | The same                                  |
 | Mark the map | Click the full map             | Tap the full map                          |
 | Sleep       | `E` by the bed in your cottage | **Interact** button                       |
 | Ride the balloon | `E` by its basket on the meadow | **Interact** button                 |
-| Enter / leave the mine, open its chest | `E` at its way in, its steps, the chest | **Interact** button |
+| Enter / leave a dungeon, open its chest | `E` at its way in, its steps, the chest | **Interact** button |
 | Journal     | `J`                            | **Journal** button                        |
 | Map         | `M`, or click the minimap      | Tap the minimap                           |
 | Map: town / kingdom | The button on the full map | The button on the full map           |
@@ -635,9 +742,17 @@ src/post.js       bloom, tone mapping and vignette passes (High preset)
 src/lantern.js    the traveller's lantern: the prop, its beam and glow
 src/gear.js       the traveller's sword and scabbard
 src/combat.js     blows, the traveller's health, aiming at whoever is near
-src/dungeon.js    the Gloomhollow Mine: its caves, torches, monsters and loot
+src/districts.js  the six quarters: their bounds, roads and street layouts
+src/district-styles.js  each quarter's buildings (machiya, longhouses, shacks,
+                  courtyard houses, villas…) and landmarks
+src/district-kit.js     shared builders for them: curved and hipped roofs,
+                  lattices, arches, palisades, hulls
+src/dungeon.js    the seven dungeons: caves, light, monsters, bosses and loot
 src/rasengan.js   the Rasengan: the sphere, the lunge, the burst and its sound
-src/quests.js     purse, bag, shops, and the Wardens' Guild's bounties
+src/chidori.js    the Chidori: lightning in the hand, the dash, chains, sound
+src/quests.js     purse, bag, shops, the Wardens' Guild's cases and wanted
+                  notices, looking people over
+src/wanted.js     a person's looks in words, and how they fit a description
 src/music.js      the music: synthesised instruments and a tune generator
 src/dialogue.js   branching conversations: typewriter, replies, flags
 src/lore.js       discoveries and their glints, the reader, the journal, the save

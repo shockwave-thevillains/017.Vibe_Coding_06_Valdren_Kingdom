@@ -45,6 +45,7 @@ const GUARD_SIGHT = 26; // metres within which a guard sees a brawl
 const FINE = 5;         // crowns a guard fines the traveller for it
 const BIND_RANGE = 2.2;
 const MARK_REACHED = 6;   // metres from the mark at which it counts as reached
+const LOOK_RANGE = 7;     // metres within which someone can be looked over (T)
 
 /*
  * Graphics presets. Low turns shadows and lantern lights off and renders at one
@@ -230,7 +231,16 @@ async function boot() {
   quests.purse = (coins) => ui.setPurse(coins);
   journal.pages = {
     bag: (page, refresh) => quests.renderBag(page, refresh),
-    bounties: (page) => quests.renderBounties(page),
+    bounties: (page) => {
+      quests.touch = input.touchMode;
+      quests.renderBounties(page);
+    },
+  };
+  // A notice's button marks where its culprit was last seen.
+  quests.onMark = (spot, name) => {
+    mark = spot;
+    ui.toast(`Marked on your map: where ${name.replace(/^The /, 'the ')} was last seen. Follow the red pointer.`, 3500);
+    saveNow();
   };
   ui.setTouchMode(input.touchMode);
   ui.setDebugVisible(params.has('debug'));
@@ -240,6 +250,16 @@ async function boot() {
   const progress = new Progress();
   let saveWarned = false;
   let mark = null; // { x, z }: the spot the traveller has marked on the map
+  // Where the pointer leads: to the guildmaster while a captive is being led there,
+  // else to the traveller's mark.
+  const setMark = (m) => {
+    mark = m;
+  };
+  function pointer() {
+    const gm = quests.captive && npcs.byId.get('guildmaster');
+    if (gm) return { x: gm.position.x, z: gm.position.z, guide: true, label: 'Wardens\' Guild' };
+    return mark;
+  }
   let underground = false; // in a dungeon
   // The way down into the dungeon the traveller is in (or last went into).
   const doorOf = (id) => world.dungeonDoors.find((d) => d.id === id) || world.dungeonDoors[0];
@@ -377,6 +397,7 @@ async function boot() {
     if (mode !== 'playing') return;
     quests.prepareTalk(npc);
     if (!dialogue.start(npc)) return;
+    ui.hideInspect();
     talkingTo = npc;
     npc.talking = true;
     savedView.pitch = follow.pitch;
@@ -410,7 +431,8 @@ async function boot() {
     } else if (verb === 'handover') {
       const c = quests.handOver(arg);
       if (c) {
-        ui.toast(`+${c.bounty} crowns. ${c.title}: closed.`, 4000);
+        guideNoted = false;
+        afterTalk = `+${c.bounty} crowns. ${c.title}: closed.`;
         saveNow();
       }
     }
@@ -496,8 +518,8 @@ async function boot() {
       people: metPeople.map((n) => ({ x: n.position.x, z: n.position.z, name: n.name })),
       finds: lore.found.map((id) => lore.byId.get(id)).map((e) => ({ x: e.pos.x, z: e.pos.z, title: e.title })),
       home: world.home,
-      mark,
-      shops,
+      mark: pointer(),
+      shops: [...quests.searches, ...shops],
       touch: input.touchMode,
     };
   }
@@ -512,7 +534,8 @@ async function boot() {
   ui.onMark = (spot, name) => {
     mark = spot;
     if (mode === 'map') ui.showMap(mapView());
-    if (name) ui.toast(`Marked: ${name}. Close the map and follow the red pointer.`, 3000);
+    if (quests.captive) ui.toast(`Marked. Until ${quests.captive.name} is handed over, the pointer leads to the Wardens' Guild.`, 3500);
+    else if (name) ui.toast(`Marked: ${name}. Close the map and follow the red pointer.`, 3000);
     saveNow();
   };
 
@@ -813,17 +836,57 @@ async function boot() {
     ui.toast(paid ? `${guard.name} saw that and fines you ${paid} crown${paid === 1 ? '' : 's'}. Keep the peace!` : `${guard.name} saw that. Your purse is empty, so it's a warning this time.`, 3500);
   }
 
-  // A beaten criminal has their hands bound and follows the traveller from then on.
+  // A beaten criminal has their hands bound and follows the traveller from then on;
+  // the pointer leads to the guildmaster until they are handed over.
   function bindCaptive(npc) {
     quests.bind(npc);
-    let where = 'Lead them to the Wardens\' Guild';
-    if (!mark && world.guild) {
-      mark = { x: world.guild.door[0], z: world.guild.door[1] };
-      where += ' (marked on your map)';
-    }
-    ui.toast(`You bind ${npc.name}'s hands. ${where}.`, 4500);
+    guideNoted = false;
+    ui.toast(`You bind ${npc.name}'s hands. Lead them to the Wardens' Guild: follow the golden pointer to the guildmaster.`, 5000);
     saveNow();
   }
+
+  // Looking someone over: the nearest person in front, within a few strides.
+  function lookTarget() {
+    const p = player.position;
+    const fx = Math.sin(player.heading);
+    const fz = Math.cos(player.heading);
+    let best = null;
+    let bestScore = Infinity;
+    for (const n of npcs.list) {
+      if (n.mood === 'gone' || n.talking || !n.figure.root.visible) continue;
+      const dx = n.position.x - p.x;
+      const dz = n.position.z - p.z;
+      const d = Math.hypot(dx, dz);
+      if (d > LOOK_RANGE || Math.abs(n.position.y - p.y) > 2) continue;
+      const facing = d > 0.01 ? (dx * fx + dz * fz) / d : 1;
+      const score = d + (1 - facing) * 2.5;
+      if (score < bestScore) {
+        bestScore = score;
+        best = n;
+      }
+    }
+    return best;
+  }
+
+  let lookedAt = null;
+  input.on('inspect', () => {
+    if (mode !== 'playing' || underground) return;
+    const npc = lookTarget();
+    if (!npc) {
+      ui.toast(`No one close enough to look over. Walk up to someone and ${input.touchMode ? 'tap Look' : 'press T'}.`, 2600);
+      return;
+    }
+    const result = quests.inspect(npc);
+    lookedAt = npc;
+    ui.showInspect(npc, result);
+    if (result.found) {
+      if (result.first) npc.say(npc.mood === null ? 'What are you staring at?' : '…', 2.5);
+      ui.toast(result.first
+        ? `It's them: ${npc.name} fits ${result.found.title.replace(/^The /, 'the ')} in every detail! Talk to them and name them to their face.`
+        : `${npc.name}: ${result.found.title}.`, 5000);
+      saveNow();
+    }
+  });
 
   // ------------------------------------------------------------ the mine
 
@@ -1156,10 +1219,10 @@ async function boot() {
       z: player.position.z,
       heading: player.heading,
       yaw: follow.yaw,
-      people: npcs.list.filter((n) => n.figure.root.visible).map((n) => ({ x: n.position.x, z: n.position.z, met: flags.has(`met_${n.id}`), foe: n.mood === 'flee' || n.mood === 'fight' })),
+      people: npcs.list.filter((n) => n.figure.root.visible || n.tag).map((n) => ({ x: n.position.x, z: n.position.z, met: flags.has(`met_${n.id}`), foe: n.mood === 'flee' || n.mood === 'fight' || !!n.tag })),
       finds: lore.found.map((id) => lore.byId.get(id).pos),
       home: world.home,
-      mark,
+      mark: pointer(),
       shops,
     });
   }
@@ -1167,7 +1230,9 @@ async function boot() {
   // The pointer to the mark: over the spot when it is in view, else at the edge of the
   // screen pointing the way. Reaching the spot clears the mark.
   const markPoint = new THREE.Vector3();
+  let guideNoted = false;
   function updateMark() {
+    const mark = pointer();
     if (!mark || underground) {
       ui.updateWaypoint(null);
       ui.setCompassMark(null);
@@ -1177,8 +1242,14 @@ async function boot() {
     const dx = mark.x - p.x;
     const dz = mark.z - p.z;
     const distance = Math.hypot(dx, dz);
-    if (distance < MARK_REACHED && !player.flying) {
-      mark = null;
+    if (mark.guide) {
+      // At the guild: say who takes the captive.
+      if (distance < MARK_REACHED && !guideNoted) {
+        guideNoted = true;
+        ui.toast(`Talk to Edric Vane, the guildmaster, to hand ${quests.captive.name} over.`, 4000);
+      }
+    } else if (distance < MARK_REACHED && !player.flying) {
+      setMark(null);
       ui.updateWaypoint(null);
       ui.setCompassMark(null);
       ui.toast('You have reached your mark.', 2500);
@@ -1193,7 +1264,7 @@ async function boot() {
     let x = (markPoint.x * 0.5 + 0.5) * W;
     let y = (-markPoint.y * 0.5 + 0.5) * H;
     const behind = markPoint.z > 1;
-    const margin = 40;
+    const margin = mark.label ? 96 : 40; // room for the label beside the screen's edge
     const onScreen = !behind && x > margin && x < W - margin && y > margin + 40 && y < H - margin;
     let angle = 0;
     if (!onScreen) {
@@ -1210,7 +1281,7 @@ async function boot() {
       y = H / 2 + vy * k;
       angle = Math.atan2(vx, -vy);
     }
-    ui.updateWaypoint({ x, y, distance, onScreen, angle });
+    ui.updateWaypoint({ x, y, distance, onScreen, angle, label: mark.label || null });
   }
 
   // Once a session, a struggling device is pointed to the lighter presets.
@@ -1322,7 +1393,13 @@ async function boot() {
       else if (reachable && reachable.door) ui.setPrompt(reachable.door.name, input.touchMode, 'Enter');
       else if (reachable && reachable.exit) ui.setPrompt(dungeon.current.name, input.touchMode, 'Climb out of');
       else if (reachable && reachable.chest) ui.setPrompt('the chest', input.touchMode, 'Open');
-      else ui.setPrompt(reachable ? reachable.npc.name : null, input.touchMode);
+      else ui.setPrompt(reachable ? reachable.npc.name : null, input.touchMode, 'Talk to', !underground);
+      const near = underground ? null : lookTarget();
+      ui.setLook(!!near);
+      if (lookedAt && (lookedAt !== near || lookedAt.mood === 'gone')) {
+        lookedAt = null;
+        ui.hideInspect();
+      }
       if (!underground) world.update(dt, player.position, camera);
       ui.updateLabels(underground ? dungeon.labels(camera, window.innerWidth, window.innerHeight) : npcs.labels(camera, window.innerWidth, window.innerHeight, reachable && reachable.npc));
       updateHud(dt);

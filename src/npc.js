@@ -335,6 +335,7 @@ class NPC {
     this.health = this.maxHealth;
     this.blowDamage = def.blow || BLOW_DAMAGE;
     this.mood = null;
+    this.tag = null; // 'Wanted' once the traveller has spotted them as a culprit
     this.moodTimer = 0;
     this.sinceHurt = 99;
     this.saying = null;
@@ -840,7 +841,7 @@ export class NPCManager {
     for (const npc of this.list) {
       if (!npc.figure.root.visible || npc.talking) continue;
       const d = camera.position.distanceTo(npc.position);
-      const range = npc.saying ? SAY_RANGE : LABEL_RANGE;
+      const range = npc.saying || npc.tag ? SAY_RANGE : LABEL_RANGE;
       if (d > range) continue;
       const p = this._proj.set(npc.position.x, npc._visualY + npc.headHeight + 0.4 * npc.scale, npc.position.z).project(camera);
       if (p.z > 1 || p.z < -1 || Math.abs(p.x) > 1.1 || Math.abs(p.y) > 1.1) continue;
@@ -850,6 +851,7 @@ export class NPCManager {
         say: npc.saying,
         // A health bar once someone is hurt.
         health: npc.health < npc.maxHealth && npc.mood !== 'gone' ? npc.health / npc.maxHealth : null,
+        tag: npc.tag,
         x: (p.x * 0.5 + 0.5) * width,
         y: (-p.y * 0.5 + 0.5) * height,
         opacity: 1 - smoothstep(range - 5, range, d),

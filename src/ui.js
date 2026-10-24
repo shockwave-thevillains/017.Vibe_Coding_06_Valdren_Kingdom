@@ -74,6 +74,10 @@ export class UI {
     this.waypointArrow = this.waypointEl.querySelector('.wp-arrow');
     this._waypoint = '';
     this.compassMark = null;
+    this.inspectEl = $('inspect');
+    this.lookBtn = $('btn-look');
+    this._look = null;
+    this._inspectTimer = 0;
     // Clicking the full map sets the traveller's mark there, or clears it when clicked again.
     this.onMark = null;
     this.mapCanvas.addEventListener('click', (e) => this._clickMap(e));
@@ -252,6 +256,57 @@ export class UI {
     }
   }
 
+  // The touch Look button shows while someone is close enough to look over.
+  setLook(on) {
+    if (on === this._look) return;
+    this._look = on;
+    this.lookBtn.classList.toggle('near', on);
+  }
+
+  /*
+   * What the traveller sees looking someone over: their looks, then how they fit each
+   * description known (a wanted notice, or what a witness saw), detail by detail.
+   * result: from Quests.inspect.
+   */
+  showInspect(npc, result) {
+    const el = this.inspectEl;
+    const t = result.traits;
+    const make = (tag, cls, text) => Object.assign(document.createElement(tag), { className: cls, textContent: text });
+    const parts = [make('h4', '', `You look ${npc.name} over`), make('p', 'ins-role', npc.role)];
+    const looks = [t.sex === t.age ? t.sex : `${t.sex}, ${t.age}`, t.build === 'big' ? 'big-built' : null, t.hair, t.beard !== 'no beard' ? t.beard : null, t.head, t.cloak !== 'no cloak' ? t.cloak : null, t.scar !== 'no scar' ? t.scar : null].filter(Boolean);
+    parts.push(make('p', 'ins-looks', looks.join(' · ')));
+    if (!result.known) {
+      parts.push(make('p', 'ins-none', 'You have no description to compare them with yet. Read the wanted notices in your journal (Bounties), or take a case at the Wardens’ Guild.'));
+    } else if (!result.fits.length) {
+      parts.push(make('p', 'ins-none', 'They fit none of your descriptions.'));
+    }
+    for (const f of result.fits) {
+      const box = document.createElement('div');
+      box.className = `ins-fit${f.full ? ' full' : ''}`;
+      box.append(make('b', '', `${f.c.title}: ${f.hits} of ${f.total}`));
+      const ul = document.createElement('ul');
+      for (const r of f.rows) {
+        const li = make('li', r.ok ? 'ok' : 'no', r.ok ? r.want : `${r.want}? No: ${r.have}`);
+        li.prepend(make('span', 'tick', r.ok ? '✓ ' : '✗ '));
+        ul.append(li);
+      }
+      box.append(ul);
+      if (f.full) box.append(make('p', 'ins-verdict', result.found === f.c ? 'It’s them! Talk to them and name them to their face.' : 'Every detail fits.'));
+      else if (f.hits >= f.total - 1) box.append(make('p', 'ins-verdict near', 'Close, but not quite. A lookalike?'));
+      parts.push(box);
+    }
+    el.replaceChildren(...parts);
+    el.classList.toggle('found', !!result.found);
+    el.classList.remove('hidden');
+    clearTimeout(this._inspectTimer);
+    this._inspectTimer = setTimeout(() => this.hideInspect(), 12000);
+  }
+
+  hideInspect() {
+    clearTimeout(this._inspectTimer);
+    this.inspectEl.classList.add('hidden');
+  }
+
   // How ready the Chidori is (0..1), the same way.
   setChidori(ready) {
     const v = Math.round(ready * 40) / 40;
@@ -308,8 +363,8 @@ export class UI {
   }
 
   // "Talk to …" / "Read …" prompt for whatever is in reach (null hides it).
-  setPrompt(name, touch, verb = 'Talk to') {
-    const key = name ? `${touch ? 't' : 'k'}:${verb}:${name}` : null;
+  setPrompt(name, touch, verb = 'Talk to', look = false) {
+    const key = name ? `${touch ? 't' : 'k'}:${verb}:${name}:${look}` : null;
     if (key === this._prompt) return;
     this._prompt = key;
     this.interactBtn.classList.toggle('ready', !!name);
@@ -321,6 +376,7 @@ export class UI {
       this.promptEl.replaceChildren('Tap ', Object.assign(document.createElement('b'), { textContent: 'Interact' }), ` to ${verb.toLowerCase()} `, what);
     } else {
       this.promptEl.replaceChildren(Object.assign(document.createElement('kbd'), { textContent: 'E' }), ` ${verb} `, what);
+      if (look) this.promptEl.append(Object.assign(document.createElement('span'), { className: 'look-hint' }), Object.assign(document.createElement('kbd'), { textContent: 'T' }), ' Look closely');
     }
   }
 
@@ -342,7 +398,10 @@ export class UI {
         el._hp.append(el._bar);
         const name = document.createElement('span');
         name.textContent = l.text;
-        el.append(el._say, name, el._hp);
+        el._tag = document.createElement('b');
+        el._tag.className = 'tag';
+        el._tag.hidden = true;
+        el.append(el._say, el._tag, name, el._hp);
         this.labelsEl.append(el);
         this._labels.set(l.id, el);
       }
@@ -352,6 +411,12 @@ export class UI {
         el._sayText = l.say;
         el._say.textContent = l.say || '';
         el._say.hidden = !l.say;
+      }
+      if (el._tagText !== l.tag) {
+        el._tagText = l.tag;
+        el._tag.textContent = l.tag || '';
+        el._tag.hidden = !l.tag;
+        el.classList.toggle('wanted', !!l.tag);
       }
       el._hp.hidden = l.health === null || l.health === undefined;
       if (!el._hp.hidden) {
@@ -431,8 +496,10 @@ export class UI {
       return;
     }
     if (this._waypoint === '') el.classList.remove('hidden');
-    const text = w.distance >= 1000 ? `${(w.distance / 1000).toFixed(1)} km` : `${Math.round(w.distance)} m`;
+    const dist = w.distance >= 1000 ? `${(w.distance / 1000).toFixed(1)} km` : `${Math.round(w.distance)} m`;
+    const text = w.label ? `${w.label} · ${dist}` : dist;
     if (text !== this._waypoint) {
+      el.classList.toggle('guide', !!w.label);
       this._waypoint = text;
       this.waypointDist.textContent = text;
     }
@@ -706,9 +773,9 @@ export class UI {
     for (const shop of view.shops || []) {
       if (!inView(shop.x, shop.z)) continue;
       // Dungeons are always named, however small the map.
-      mark(shop.dungeon ? 'shop dungeon' : 'shop', shop.x, shop.z, shop.icon, roomy || shop.dungeon ? shop.name : null).title = `${shop.name}: ${shop.sells}`;
+      mark(shop.dungeon ? 'shop dungeon' : shop.wanted ? 'shop wanted' : 'shop', shop.x, shop.z, shop.icon, roomy || shop.dungeon || shop.wanted ? shop.name : null).title = `${shop.name}: ${shop.sells}`;
     }
-    if (view.mark && inView(view.mark.x, view.mark.z)) mark('pin', view.mark.x, view.mark.z, null, 'Your mark');
+    if (view.mark && inView(view.mark.x, view.mark.z)) mark('pin', view.mark.x, view.mark.z, null, view.mark.label || 'Your mark');
     const you = mark('you', clamp(view.x, V.x - V.half, V.x + V.half), clamp(view.z, V.z - V.half, V.z + V.half));
     // Bearing of the facing direction (north = -z, east = +x).
     you.style.transform = `translate(-50%, -50%) rotate(${Math.atan2(Math.sin(view.heading), -Math.cos(view.heading))}rad)`;
@@ -719,13 +786,13 @@ export class UI {
   // Beside the map: every place to eat or shop; picking one marks it.
   _placesList(view) {
     const items = [];
-    const sorted = [...(view.shops || [])].sort((a, b) => (!!b.place - !!a.place) || (!!b.food - !!a.food) || a.where.localeCompare(b.where));
+    const sorted = [...(view.shops || [])].sort((a, b) => (!!b.wanted - !!a.wanted) || (!!b.place - !!a.place) || (!!b.food - !!a.food) || a.where.localeCompare(b.where));
     for (const shop of sorted) {
       const li = document.createElement('li');
       const btn = document.createElement('button');
       btn.type = 'button';
       const marked = view.mark && Math.hypot(view.mark.x - shop.x, view.mark.z - shop.z) < 1;
-      btn.className = `${marked ? 'marked' : ''}${shop.dungeon ? ' dungeon' : ''}`;
+      btn.className = `${marked ? 'marked' : ''}${shop.dungeon ? ' dungeon' : ''}${shop.wanted ? ' wanted' : ''}`;
       const icon = Object.assign(document.createElement('span'), { className: 'pl-icon', textContent: shop.icon });
       icon.setAttribute('aria-hidden', 'true');
       const text = document.createElement('span');

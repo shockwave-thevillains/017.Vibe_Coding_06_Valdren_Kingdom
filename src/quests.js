@@ -11,7 +11,14 @@
  * bound (E) and led back to the guild for the reward. The state of every case lives
  * in the dialogue flags (see the guild section of data/npcs.json), so it is saved
  * with them; coins and the bag are saved here.
+ *
+ * Wanted notices are cases with no witness: the guild posts a description and where
+ * the culprit was last seen. Looking a stranger over (T) says how well they fit each
+ * description the traveller knows (see wanted.js); one who fits every detail is
+ * spotted, tagged as wanted over their head and on the minimap.
  */
+
+import { traitsOf, compare, describe } from './wanted.js';
 
 export const START_COINS = 30;
 const LAG_SECONDS = 2.5;   // a captive left this long far behind catches up out of sight
@@ -92,20 +99,55 @@ export const CASES = [
     at: { x: -2, z: 17 },
     brief: 'Purses are being cut at the market in broad daylight. Bartholomew the crier saw the thief make off.',
     clue: 'A skinny young man, no beard, a green hat with a red feather and a patched brown cloak.',
+    spec: { sex: 'a man', beard: 'no beard', head: 'a green hat', cloak: 'a brown cloak' },
   },
   {
     id: 'case2', title: 'The Smuggler of Aldra’s Haven', culprit: 'silas', witness: 'Nessa the fisherwoman', who: 'Nessa', place: 'the harbour at Aldra’s Haven', bounty: 40,
     at: { x: 362, z: 52 },
     brief: 'Barrels of Saltmere wine keep vanishing off the night boats. Nessa the fisherwoman is out before dawn.',
     clue: 'A young, clean-shaven dockhand in a grey cowl, with a scar right across his cheek.',
+    spec: { beard: 'no beard', head: 'a grey cowl', scar: 'a scar across the cheek' },
   },
   {
     id: 'case3', title: 'The Sheep Thief of Millbrook', culprit: 'dunstan', witness: 'Old Tom on the Millbrook green', who: 'Tom', place: 'Millbrook', bounty: 55,
     at: { x: 40, z: 371 },
     brief: 'Sheep are vanishing from Hob’s flock and being driven south through Millbrook. Old Tom sits on the green all day.',
     clue: 'A big man with a bushy red beard and a straw hat, carrying a sack that bleats.',
+    spec: { build: 'big', beard: 'a full red beard', head: 'a straw hat' },
+  },
+  // The wanted notices: posted from the start; at is where the culprit was last seen.
+  {
+    id: 'case4', wanted: true, title: 'The Bathhouse Pickpocket', culprit: 'suzu', place: 'Sakuragawa', bounty: 30,
+    at: { x: -238, z: 177 }, seen: 'in the queue outside the bathhouse in Sakuragawa',
+    brief: 'Purses vanish from the bathhouse queue in Sakuragawa, and their owners only notice once they are in the water.',
+    spec: { sex: 'a woman', age: 'young', hair: 'black hair', head: 'a blue cowl' },
+  },
+  {
+    id: 'case5', wanted: true, title: 'The False-Jade Forger', culprit: 'lofen', place: 'the Jade Lantern Quarter', bounty: 45,
+    at: { x: 372, z: -440 }, seen: 'on the lanes by the drum tower in the Jade Lantern Quarter',
+    brief: 'Someone sells green glass as mountain jade in the Jade Lantern Quarter. The magistrate wants him found.',
+    spec: { sex: 'a man', beard: 'a short black beard', head: 'a black hat', scar: 'a scar across the cheek' },
+  },
+  {
+    id: 'case6', wanted: true, title: 'Red Garrick’s Cutthroat', culprit: 'skeg', place: 'Mudwick', bounty: 60,
+    at: { x: -254, z: 53 }, seen: 'on the main lane of Mudwick, by the river',
+    brief: 'One of Red Garrick’s gang walks Mudwick by day and robs travellers by night. He fights hard.',
+    spec: { build: 'big', beard: 'a full black beard', head: 'a red cowl' },
+  },
+  {
+    id: 'case7', wanted: true, title: 'The Shield Thief of Hrafnvik', culprit: 'ulf', place: 'Hrafnvik', bounty: 50,
+    at: { x: -462, z: 45 }, seen: 'on the road down to the boat sheds in Hrafnvik',
+    brief: 'Painted shields keep vanishing from the boat sheds of Hrafnvik. The jarl suspects one of his own.',
+    spec: { build: 'big', beard: 'a full blond beard', cloak: 'a green cloak' },
+  },
+  {
+    id: 'case8', wanted: true, title: 'The Saffron Swindler', culprit: 'zafir', place: 'the Saffron Bazaar', bounty: 35,
+    at: { x: -272, z: 420 }, seen: 'on the long street of the Saffron Bazaar',
+    brief: 'Someone sells dyed sawdust as saffron in the bazaar, at half the honest price.',
+    spec: { sex: 'a man', beard: 'a short black beard', head: 'a yellow cowl' },
   },
 ];
+for (const c of CASES) if (c.wanted) c.clue = describe(c.spec);
 const CASE_BY_ID = new Map(CASES.map((c) => [c.id, c]));
 
 export class Quests {
@@ -116,6 +158,7 @@ export class Quests {
     this.bag = new Map(); // item id -> count
     this._lag = 0;
     this.touch = false; // the controls to name in hints
+    this.onMark = null; // marking where a culprit was last seen: (spot, name)
 
     // Hooks for what the rest of the game does: heal(amount) -> false at full health,
     // equip(item id), say(text), purse(coins), and onShopClose(reason).
@@ -148,11 +191,18 @@ export class Quests {
     for (const [id, n] of Object.entries((data && data.bag) || {})) if (ITEMS[id] && Number.isFinite(n) && n > 0) this.bag.set(id, Math.floor(n));
     this.equip(this.bag.has('steel') ? 'steel' : null);
     this.purse(this.coins);
+    // The wanted notices are on the board from the start.
+    for (const c of CASES) {
+      if (!c.wanted) continue;
+      this.flags.add(`${c.id}_open`);
+      this.flags.add(`${c.id}_clue`);
+    }
     // Culprits already handed over stay in the cells; one being led to the guild
     // follows the traveller again.
     for (const c of CASES) {
       const npc = this.npcs.byId.get(c.culprit);
       if (!npc) continue;
+      this._tag(npc);
       this.flags.delete(`${c.id}_here`);
       if (this.flags.has(`${c.id}_done`)) {
         npc.leave();
@@ -298,6 +348,42 @@ export class Quests {
     }
   }
 
+  // Looking someone over: their looks in words, and how they fit each description the
+  // traveller knows (a notice, or what a witness saw), best first. A culprit who fits
+  // every detail is spotted. Returns { traits, fits: [{ c, rows, hits, total, full }],
+  // found: the case if they were spotted, first: true the first time, known: how many
+  // descriptions the traveller has }.
+  inspect(npc) {
+    const traits = traitsOf(npc.def);
+    const known = CASES.filter((c) => this.flags.has(`${c.id}_clue`) && !this.flags.has(`${c.id}_done`));
+    const fits = known.map((c) => ({ c, ...compare(c.spec, traits) }))
+      .filter((f) => f.hits * 2 >= f.total)
+      .sort((a, b) => b.hits / b.total - a.hits / a.total || b.total - a.total);
+    const best = fits[0];
+    let found = null;
+    let first = false;
+    if (best && best.full && npc.criminal === best.c.id) {
+      found = best.c;
+      first = !this.flags.has(`${found.id}_known`);
+      this.flags.add(`${found.id}_known`);
+      this._tag(npc);
+    }
+    return { traits, fits: fits.slice(0, 2), found, first, known: known.length };
+  }
+
+  // The red tag over a spotted culprit's head, until they are in the cells.
+  _tag(npc) {
+    const c = this.caseOf(npc);
+    npc.tag = c && this.flags.has(`${c.id}_known`) && !this.flags.has(`${c.id}_done`) ? 'Wanted' : null;
+  }
+
+  // Where to search: every case taken and not yet closed, with the culprit still at
+  // large, at the spot they were last seen (for the map and its list).
+  get searches() {
+    return CASES.filter((c) => this.flags.has(`${c.id}_open`) && !this.flags.has(`${c.id}_done`) && !this.flags.has(`${c.id}_bound`))
+      .map((c) => ({ id: `case:${c.id}`, x: c.at.x, z: c.at.z, icon: '📜', name: c.title, where: c.place, sells: `Wanted: ${c.bounty} crowns`, wanted: true }));
+  }
+
   // Binds a culprit who has yielded. Returns the case.
   bind(npc) {
     const c = this.caseOf(npc);
@@ -313,6 +399,7 @@ export class Quests {
     const npc = this.npcs.byId.get(c.culprit);
     if (npc) npc.leave();
     this.flags.add(`${caseId}_done`);
+    if (npc) this._tag(npc);
     this.flags.delete(`${caseId}_bound`);
     this.flags.delete(`${caseId}_here`);
     this.addCoins(c.bounty);
@@ -394,36 +481,62 @@ export class Quests {
     page.append(ul);
   }
 
-  // The Bounties page: every case taken, what the witness said, and where it stands.
+  // The Bounties page: every case taken, what the witness said, and where it stands;
+  // then the wanted notices, with a button to mark where each culprit was last seen.
   renderBounties(page) {
     page.replaceChildren();
+    const look = this.touch ? 'the Look button' : 'T';
     page.append(Object.assign(document.createElement('h3'), { textContent: 'Bounties' }));
-    const taken = CASES.filter((c) => this.flags.has(`${c.id}_open`));
+    const taken = CASES.filter((c) => !c.wanted && this.flags.has(`${c.id}_open`));
     if (!taken.length) {
       page.append(Object.assign(document.createElement('p'), {
         textContent: 'The Wardens’ Guild, on the street west of the market, pays bounties for catching wrongdoers. Its guildmaster stands by the notice board at the door.',
       }));
-      return;
     }
-    for (const c of taken) {
-      const culprit = this.npcs.byId.get(c.culprit);
-      const div = document.createElement('div');
-      div.className = 'case';
-      const done = this.flags.has(`${c.id}_done`);
-      const head = Object.assign(document.createElement('h4'), { textContent: `${c.title}${done ? ' (closed)' : ''}` });
-      const reward = Object.assign(document.createElement('p'), { className: 'meta', textContent: `Bounty: ${c.bounty} crowns · ${c.place}` });
-      div.append(head, reward, Object.assign(document.createElement('p'), { textContent: c.brief }));
-      if (this.flags.has(`${c.id}_clue`)) div.append(Object.assign(document.createElement('p'), { className: 'clue', textContent: `What ${c.who} saw: ${c.clue}` }));
-      let status;
-      if (done) status = `Closed: ${culprit ? culprit.name : 'the culprit'} is in the guild’s cells. You were paid ${c.bounty} crowns.`;
-      else if (this.flags.has(`${c.id}_bound`)) status = `${culprit.name} is bound. Lead them to the guildmaster at the Wardens’ Guild.`;
-      else if (culprit && culprit.mood === 'yield') status = `${culprit.name} has yielded. Bind them (E) before they slip away.`;
-      else if (culprit && (culprit.mood === 'flee' || culprit.mood === 'fight')) status = `${culprit.name} is running! Catch them and beat them until they yield.`;
-      else if (this.flags.has(`${c.id}_exposed`)) status = `${culprit.name} got away once. Find them again and confront them.`;
-      else if (this.flags.has(`${c.id}_clue`)) status = 'Find whoever matches the description, and accuse them to their face.';
-      else status = `Ask ${c.witness} what they saw.`;
-      div.append(Object.assign(document.createElement('p'), { className: 'status', textContent: status }));
-      page.append(div);
+    for (const c of taken) page.append(this._caseCard(c, look));
+    page.append(Object.assign(document.createElement('h3'), { textContent: 'Wanted notices' }));
+    page.append(Object.assign(document.createElement('p'), {
+      className: 'meta',
+      textContent: `Posted by the Wardens’ Guild. Go where the culprit was last seen and look strangers over closely (${look}): whoever fits every detail is your quarry. Beat them till they yield, bind them, and follow the arrow to the guild.`,
+    }));
+    for (const c of CASES) if (c.wanted) page.append(this._caseCard(c, look));
+  }
+
+  _caseCard(c, look) {
+    const culprit = this.npcs.byId.get(c.culprit);
+    const div = document.createElement('div');
+    div.className = `case${c.wanted ? ' wanted' : ''}`;
+    const done = this.flags.has(`${c.id}_done`);
+    const bound = this.flags.has(`${c.id}_bound`);
+    const known = this.flags.has(`${c.id}_known`) || this.flags.has(`${c.id}_exposed`);
+    const head = Object.assign(document.createElement('h4'), { textContent: `${c.title}${done ? ' (closed)' : ''}` });
+    const reward = Object.assign(document.createElement('p'), { className: 'meta', textContent: `Bounty: ${c.bounty} crowns · ${c.place}` });
+    div.append(head, reward, Object.assign(document.createElement('p'), { textContent: c.brief }));
+    if (c.wanted) {
+      div.append(Object.assign(document.createElement('p'), { className: 'clue', textContent: `Wanted: ${c.clue}` }));
+      if (!done) div.append(Object.assign(document.createElement('p'), { className: 'meta', textContent: `Last seen ${c.seen}.` }));
+    } else if (this.flags.has(`${c.id}_clue`)) {
+      div.append(Object.assign(document.createElement('p'), { className: 'clue', textContent: `What ${c.who} saw: ${c.clue}` }));
     }
+    let status;
+    if (done) status = `Closed: ${culprit ? culprit.name : 'the culprit'} is in the guild’s cells. You were paid ${c.bounty} crowns.`;
+    else if (bound) status = `${culprit.name} is bound. Follow the arrow to the guildmaster at the Wardens’ Guild.`;
+    else if (culprit && culprit.mood === 'yield') status = `${culprit.name} has yielded. Bind them (${this.touch ? 'Interact' : 'E'}) before they slip away.`;
+    else if (culprit && (culprit.mood === 'flee' || culprit.mood === 'fight')) status = `${culprit.name} is running! Catch them and beat them until they yield.`;
+    else if (this.flags.has(`${c.id}_exposed`)) status = `${culprit.name} got away once. Find them again and confront them.`;
+    else if (known) status = `Spotted: it’s ${culprit.name}, the ${culprit.role.toLowerCase()}. Talk to them and name them to their face.`;
+    else if (this.flags.has(`${c.id}_clue`)) status = `Search ${c.place}. Look strangers over closely (${look}) and find whoever fits every detail.`;
+    else status = `Ask ${c.witness} what they saw.`;
+    div.append(Object.assign(document.createElement('p'), { className: 'status', textContent: status }));
+    if (!done && !bound && this.onMark) {
+      const btn = Object.assign(document.createElement('button'), { type: 'button', className: 'buy mark-case', textContent: c.wanted ? 'Mark where last seen' : `Mark ${c.place}` });
+      btn.addEventListener('click', () => {
+        this.onMark({ x: c.at.x, z: c.at.z }, c.title);
+        btn.textContent = 'Marked on your map';
+        btn.disabled = true;
+      });
+      div.append(btn);
+    }
+    return div;
   }
 }

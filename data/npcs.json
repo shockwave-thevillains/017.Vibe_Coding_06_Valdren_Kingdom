@@ -6234,6 +6234,41 @@
           },
           {
             "if": [
+              "case4_here",
+              "!case4_done"
+            ],
+            "node": "hand4"
+          },
+          {
+            "if": [
+              "case5_here",
+              "!case5_done"
+            ],
+            "node": "hand5"
+          },
+          {
+            "if": [
+              "case6_here",
+              "!case6_done"
+            ],
+            "node": "hand6"
+          },
+          {
+            "if": [
+              "case7_here",
+              "!case7_done"
+            ],
+            "node": "hand7"
+          },
+          {
+            "if": [
+              "case8_here",
+              "!case8_done"
+            ],
+            "node": "hand8"
+          },
+          {
+            "if": [
               "case1_bound",
               "!case1_done"
             ],
@@ -6250,6 +6285,41 @@
             "if": [
               "case3_bound",
               "!case3_done"
+            ],
+            "node": "lag"
+          },
+          {
+            "if": [
+              "case4_bound",
+              "!case4_done"
+            ],
+            "node": "lag"
+          },
+          {
+            "if": [
+              "case5_bound",
+              "!case5_done"
+            ],
+            "node": "lag"
+          },
+          {
+            "if": [
+              "case6_bound",
+              "!case6_done"
+            ],
+            "node": "lag"
+          },
+          {
+            "if": [
+              "case7_bound",
+              "!case7_done"
+            ],
+            "node": "lag"
+          },
+          {
+            "if": [
+              "case8_bound",
+              "!case8_done"
             ],
             "node": "lag"
           },
@@ -6312,6 +6382,10 @@
                 "next": "offer1"
               },
               {
+                "text": "What about the wanted notices?",
+                "next": "wanted"
+              },
+              {
                 "text": "Not today."
               }
             ]
@@ -6322,6 +6396,10 @@
               {
                 "text": "What's the reward?",
                 "next": "reward"
+              },
+              {
+                "text": "What about the wanted notices?",
+                "next": "wanted"
               },
               {
                 "text": "Understood."
@@ -6381,6 +6459,10 @@
               {
                 "text": "Remind me how this works.",
                 "next": "how"
+              },
+              {
+                "text": "What about the wanted notices?",
+                "next": "wanted"
               },
               {
                 "text": "I'm on it."
@@ -6451,6 +6533,10 @@
                 "next": "how"
               },
               {
+                "text": "What about the wanted notices?",
+                "next": "wanted"
+              },
+              {
                 "text": "I'm on it."
               }
             ]
@@ -6519,6 +6605,10 @@
                 "next": "how"
               },
               {
+                "text": "What about the wanted notices?",
+                "next": "wanted"
+              },
+              {
                 "text": "I'm on it."
               }
             ]
@@ -6549,10 +6639,14 @@
             ]
           },
           "cleared": {
-            "text": "The board is clear: cutpurse, smuggler and sheep thief, all in the cells. Valdren owes you, and the guild won't forget it.",
+            "text": "The board is clear: cutpurse, smuggler and sheep thief, all in the cells. Valdren owes you, and the guild won't forget it. The wanted notices stay up until every face on them is caught.",
             "choices": [
               {
                 "text": "Glad to help."
+              },
+              {
+                "text": "What about the wanted notices?",
+                "next": "wanted"
               },
               {
                 "text": "How did it all work, again?",
@@ -6569,6 +6663,143 @@
               {
                 "text": "How does this work?",
                 "next": "how"
+              }
+            ]
+          },
+          "hand4": {
+            "text": "The bathhouse pickpocket herself! Half of Sakuragawa will want their purses back.",
+            "choices": [
+              {
+                "text": "She's all yours.",
+                "next": "paid4",
+                "do": "handover:case4"
+              },
+              {
+                "text": "One moment."
+              }
+            ]
+          },
+          "paid4": {
+            "text": "30 crowns, as the notice promised. Into the cells with her.",
+            "choices": [
+              {
+                "text": "Who else is on the notices?",
+                "next": "wanted"
+              },
+              {
+                "text": "Thank you."
+              }
+            ]
+          },
+          "hand5": {
+            "text": "Lo Fen, and his pockets full of green glass. The magistrate will be glad of this.",
+            "choices": [
+              {
+                "text": "He's all yours.",
+                "next": "paid5",
+                "do": "handover:case5"
+              },
+              {
+                "text": "One moment."
+              }
+            ]
+          },
+          "paid5": {
+            "text": "45 crowns, as the notice promised. Into the cells with him.",
+            "choices": [
+              {
+                "text": "Who else is on the notices?",
+                "next": "wanted"
+              },
+              {
+                "text": "Thank you."
+              }
+            ]
+          },
+          "hand6": {
+            "text": "Skeg! One of Red Garrick's own. That's one less blade in the cellars.",
+            "choices": [
+              {
+                "text": "He's all yours.",
+                "next": "paid6",
+                "do": "handover:case6"
+              },
+              {
+                "text": "One moment."
+              }
+            ]
+          },
+          "paid6": {
+            "text": "60 crowns, as the notice promised. Into the cells with him.",
+            "choices": [
+              {
+                "text": "Who else is on the notices?",
+                "next": "wanted"
+              },
+              {
+                "text": "Thank you."
+              }
+            ]
+          },
+          "hand7": {
+            "text": "Ulf Hrolfsson, the shield thief. The jarl will drink to you tonight.",
+            "choices": [
+              {
+                "text": "He's all yours.",
+                "next": "paid7",
+                "do": "handover:case7"
+              },
+              {
+                "text": "One moment."
+              }
+            ]
+          },
+          "paid7": {
+            "text": "50 crowns, as the notice promised. Into the cells with him.",
+            "choices": [
+              {
+                "text": "Who else is on the notices?",
+                "next": "wanted"
+              },
+              {
+                "text": "Thank you."
+              }
+            ]
+          },
+          "hand8": {
+            "text": "Zafir and his sawdust saffron. The bazaar will sleep easier.",
+            "choices": [
+              {
+                "text": "He's all yours.",
+                "next": "paid8",
+                "do": "handover:case8"
+              },
+              {
+                "text": "One moment."
+              }
+            ]
+          },
+          "paid8": {
+            "text": "35 crowns, as the notice promised. Into the cells with him.",
+            "choices": [
+              {
+                "text": "Who else is on the notices?",
+                "next": "wanted"
+              },
+              {
+                "text": "Thank you."
+              }
+            ]
+          },
+          "wanted": {
+            "text": "Five faces on the wanted notices, each with a price: a pickpocket in the bathhouse queue at Sakuragawa, a forger selling false jade in the Jade Lantern Quarter, one of Red Garrick's cutthroats in Mudwick, a shield thief in Hrafnvik, and a swindler in the Saffron Bazaar. Their descriptions are in your journal, under Bounties. Look a stranger over closely and you'll know if they fit. Then beat them till they yield, bind them, and follow the arrow back to me.",
+            "choices": [
+              {
+                "text": "How does it work?",
+                "next": "how"
+              },
+              {
+                "text": "I'll find them."
               }
             ]
           }
@@ -10324,7 +10555,7 @@
             ]
           },
           "t1": {
-            "text": "Gloomhollow, Frostfang, the Sunken Vault, the Jade Hollow, the Mistveil Grotto, the cellars under Mudwick. Six holes, six kinds of trouble.",
+            "text": "Gloomhollow, Frostfang, the Sunken Vault, the Jade Hollow, the Mistveil Grotto, the Serpent Grotto and the cellars under Mudwick. Seven holes, seven kinds of trouble.",
             "choices": [
               {
                 "text": "What do you study?",
@@ -11039,6 +11270,1066 @@
           }
         }
       }
+    },
+    {
+      "id": "suzu",
+      "name": "Suzu",
+      "role": "Bather",
+      "position": {
+        "x": -247,
+        "z": 176
+      },
+      "heading": 0,
+      "patrol": {
+        "mode": "pingpong",
+        "speed": 1.0,
+        "points": [
+          {
+            "x": -247,
+            "z": 176,
+            "wait": 6,
+            "face": 0
+          },
+          {
+            "x": -229,
+            "z": 176,
+            "wait": 7,
+            "face": 0
+          }
+        ]
+      },
+      "look": {
+        "female": true,
+        "skin": "#e8c0a0",
+        "hair": "#1e1a18",
+        "eyes": "#4a3a2a",
+        "tunic": "#6a8aa8",
+        "trousers": "#2e2a26",
+        "boots": "#3a2a1e",
+        "belt": "#3a2a1a",
+        "trim": "#8a6a3a",
+        "cloak": null,
+        "age": 0.15,
+        "skirt": "robe",
+        "hairStyle": "long",
+        "lips": "#b4504e",
+        "stubble": false,
+        "sleeves": "#e8e0d0"
+      },
+      "outfit": {
+        "cowl": "#2c3d6c"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "case4_exposed"
+            ],
+            "node": "caught"
+          },
+          {
+            "if": [
+              "met_suzu"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Oh! You startled me. I'm only waiting for the bath. Everyone waits for the bath.",
+            "choices": [
+              {
+                "text": "Do you come here often?",
+                "next": "t0"
+              },
+              {
+                "text": "Young, long black hair, a blue cowl and quick fingers. You're the bathhouse pickpocket on the Guild's notice.",
+                "next": "accuse",
+                "if": [
+                  "case4_clue",
+                  "!case4_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "again": {
+            "text": "Still here? The queue's long today. Lovely and long.",
+            "choices": [
+              {
+                "text": "Have you seen the pickpocket?",
+                "next": "t1"
+              },
+              {
+                "text": "Young, long black hair, a blue cowl and quick fingers. You're the bathhouse pickpocket on the Guild's notice.",
+                "next": "accuse",
+                "if": [
+                  "case4_clue",
+                  "!case4_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Every day. The queue is the best part. All those people standing so close, thinking about hot water and not about their purses.",
+            "choices": [
+              {
+                "text": "Have you seen the pickpocket?",
+                "next": "t1"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t1": {
+            "text": "A pickpocket? Here? How dreadful. I'd keep a hand on my purse, if I were you. Both hands.",
+            "choices": [
+              {
+                "text": "Do you come here often?",
+                "next": "t0"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "accuse": {
+            "text": "The Guild? Then I'd better be quicker than the Guild, hadn't I?",
+            "set": [
+              "case4_exposed"
+            ],
+            "choices": [
+              {
+                "text": "Stop, thief!",
+                "do": "bolt"
+              },
+              {
+                "text": "Don't make this harder.",
+                "do": "bolt"
+              }
+            ]
+          },
+          "caught": {
+            "text": "Not you again! Catch me if you can!",
+            "choices": [
+              {
+                "text": "Stop right there!",
+                "do": "bolt"
+              },
+              {
+                "text": "Come quietly.",
+                "do": "bolt"
+              }
+            ]
+          }
+        }
+      },
+      "criminal": "case4",
+      "health": 90,
+      "blow": 7
+    },
+    {
+      "id": "hana",
+      "name": "Old Hana",
+      "role": "Bathhouse Sweeper",
+      "position": {
+        "x": -262,
+        "z": 176
+      },
+      "heading": 0,
+      "look": {
+        "female": true,
+        "skin": "#d9a882",
+        "hair": "#b0aca6",
+        "eyes": "#5a7a4a",
+        "tunic": "#4a5a6a",
+        "trousers": "#2e2a26",
+        "boots": "#2e2118",
+        "belt": "#3a2a1a",
+        "trim": "#d8d0c0",
+        "cloak": null,
+        "age": 0.75,
+        "skirt": "robe",
+        "hairStyle": "bun",
+        "lips": "#c06060",
+        "stubble": false
+      },
+      "outfit": {
+        "cowl": "#2c3d6c"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_hana"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Mind the step, dear, it's slippery. I sweep the bathhouse and I've seen everything.",
+            "choices": [
+              {
+                "text": "Seen a pickpocket here?",
+                "next": "t0"
+              },
+              {
+                "text": "A blue cowl by the bathhouse… Are you the pickpocket?",
+                "next": "accuse",
+                "if": [
+                  "case4_clue",
+                  "!case4_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back for a bath? Take your boots off this time.",
+            "choices": [
+              {
+                "text": "Why the blue cowl?",
+                "next": "t1"
+              },
+              {
+                "text": "A blue cowl by the bathhouse… Are you the pickpocket?",
+                "next": "accuse",
+                "if": [
+                  "case4_clue",
+                  "!case4_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Every day! A young thing in a blue cowl, quick as a minnow, works the queue. Purses vanish and off she goes.",
+            "choices": [
+              {
+                "text": "Why the blue cowl?",
+                "next": "t1"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Bathhouse blue. Half of us wear it. Mine's older than that girl, mind. And so am I, by fifty years.",
+            "choices": [
+              {
+                "text": "Seen a pickpocket here?",
+                "next": "t0"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "accuse": {
+            "text": "Me? With these knees and this grey hair? The girl you want is young, with hair black as a crow's wing. Look closer!",
+            "choices": [
+              {
+                "text": "Seen a pickpocket here?",
+                "next": "t0"
+              },
+              {
+                "text": "My mistake. Sorry."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "lofen",
+      "name": "Lo Fen",
+      "role": "Jade Seller",
+      "position": {
+        "x": 362,
+        "z": -440
+      },
+      "heading": 3.1416,
+      "patrol": {
+        "mode": "pingpong",
+        "speed": 0.9,
+        "points": [
+          {
+            "x": 362,
+            "z": -440,
+            "wait": 8,
+            "face": 3.1416
+          },
+          {
+            "x": 388,
+            "z": -440,
+            "wait": 8,
+            "face": 3.1416
+          }
+        ]
+      },
+      "look": {
+        "female": false,
+        "skin": "#6e4630",
+        "hair": "#1e1a18",
+        "eyes": "#4a5e72",
+        "tunic": "#2e5a4a",
+        "trousers": "#5a4a3a",
+        "boots": "#2e2118",
+        "belt": "#2e2116",
+        "trim": "#8a6a3a",
+        "cloak": null,
+        "age": 0.45,
+        "hairStyle": "short",
+        "beard": "short",
+        "sleeves": "#e8d8b0",
+        "skirt": "robe",
+        "scar": "cut"
+      },
+      "outfit": {
+        "hat": "#221c1a"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "case5_exposed"
+            ],
+            "node": "caught"
+          },
+          {
+            "if": [
+              "met_lofen"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Jade! Real jade, from the mountains of the east! Touch it, feel how cool it is.",
+            "choices": [
+              {
+                "text": "Is it really jade?",
+                "next": "t0"
+              },
+              {
+                "text": "A short black beard, a black hat and a scar across your cheek. You're the forger selling green glass for jade.",
+                "next": "accuse",
+                "if": [
+                  "case5_clue",
+                  "!case5_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back for jade? I knew you had good taste.",
+            "choices": [
+              {
+                "text": "How did you get that scar?",
+                "next": "t1"
+              },
+              {
+                "text": "A short black beard, a black hat and a scar across your cheek. You're the forger selling green glass for jade.",
+                "next": "accuse",
+                "if": [
+                  "case5_clue",
+                  "!case5_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Of course! See how it shines? Real jade shines. Glass also shines, but differently. More.",
+            "choices": [
+              {
+                "text": "How did you get that scar?",
+                "next": "t1"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t1": {
+            "text": "A disagreement about the price of jade. I won. Mostly.",
+            "choices": [
+              {
+                "text": "Is it really jade?",
+                "next": "t0"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "accuse": {
+            "text": "Green glass? How dare you! …Fine. You'll have to catch me first!",
+            "set": [
+              "case5_exposed"
+            ],
+            "choices": [
+              {
+                "text": "Stop, thief!",
+                "do": "bolt"
+              },
+              {
+                "text": "Don't make this harder.",
+                "do": "bolt"
+              }
+            ]
+          },
+          "caught": {
+            "text": "You again! My jade is fake, but my feet are real!",
+            "choices": [
+              {
+                "text": "Stop right there!",
+                "do": "bolt"
+              },
+              {
+                "text": "Come quietly.",
+                "do": "bolt"
+              }
+            ]
+          }
+        }
+      },
+      "criminal": "case5",
+      "health": 120,
+      "blow": 9
+    },
+    {
+      "id": "skeg",
+      "name": "Skeg",
+      "role": "Rat-catcher",
+      "position": {
+        "x": -240,
+        "z": 54
+      },
+      "heading": 1.5708,
+      "scale": 1.08,
+      "patrol": {
+        "mode": "pingpong",
+        "speed": 1.0,
+        "points": [
+          {
+            "x": -240,
+            "z": 54,
+            "wait": 6
+          },
+          {
+            "x": -268,
+            "z": 52,
+            "wait": 6
+          }
+        ]
+      },
+      "look": {
+        "female": false,
+        "skin": "#d9a882",
+        "hair": "#1e1a18",
+        "eyes": "#4a5e72",
+        "tunic": "#3a3530",
+        "trousers": "#2a2420",
+        "boots": "#2e2118",
+        "belt": "#3a2a1a",
+        "trim": "#d8d0c0",
+        "cloak": null,
+        "age": 0.4,
+        "hairStyle": "long",
+        "beard": "full",
+        "belly": 0.35
+      },
+      "outfit": {
+        "cowl": "#8a2a22"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "case6_exposed"
+            ],
+            "node": "caught"
+          },
+          {
+            "if": [
+              "met_skeg"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Whatcher lookin' at?",
+            "choices": [
+              {
+                "text": "What do you do here?",
+                "next": "t0"
+              },
+              {
+                "text": "Big, a full black beard and a red cowl. You're one of Red Garrick's cutthroats, on the Guild's notice.",
+                "next": "accuse",
+                "if": [
+                  "case6_clue",
+                  "!case6_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "again": {
+            "text": "You again. Keep walkin'.",
+            "choices": [
+              {
+                "text": "Do you know Red Garrick?",
+                "next": "t1"
+              },
+              {
+                "text": "Big, a full black beard and a red cowl. You're one of Red Garrick's cutthroats, on the Guild's notice.",
+                "next": "accuse",
+                "if": [
+                  "case6_clue",
+                  "!case6_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Catch rats. Big ones. Some of 'em walk on two legs and carry purses.",
+            "choices": [
+              {
+                "text": "Do you know Red Garrick?",
+                "next": "t1"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Never heard of him. Who told you that name? Was it Rook? I'll have words with Rook.",
+            "choices": [
+              {
+                "text": "What do you do here?",
+                "next": "t0"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "accuse": {
+            "text": "Garrick's lads don't go quiet. Come on, then!",
+            "set": [
+              "case6_exposed"
+            ],
+            "choices": [
+              {
+                "text": "Stop, thief!",
+                "do": "bolt"
+              },
+              {
+                "text": "Don't make this harder.",
+                "do": "bolt"
+              }
+            ]
+          },
+          "caught": {
+            "text": "Back for more? Garrick'll hear about this!",
+            "choices": [
+              {
+                "text": "Stop right there!",
+                "do": "bolt"
+              },
+              {
+                "text": "Come quietly.",
+                "do": "bolt"
+              }
+            ]
+          }
+        }
+      },
+      "criminal": "case6",
+      "health": 170,
+      "blow": 13
+    },
+    {
+      "id": "dunn",
+      "name": "Dunn",
+      "role": "Ragman",
+      "position": {
+        "x": -322,
+        "z": 46
+      },
+      "heading": 1.5708,
+      "look": {
+        "female": false,
+        "skin": "#a8774f",
+        "hair": "#6e6258",
+        "eyes": "#5a6e3a",
+        "tunic": "#5a4a3a",
+        "trousers": "#2e2a26",
+        "boots": "#4a3322",
+        "belt": "#3a2a1a",
+        "trim": "#d8d0c0",
+        "cloak": null,
+        "age": 0.7,
+        "hairStyle": "long",
+        "beard": null
+      },
+      "outfit": {
+        "cowl": "#8a2a22"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "met_dunn"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Rags! Bones! Old iron! Anything you don't want, Dunn takes away!",
+            "choices": [
+              {
+                "text": "Seen any cutthroats about?",
+                "next": "t0"
+              },
+              {
+                "text": "A red cowl in Mudwick. Are you one of Garrick's cutthroats?",
+                "next": "accuse",
+                "if": [
+                  "case6_clue",
+                  "!case6_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "again": {
+            "text": "Got any rags for old Dunn?",
+            "choices": [
+              {
+                "text": "Why the red cowl?",
+                "next": "t1"
+              },
+              {
+                "text": "A red cowl in Mudwick. Are you one of Garrick's cutthroats?",
+                "next": "accuse",
+                "if": [
+                  "case6_clue",
+                  "!case6_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Garrick's lot? There's one walks the main lane, big as a door, with a beard like a black hedge. I keep out of his way.",
+            "choices": [
+              {
+                "text": "Why the red cowl?",
+                "next": "t1"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t1": {
+            "text": "Found it in the river. Good wool. Garrick's lads like red, but I just like warm.",
+            "choices": [
+              {
+                "text": "Seen any cutthroats about?",
+                "next": "t0"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "accuse": {
+            "text": "Me? I can't grow a beard to save my life! The one you want is big, with a black beard. Look at my chin!",
+            "choices": [
+              {
+                "text": "Seen any cutthroats about?",
+                "next": "t0"
+              },
+              {
+                "text": "My mistake. Sorry."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "ulf",
+      "name": "Ulf Hrolfsson",
+      "role": "Boat-shed Hand",
+      "position": {
+        "x": -460,
+        "z": 30
+      },
+      "heading": 0,
+      "scale": 1.08,
+      "patrol": {
+        "mode": "pingpong",
+        "speed": 1.0,
+        "points": [
+          {
+            "x": -460,
+            "z": 30,
+            "wait": 7
+          },
+          {
+            "x": -464,
+            "z": 60,
+            "wait": 7
+          }
+        ]
+      },
+      "look": {
+        "female": false,
+        "skin": "#6e4630",
+        "hair": "#d8c080",
+        "eyes": "#5a7a4a",
+        "tunic": "#6a4a2a",
+        "trousers": "#3a2e24",
+        "boots": "#3a2a1e",
+        "belt": "#3a2a1a",
+        "trim": "#c8b48a",
+        "cloak": "#3d5a2a",
+        "age": 0.35,
+        "hairStyle": "short",
+        "beard": "full",
+        "sleeves": "#8a7a62",
+        "belly": 0.3
+      },
+      "outfit": {},
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "case7_exposed"
+            ],
+            "node": "caught"
+          },
+          {
+            "if": [
+              "met_ulf"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Hail, stranger. Fine day for rowing.",
+            "choices": [
+              {
+                "text": "Where do you work?",
+                "next": "t0"
+              },
+              {
+                "text": "Big, a full blond beard and a green cloak. You're the shield thief of the boat sheds.",
+                "next": "accuse",
+                "if": [
+                  "case7_clue",
+                  "!case7_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "again": {
+            "text": "Still here? Hrafnvik must agree with you.",
+            "choices": [
+              {
+                "text": "Have shields gone missing?",
+                "next": "t1"
+              },
+              {
+                "text": "Big, a full blond beard and a green cloak. You're the shield thief of the boat sheds.",
+                "next": "accuse",
+                "if": [
+                  "case7_clue",
+                  "!case7_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t0": {
+            "text": "The boat sheds. Mending, carrying, guarding the shields. Mostly guarding the shields.",
+            "choices": [
+              {
+                "text": "Have shields gone missing?",
+                "next": "t1"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t1": {
+            "text": "A few. A dozen. Who counts shields? Nobody, until they need one.",
+            "choices": [
+              {
+                "text": "Where do you work?",
+                "next": "t0"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "accuse": {
+            "text": "Ha! Took you long enough. Come and take me, if you've the arms for it!",
+            "set": [
+              "case7_exposed"
+            ],
+            "choices": [
+              {
+                "text": "Stop, thief!",
+                "do": "bolt"
+              },
+              {
+                "text": "Don't make this harder.",
+                "do": "bolt"
+              }
+            ]
+          },
+          "caught": {
+            "text": "You again! Fine, let's have it out!",
+            "choices": [
+              {
+                "text": "Stop right there!",
+                "do": "bolt"
+              },
+              {
+                "text": "Come quietly.",
+                "do": "bolt"
+              }
+            ]
+          }
+        }
+      },
+      "criminal": "case7",
+      "health": 160,
+      "blow": 12
+    },
+    {
+      "id": "zafir",
+      "name": "Zafir",
+      "role": "Saffron Seller",
+      "position": {
+        "x": -258,
+        "z": 420
+      },
+      "heading": 0,
+      "patrol": {
+        "mode": "pingpong",
+        "speed": 0.9,
+        "points": [
+          {
+            "x": -258,
+            "z": 420,
+            "wait": 7
+          },
+          {
+            "x": -286,
+            "z": 420,
+            "wait": 7
+          }
+        ]
+      },
+      "look": {
+        "female": false,
+        "skin": "#a06a48",
+        "hair": "#1e1a18",
+        "eyes": "#5a7a4a",
+        "tunic": "#7a3a5a",
+        "trousers": "#2e2a26",
+        "boots": "#4a3322",
+        "belt": "#2e2116",
+        "trim": "#d8d0c0",
+        "cloak": null,
+        "age": 0.3,
+        "hairStyle": "short",
+        "beard": "short",
+        "sleeves": "#e8dcc4",
+        "skirt": "robe"
+      },
+      "outfit": {
+        "cowl": "#e0a020"
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "case8_exposed"
+            ],
+            "node": "caught"
+          },
+          {
+            "if": [
+              "met_zafir"
+            ],
+            "node": "again"
+          },
+          {
+            "node": "greet"
+          }
+        ],
+        "nodes": {
+          "greet": {
+            "text": "Saffron! The finest saffron, threads of pure gold! Half the price of the others!",
+            "choices": [
+              {
+                "text": "Why is yours so cheap?",
+                "next": "t0"
+              },
+              {
+                "text": "A yellow cowl and a short black beard. You're the swindler selling dyed sawdust for saffron.",
+                "next": "accuse",
+                "if": [
+                  "case8_clue",
+                  "!case8_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "again": {
+            "text": "Back for more saffron? A wise buyer!",
+            "choices": [
+              {
+                "text": "It smells of sawdust.",
+                "next": "t1"
+              },
+              {
+                "text": "A yellow cowl and a short black beard. You're the swindler selling dyed sawdust for saffron.",
+                "next": "accuse",
+                "if": [
+                  "case8_clue",
+                  "!case8_done"
+                ]
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t0": {
+            "text": "Because I love my customers! And because… the harvest was generous this year.",
+            "choices": [
+              {
+                "text": "It smells of sawdust.",
+                "next": "t1"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "t1": {
+            "text": "That is the smell of fresh saffron. Very fresh. Freshly… dyed. Grown! Freshly grown.",
+            "choices": [
+              {
+                "text": "Why is yours so cheap?",
+                "next": "t0"
+              },
+              {
+                "text": "Good day."
+              }
+            ]
+          },
+          "accuse": {
+            "text": "Sawdust? Prove it! No, don't prove it. Run, Zafir!",
+            "set": [
+              "case8_exposed"
+            ],
+            "choices": [
+              {
+                "text": "Stop, thief!",
+                "do": "bolt"
+              },
+              {
+                "text": "Don't make this harder.",
+                "do": "bolt"
+              }
+            ]
+          },
+          "caught": {
+            "text": "You again! My saffron's false, but my legs are true!",
+            "choices": [
+              {
+                "text": "Stop right there!",
+                "do": "bolt"
+              },
+              {
+                "text": "Come quietly.",
+                "do": "bolt"
+              }
+            ]
+          }
+        }
+      },
+      "criminal": "case8",
+      "health": 110,
+      "blow": 9
     }
   ]
 }
